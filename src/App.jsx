@@ -3,10 +3,12 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Catalogue from './pages/Catalogue'
 import AnimeDetail from './pages/AnimeDetail'
+import Profil from './pages/Profil'
 import NotFound from './pages/NotFound'
 import { FavoritesProvider } from './context/FavoritesContext'
 import { HistoryProvider } from './context/HistoryContext'
 import { ModalProvider } from './context/ModalContext'
+import { WatchlistProvider } from './context/WatchlistContext'
 import { ThemeProvider } from './context/ThemeContext'
 import AnimeModal from './components/AnimeModal'
 import Footer from './components/Footer'
@@ -17,6 +19,7 @@ export default function App() {
     <ThemeProvider>
     <HistoryProvider>
     <FavoritesProvider>
+    <WatchlistProvider>
     <ModalProvider>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col">
@@ -25,6 +28,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/catalogue" element={<Catalogue />} />
             <Route path="/anime/:id" element={<AnimeDetail />} />
+            <Route path="/profil" element={<Profil />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AnimeModal />
@@ -33,6 +37,7 @@ export default function App() {
         </div>
       </BrowserRouter>
     </ModalProvider>
+    </WatchlistProvider>
     </FavoritesProvider>
     </HistoryProvider>
     </ThemeProvider>

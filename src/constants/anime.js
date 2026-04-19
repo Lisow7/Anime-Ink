@@ -1,3 +1,9 @@
+export const WATCH_STATUS = [
+  { value: 'to_watch',  label: 'À voir',   color: '#6b7280' },
+  { value: 'watching',  label: 'En cours', color: '#f59e0b' },
+  { value: 'completed', label: 'Terminé',  color: '#22c55e' },
+]
+
 export const STATUS_LABEL = {
   'Finished Airing': 'Terminé',
   'Currently Airing': 'En cours',

@@ -68,6 +68,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-8">
           {navLink('/catalogue', 'Catalogue')}
+          {navLink('/profil', 'Profil')}
 
           <Link
             to="/catalogue?tab=favoris"
