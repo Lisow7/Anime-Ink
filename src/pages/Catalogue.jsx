@@ -4,8 +4,11 @@ import { useSearchParams } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import AnimeListCard from '../components/AnimeListCard'
 import EmptyState from '../components/EmptyState'
+import WatchlistTable from '../components/WatchlistTable'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
+import { useWatchlist } from '../context/WatchlistContext'
+import { WATCH_STATUS } from '../constants/anime'
 import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -43,6 +46,7 @@ export default function Catalogue() {
 
   const { favorites, clearFavorites } = useFavorites()
   const { history, clearHistory: clearHistoryBase } = useHistory()
+  const { watchlist, clearWatchlist } = useWatchlist()
   const switchTab = (tabName) => {
     const next = new URLSearchParams(searchParams)
     if (tabName === 'catalogue') next.delete('tab')
@@ -53,6 +57,7 @@ export default function Catalogue() {
   const resetAll = () => {
     clearFavorites()
     clearHistoryBase()
+    clearWatchlist()
     setTab('catalogue')
     setInputValue('')
     setSearchParams(new URLSearchParams())
@@ -78,26 +83,30 @@ export default function Catalogue() {
   }, [debouncedInput])
 
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
     setError(false)
     const run = async () => {
       try {
         if (query) {
-          const data = await searchAnime(query)
+          const data = await searchAnime(query, controller.signal)
+          if (controller.signal.aborted) return
           setAnimes(data)
           setPagination({ current: 1, last: 1, total: data.length })
         } else {
-          const result = await getAnimeByFilter({ genre, status, type, orderBy, letter, page })
+          const result = await getAnimeByFilter({ genre, status, type, orderBy, letter, page }, controller.signal)
+          if (controller.signal.aborted) return
           const norm = (t) => t.replace(/^[^a-zA-Z0-9\u00C0-\u024F]+/, '')
+          const data = result.data ?? []
           const sorted = (orderBy === 'title' || letter)
-            ? [...result.data].sort((a, b) => {
-                const cmp = norm(a.title).localeCompare(norm(b.title), undefined, { sensitivity: 'base' })
+            ? [...data].sort((a, b) => {
+                const cmp = norm(a.title ?? '').localeCompare(norm(b.title ?? ''), undefined, { sensitivity: 'base' })
                 if (cmp !== 0) return cmp
                 const dateA = a.aired?.from ? new Date(a.aired.from) : new Date(0)
                 const dateB = b.aired?.from ? new Date(b.aired.from) : new Date(0)
                 return dateA - dateB
               })
-            : result.data
+            : data
           setAnimes(sorted)
           setPagination({
             current: result.pagination?.current_page ?? 1,
@@ -105,13 +114,14 @@ export default function Catalogue() {
             total: result.pagination?.items?.total ?? null,
           })
         }
-      } catch {
-        setError(true)
+      } catch (e) {
+        if (!controller.signal.aborted) setError(true)
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
     run()
+    return () => controller.abort()
   }, [query, genre, status, type, orderBy, letter, page, retryKey])
 
   useEffect(() => {
@@ -143,9 +153,9 @@ export default function Catalogue() {
     localStorage.setItem('anime-ink-view', mode)
   }
 
-  const displayList = tab === 'favoris' ? favorites : tab === 'recents' ? history : animes
+  const displayList = tab === 'favoris' ? favorites : tab === 'recents' ? history : tab === 'liste' ? watchlist : animes
   const isGrid = viewMode === 'grid'
-  const total = tab === 'favoris' ? favorites.length : tab === 'recents' ? history.length : (pagination.total ?? animes.length)
+  const total = tab === 'favoris' ? favorites.length : tab === 'recents' ? history.length : tab === 'liste' ? watchlist.length : (pagination.total ?? animes.length)
   const isEmpty = !loading && displayList.length === 0
 
   return (
@@ -154,7 +164,7 @@ export default function Catalogue() {
       {/* Header + onglets */}
       <div className="flex items-center justify-between gap-8">
         <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
-          {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : 'Catalogue'}
+          {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : tab === 'liste' ? 'Ma liste' : 'Catalogue'}
         </h1>
         <div className="flex items-center gap-3">
         {(favorites.length > 0 || history.length > 0) && (
@@ -189,6 +199,17 @@ export default function Catalogue() {
               Récents
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tab === 'recents' ? 'bg-white/20' : 'bg-white/10'}`}>
                 {history.length}
+              </span>
+            </button>
+          )}
+          {watchlist.length > 0 && (
+            <button
+              onClick={() => switchTab('liste')}
+              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'liste' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              Ma liste
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tab === 'liste' ? 'bg-white/20' : 'bg-white/10'}`}>
+                {watchlist.length}
               </span>
             </button>
           )}
@@ -292,6 +313,22 @@ export default function Catalogue() {
         </div>
       )}
 
+      {/* Compteur Ma liste */}
+      {tab === 'liste' && watchlist.length > 0 && !isEmpty && (
+        <div className="flex items-center gap-3 -mt-4 flex-wrap">
+          {WATCH_STATUS.map(ws => {
+            const count = watchlist.filter(a => a.watchStatus === ws.value).length
+            if (!count) return null
+            return (
+              <span key={ws.value} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ws.color }} />
+                {ws.label} · {count}
+              </span>
+            )
+          })}
+        </div>
+      )}
+
       {/* Compteur favoris */}
       {tab === 'favoris' && favorites.length > 0 && !isEmpty && (
         <p className="text-[var(--text-muted)] text-xs -mt-4">
@@ -349,7 +386,11 @@ export default function Catalogue() {
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyFavoris />
           : tab === 'recents'
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyRecents />
+          : tab === 'liste'
+          ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyListe />
           : <EmptyState query={query} onReset={resetFilters} />
+      ) : !error && tab === 'liste' ? (
+        <WatchlistTable list={displayList} />
       ) : !error && isGrid ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
           {displayList.map((anime) => (

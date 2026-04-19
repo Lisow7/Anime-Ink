@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useModal } from '../context/ModalContext'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
+import { useWatchlist } from '../context/WatchlistContext'
 import { getAnimeById, getAnimeRecommendations } from '../services/jikan'
 import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
@@ -12,6 +13,7 @@ export default function AnimeModal() {
   const { animeId, openModal, closeModal } = useModal()
   const { isFavorite, toggle } = useFavorites()
   const { addToHistory } = useHistory()
+  const { getStatus, setStatus, remove } = useWatchlist()
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(false)
   const [synopsis, setSynopsis] = useState(null)
@@ -65,6 +67,7 @@ export default function AnimeModal() {
   if (!animeId) return null
 
   const fav = anime ? isFavorite(anime.mal_id) : false
+  const watchStatus = anime ? getStatus(anime.mal_id) : null
 
   return (
     <div
@@ -109,16 +112,34 @@ export default function AnimeModal() {
                       <p className="text-[var(--text-muted)] text-sm mt-1">{anime.title_japanese}</p>
                     )}
                   </div>
-                  {/* Bouton favori */}
-                  <button
-                    onClick={() => toggle(anime)}
-                    className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
-                    aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                  >
-                    <svg viewBox="0 0 24 24" className="w-6 h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {/* Bouton Ma liste */}
+                    <button
+                      onClick={() => watchStatus ? remove(anime.mal_id) : setStatus(anime, 'to_watch')}
+                      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                        watchStatus
+                          ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[#22c55e]'
+                          : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[#22c55e]'
+                      }`}
+                      aria-label={watchStatus ? 'Retirer de ma liste' : 'Ajouter à ma liste'}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth="2">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {watchStatus ? 'Dans ma liste' : 'Ma liste'}
+                    </button>
+
+                    {/* Bouton favori */}
+                    <button
+                      onClick={() => toggle(anime)}
+                      className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
+                      aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-6 h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Score */}

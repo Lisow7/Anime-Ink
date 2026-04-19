@@ -1,7 +1,7 @@
 const BASE_URL = 'https://api.jikan.moe/v4'
 
-export async function searchAnime(query) {
-  const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`)
+export async function searchAnime(query, signal) {
+  const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`, { signal })
   const data = await res.json()
   const q = query.toLowerCase()
   return data.data
@@ -29,7 +29,7 @@ export async function getTopAnime(page = 1) {
   return data
 }
 
-export async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}) {
+export async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}, signal) {
   const params = new URLSearchParams({ limit: 24, page })
   if (genre) params.set('genres', genre)
   if (status) params.set('status', status)
@@ -38,13 +38,19 @@ export async function getAnimeByFilter({ genre, status, type, orderBy, letter, p
   if (letter) params.set('letter', letter)
   params.set('sort', orderBy === 'title' ? 'asc' : 'desc')
 
-  const res = await fetch(`${BASE_URL}/anime?${params}`)
+  const res = await fetch(`${BASE_URL}/anime?${params}`, { signal })
   const data = await res.json()
   return data
 }
 
 export async function getGenres() {
   const res = await fetch(`${BASE_URL}/genres/anime`)
+  const data = await res.json()
+  return data.data
+}
+
+export async function getRandomAnime() {
+  const res = await fetch(`${BASE_URL}/random/anime`)
   const data = await res.json()
   return data.data
 }
