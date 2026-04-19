@@ -33,11 +33,39 @@ export function WatchlistProvider({ children }) {
         genres: anime.genres,
         synopsis: anime.synopsis,
         watchStatus,
+        currentEpisode: 0,
+        currentSeason: 1,
       }])
     }
   }
 
+  const setEpisode = (id, ep) => save(watchlist.map(a => a.mal_id === id ? { ...a, currentEpisode: ep } : a))
+
+  const setSeason = (id, season) => save(watchlist.map(a => {
+    if (a.mal_id !== id) return a
+    const seasonEp = a.seasonData?.[season - 1]?.episodes ?? null
+    const clampedEp = seasonEp !== null ? Math.min(a.currentEpisode ?? 0, seasonEp) : 0
+    return { ...a, currentSeason: season, currentEpisode: clampedEp }
+  }))
+
+  const setSeasonData = (id, seasonData) => save(watchlist.map(a => {
+    if (a.mal_id !== id) return a
+    // Position réelle de cet animé dans la franchise (ex: JJK S2 → saison 2)
+    const franchiseIndex = seasonData.findIndex(s => s.mal_id === id)
+    const actualSeason = franchiseIndex >= 0 ? franchiseIndex + 1 : Math.min(a.currentSeason ?? 1, seasonData.length)
+    const seasonEp = seasonData[actualSeason - 1]?.episodes ?? null
+    const correctedEp = seasonEp !== null ? Math.min(a.currentEpisode ?? 0, seasonEp) : (a.currentEpisode ?? 0)
+    return { ...a, seasonData, currentSeason: actualSeason, currentEpisode: correctedEp }
+  }))
+
   const remove = (id) => save(watchlist.filter(a => a.mal_id !== id))
+
+  const reorder = (fromIndex, toIndex) => {
+    const next = [...watchlist]
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    save(next)
+  }
 
   const clearWatchlist = () => {
     setWatchlist([])
@@ -45,7 +73,7 @@ export function WatchlistProvider({ children }) {
   }
 
   return (
-    <WatchlistContext.Provider value={{ watchlist, getStatus, setStatus, remove, clearWatchlist }}>
+    <WatchlistContext.Provider value={{ watchlist, getStatus, setStatus, setEpisode, setSeason, setSeasonData, remove, reorder, clearWatchlist }}>
       {children}
     </WatchlistContext.Provider>
   )

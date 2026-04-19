@@ -81,7 +81,7 @@ export default function AnimeDetail() {
 
           {score && (
             <div className="flex items-baseline gap-2">
-              <span className={`text-4xl font-bold ${scoreColor(score)}`}>{score}</span>
+              <span className="text-4xl font-bold" style={{ color: scoreColor(score) }}>{score}</span>
               <span className="text-[var(--text-muted)] text-sm">/ 10</span>
               {scored_by && (
                 <span className="text-[var(--text-muted)] text-xs">({scored_by.toLocaleString()} votes)</span>

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import { getTopAnime, getRandomAnime } from '../services/jikan'
 import { useModal } from '../context/ModalContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
+import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
 
 export default function Home() {
@@ -14,6 +16,7 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const navigate = useNavigate()
   const { openModal } = useModal()
+  const { blurHentai } = useAgeFilter()
 
   useEffect(() => {
     getTopAnime(1).then((data) => {
@@ -51,6 +54,11 @@ export default function Home() {
     e.preventDefault()
     if (query.trim()) navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`)
   }
+
+  const randomIsHentai = random?.genres?.some(g => HENTAI_GENRES.includes(g.name))
+  const randomIsEcchi = random?.genres?.some(g => ECCHI_GENRES.includes(g.name))
+  const randomBlurred = blurHentai && (randomIsHentai || randomIsEcchi)
+  const randomAgeBadge = randomIsHentai ? '-18' : '-16'
 
   return (
     <main className="flex flex-col items-center px-6 py-16 gap-16 max-w-6xl mx-auto w-full">
@@ -123,32 +131,52 @@ export default function Home() {
             <div className="absolute inset-0 z-10 flex items-center gap-6 px-6 sm:px-8">
 
               {/* Poster */}
-              <img
-                src={random.images?.jpg?.large_image_url}
-                alt={random.title}
-                className="hidden sm:block h-44 rounded-xl shadow-2xl shrink-0 object-cover"
-              />
+              <div className="relative hidden sm:block shrink-0">
+                <img
+                  src={random.images?.jpg?.large_image_url}
+                  alt={random.title}
+                  className="h-44 rounded-xl shadow-2xl object-cover"
+                  style={randomBlurred ? { filter: 'blur(10px)', transform: 'scale(1.05)' } : undefined}
+                />
+                {randomBlurred && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl pointer-events-none">
+                    <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center border-2 backdrop-blur-sm select-none"
+                    style={randomIsHentai
+                      ? { borderColor: '#e63946', background: 'rgba(230,57,70,0.18)', boxShadow: '0 0 22px rgba(230,57,70,0.5)' }
+                      : { borderColor: '#a855f7', background: 'rgba(168,85,247,0.18)', boxShadow: '0 0 22px rgba(168,85,247,0.5)' }
+                    }
+                  >
+                    <span className="text-sm font-black leading-none" style={{ color: randomIsHentai ? '#e63946' : '#a855f7' }}>
+                      {randomAgeBadge}
+                    </span>
+                  </div>
+                  </div>
+                )}
+              </div>
 
               {/* Texte */}
               <div className="flex flex-col gap-3 min-w-0">
-                {random.title_japanese && (
+                {random.title_japanese && !randomBlurred && (
                   <p className="text-white/40 text-xs tracking-wide truncate">{random.title_japanese}</p>
                 )}
                 <h3 className="text-white font-bold text-xl sm:text-2xl leading-tight line-clamp-2">
-                  {random.title}
+                  {randomBlurred ? '??? — Contenu adulte' : random.title}
                 </h3>
 
-                <div className="flex items-center gap-3">
-                  {random.score && (
-                    <span className={`text-lg font-bold ${scoreColor(random.score)}`}>★ {random.score}</span>
-                  )}
-                  {random.year && (
-                    <span className="text-white/40 text-xs">{random.year}</span>
-                  )}
-                  {random.episodes && (
-                    <span className="text-white/40 text-xs">{random.episodes} ép.</span>
-                  )}
-                </div>
+                {!randomBlurred && (
+                  <div className="flex items-center gap-3">
+                    {random.score && (
+                      <span className="text-lg font-bold" style={{ color: scoreColor(random.score) }}>★ {random.score}</span>
+                    )}
+                    {random.year && (
+                      <span className="text-white/40 text-xs">{random.year}</span>
+                    )}
+                    {random.episodes && (
+                      <span className="text-white/40 text-xs">{random.episodes} ép.</span>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex flex-wrap gap-1.5">
                   {random.genres?.slice(0, 3).map(g => (
@@ -162,7 +190,7 @@ export default function Home() {
                   onClick={() => openModal(random.mal_id)}
                   className="mt-1 w-fit text-sm font-medium text-[#22c55e] hover:text-white transition-colors flex items-center gap-1.5 group"
                 >
-                  Découvrir
+                  {randomBlurred ? 'Voir quand même' : 'Découvrir'}
                   <span className="transition-transform group-hover:translate-x-0.5">→</span>
                 </button>
               </div>

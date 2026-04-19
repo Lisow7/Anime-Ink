@@ -2,14 +2,21 @@ import { memo } from 'react'
 import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
 import { useHistory } from '../context/HistoryContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
+import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
 
 function AnimeCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
   const { openModal } = useModal()
   const { history } = useHistory()
-  const { mal_id, title, images, score, episodes, status, trailer } = anime
+  const { blurHentai } = useAgeFilter()
+  const { mal_id, title, images, score, episodes, status, trailer, genres } = anime
+  const isHentai = genres?.some(g => HENTAI_GENRES.includes(g.name))
+  const isEcchi = genres?.some(g => ECCHI_GENRES.includes(g.name))
+  const blurred = blurHentai && (isHentai || isEcchi)
+  const ageBadge = isHentai ? '-18' : '-16'
   const fav = isFavorite(mal_id)
   const seen = history.some(a => a.mal_id === mal_id)
   const youtubeId = trailer?.youtube_id
@@ -31,7 +38,26 @@ function AnimeCard({ anime }) {
             className={`w-full h-full object-cover transition-all duration-300 ${
               thumbUrl ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
+            style={blurred ? { filter: 'blur(12px)', transform: 'scale(1.1)' } : undefined}
           />
+          {blurred && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center border-2 backdrop-blur-sm select-none"
+                style={isHentai
+                  ? { borderColor: '#e63946', background: 'rgba(230,57,70,0.18)', boxShadow: '0 0 22px rgba(230,57,70,0.45)' }
+                  : { borderColor: '#a855f7', background: 'rgba(168,85,247,0.18)', boxShadow: '0 0 22px rgba(168,85,247,0.45)' }
+                }
+              >
+                <span
+                  className="text-sm font-black tracking-tight leading-none"
+                  style={{ color: isHentai ? '#e63946' : '#a855f7' }}
+                >
+                  {ageBadge}
+                </span>
+              </div>
+            </div>
+          )}
 
           {thumbUrl && (
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -54,7 +80,7 @@ function AnimeCard({ anime }) {
           )}
 
           {score && (
-            <span className={`absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md ${scoreColor(score)}`}>
+            <span className="absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md" style={{ color: scoreColor(score) }}>
               ★ {score}
             </span>
           )}
@@ -71,7 +97,7 @@ function AnimeCard({ anime }) {
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <h3 className="text-[var(--text-primary)] text-sm font-medium line-clamp-2 leading-snug">{title}</h3>
+          <h3 className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</h3>
           <div className="mt-auto flex items-center justify-between pt-2">
             <span className="text-[var(--text-muted)] text-xs">
               {episodes ? `${episodes} ép.` : '? ép.'}

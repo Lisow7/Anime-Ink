@@ -125,7 +125,7 @@ export default function Catalogue() {
   }, [query, genre, status, type, orderBy, letter, page, retryKey])
 
   useEffect(() => {
-    getGenres().then(setGenres)
+    getGenres().then(data => { if (Array.isArray(data)) setGenres([...data].sort((a, b) => a.name.localeCompare(b.name))) })
   }, [])
 
   const updateParam = (key, value) => {
@@ -139,6 +139,13 @@ export default function Catalogue() {
   const resetFilters = () => {
     setInputValue('')
     setSearchParams(new URLSearchParams())
+  }
+
+  const clearSearch = () => {
+    setInputValue('')
+    const next = new URLSearchParams(searchParams)
+    next.delete('q')
+    setSearchParams(next)
   }
 
   const goToPage = (p) => {
@@ -159,7 +166,7 @@ export default function Catalogue() {
   const isEmpty = !loading && displayList.length === 0
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 flex flex-col gap-8">
+    <main className={`${tab === 'liste' ? 'max-w-[1400px] px-10' : 'max-w-6xl px-6'} mx-auto py-10 flex flex-col gap-8`}>
 
       {/* Header + onglets */}
       <div className="flex items-center justify-between gap-8">
@@ -167,11 +174,6 @@ export default function Catalogue() {
           {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : tab === 'liste' ? 'Ma liste' : 'Catalogue'}
         </h1>
         <div className="flex items-center gap-3">
-        {(favorites.length > 0 || history.length > 0) && (
-          <button onClick={resetAll} className="text-[var(--text-muted)] text-xs hover:text-red-400 transition-colors shrink-0">
-            Tout réinitialiser
-          </button>
-        )}
         <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1">
           <button
             onClick={() => switchTab('catalogue')}
@@ -214,40 +216,53 @@ export default function Catalogue() {
             </button>
           )}
         </div>
+        {(favorites.length > 0 || history.length > 0 || watchlist.length > 0) && (
+          <>
+            <div className="w-px h-6 bg-[var(--border-color)] shrink-0" />
+            <button onClick={resetAll} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-[#e63946]/30 text-[#e63946]/70 hover:border-[#e63946] hover:text-[#e63946] hover:bg-[#e63946]/5 transition-all shrink-0">
+              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth="2.5">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Tout réinitialiser
+            </button>
+          </>
+        )}
         </div>
       </div>
 
-      {/* Filtres — uniquement sur l'onglet catalogue */}
+      {/* Barre de recherche — toujours visible sur catalogue */}
+      {tab === 'catalogue' && (
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={inputValue}
+            placeholder="Rechercher un animé..."
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 max-w-sm"
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+          {/* Toggle grille / liste */}
+          <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
+            <button
+              onClick={() => switchView('grid')}
+              className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              aria-label="Vue grille"
+            >
+              <IconGrid />
+            </button>
+            <button
+              onClick={() => switchView('list')}
+              className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              aria-label="Vue liste"
+            >
+              <IconList />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filtres supplémentaires — uniquement si résultats */}
       {tab === 'catalogue' && !isEmpty && (
         <div className="flex flex-col gap-4">
-          {/* Barre de recherche + toggle vue */}
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              value={inputValue}
-              placeholder="Rechercher..."
-              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 max-w-sm"
-              onChange={(e) => setInputValue(e.target.value)}
-            />
-            {/* Toggle grille / liste */}
-            <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
-              <button
-                onClick={() => switchView('grid')}
-                className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-                aria-label="Vue grille"
-              >
-                <IconGrid />
-              </button>
-              <button
-                onClick={() => switchView('list')}
-                className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-                aria-label="Vue liste"
-              >
-                <IconList />
-              </button>
-            </div>
-          </div>
-
           {/* Filtre alphabétique */}
           {!query && (
             <div className="flex flex-wrap gap-1.5">
@@ -388,7 +403,7 @@ export default function Catalogue() {
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyRecents />
           : tab === 'liste'
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyListe />
-          : <EmptyState query={query} onReset={resetFilters} />
+          : <EmptyState query={query} onReset={query ? clearSearch : resetFilters} />
       ) : !error && tab === 'liste' ? (
         <WatchlistTable list={displayList} />
       ) : !error && isGrid ? (
