@@ -1,5 +1,6 @@
 import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
+import { useHistory } from '../context/HistoryContext'
 
 const statusLabel = {
   'Finished Airing': 'Terminé',
@@ -7,11 +8,19 @@ const statusLabel = {
   'Not yet aired': 'À venir',
 }
 
+function scoreColor(score) {
+  if (score >= 7.5) return 'text-[#22c55e]'
+  if (score >= 6) return 'text-[#f59e0b]'
+  return 'text-[#e63946]'
+}
+
 export default function AnimeCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
   const { openModal } = useModal()
+  const { history } = useHistory()
   const { mal_id, title, images, score, episodes, status, trailer } = anime
   const fav = isFavorite(mal_id)
+  const seen = history.some(a => a.mal_id === mal_id)
   const youtubeId = trailer?.youtube_id
   const thumbUrl = youtubeId
     ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
@@ -28,6 +37,7 @@ export default function AnimeCard({ anime }) {
           <img
             src={images?.jpg?.large_image_url}
             alt={title}
+            loading="lazy"
             className={`w-full h-full object-cover transition-all duration-300 ${
               thumbUrl ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
@@ -41,7 +51,6 @@ export default function AnimeCard({ anime }) {
                 alt={`Trailer ${title}`}
                 className="w-full h-full object-cover"
               />
-              {/* Bouton play YouTube */}
               <a
                 href={`https://www.youtube.com/watch?v=${youtubeId}`}
                 target="_blank"
@@ -59,8 +68,20 @@ export default function AnimeCard({ anime }) {
             </div>
           )}
 
+          {/* Badge "Déjà vu" */}
+          {seen && (
+            <span className="absolute bottom-2 right-2 bg-black/60 text-[#6b7280] text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-1">
+              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Vu
+            </span>
+          )}
+
+          {/* Score coloré */}
           {score && (
-            <span className="absolute bottom-2 right-2 bg-black/70 text-[#f5f5f5] text-xs font-semibold px-2 py-1 rounded-md">
+            <span className={`absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md ${scoreColor(score)}`}>
               ★ {score}
             </span>
           )}
@@ -85,6 +106,7 @@ export default function AnimeCard({ anime }) {
         </div>
       </div>
 
+      {/* Bouton favori */}
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
         className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}

@@ -11,6 +11,12 @@ const statusLabel = {
   'Not yet aired': 'À venir',
 }
 
+const scoreColor = (score) => {
+  if (score >= 7.5) return 'text-[#22c55e]'
+  if (score >= 6) return 'text-[#f59e0b]'
+  return 'text-[#e63946]'
+}
+
 const infoItem = (label, value) => value ? (
   <div className="flex flex-col gap-0.5">
     <span className="text-[#6b7280] text-xs uppercase tracking-wider">{label}</span>
@@ -131,7 +137,7 @@ export default function AnimeModal() {
                 {/* Score */}
                 {anime.score && (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[#22c55e] text-4xl font-bold">{anime.score}</span>
+                    <span className={`text-4xl font-bold ${scoreColor(anime.score)}`}>{anime.score}</span>
                     <span className="text-[#6b7280] text-sm">/ 10</span>
                     {anime.scored_by && (
                       <span className="text-[#6b7280] text-xs">({anime.scored_by.toLocaleString()} votes)</span>
@@ -165,30 +171,48 @@ export default function AnimeModal() {
             </div>
 
             {/* Liens de visionnage */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-[#f5f5f5] font-semibold">Regarder</h3>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: 'Crunchyroll', color: '#f47521', href: `https://www.crunchyroll.com/search?q=${encodeURIComponent(anime.title)}` },
-                  { label: 'ADN', color: '#00aaff', href: `https://animationdigitalnetwork.com/search#query=${encodeURIComponent(anime.title)}` },
-                  { label: 'Netflix', color: '#e50914', href: `https://www.netflix.com/search?q=${encodeURIComponent(anime.title)}` },
-                  { label: 'MyAnimeList', color: '#2e51a2', href: anime.url || `https://myanimelist.net/anime/${anime.mal_id}` },
-                ].map(({ label, color, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-[#1a1a1a] text-sm text-[#f5f5f5] hover:border-white/30 transition-colors"
-                  >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                    {label}
-                  </a>
-                ))}
-              </div>
-              <p className="text-[#6b7280] text-xs">Ces liens redirigent vers la recherche de l'animé sur chaque plateforme.</p>
-            </div>
+            {(() => {
+              const platformColors = {
+                'crunchyroll': '#f47521',
+                'netflix': '#e50914',
+                'adn': '#00aaff',
+                'animation digital network': '#00aaff',
+                'amazon prime video': '#00a8e0',
+                'funimation': '#410099',
+                'hidive': '#00bacc',
+                'disney+': '#113ccf',
+              }
+              const streaming = (anime.streaming || []).map(s => ({
+                label: s.name,
+                color: platformColors[s.name.toLowerCase()] || '#6b7280',
+                href: s.url,
+              }))
+              const malLink = anime.url
+                ? [{ label: 'MyAnimeList', color: '#2e51a2', href: anime.url }]
+                : []
+              const links = [...streaming, ...malLink]
+              if (links.length === 0) return null
+              return (
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-[#f5f5f5] font-semibold">Regarder</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {links.map(({ label, color, href }) => (
+                      <a
+                        key={label}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-[#1a1a1a] text-sm text-[#f5f5f5] hover:border-white/30 transition-colors"
+                      >
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        {label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Synopsis */}
             {anime.synopsis && (
