@@ -152,7 +152,7 @@ export default function Profil() {
                       {anime.title}
                     </span>
                     {anime.score && (
-                      <span className={`text-[10px] font-semibold ${scoreColor(anime.score)}`}>★ {anime.score}</span>
+                      <span className="text-[10px] font-semibold" style={{ color: scoreColor(anime.score) }}>★ {anime.score}</span>
                     )}
                   </Link>
                 ))}

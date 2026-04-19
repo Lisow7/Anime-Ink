@@ -145,7 +145,7 @@ export default function AnimeModal() {
                 {/* Score */}
                 {anime.score && (
                   <div className="flex items-baseline gap-2">
-                    <span className={`text-4xl font-bold ${scoreColor(anime.score)}`}>{anime.score}</span>
+                    <span className="text-4xl font-bold" style={{ color: scoreColor(anime.score) }}>{anime.score}</span>
                     <span className="text-[var(--text-muted)] text-sm">/ 10</span>
                     {anime.scored_by && (
                       <span className="text-[var(--text-muted)] text-xs">({anime.scored_by.toLocaleString()} votes)</span>

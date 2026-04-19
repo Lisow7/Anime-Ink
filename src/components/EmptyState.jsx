@@ -43,7 +43,7 @@ export default function EmptyState({ query, onReset, emptyFavoris, emptyRecents,
         className="group relative inline-flex items-center gap-2 px-6 py-2.5 border border-[#22c55e]/40 rounded-full text-sm text-[var(--text-primary)] tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
       >
         <span className="absolute inset-0 bg-[#22c55e]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-        <span className="relative">{(emptyFavoris || emptyRecents || emptyListe) ? '← Retour au catalogue' : '← Réinitialiser'}</span>
+        <span className="relative">{(emptyFavoris || emptyRecents || emptyListe) ? '← Retour au catalogue' : query ? '← Effacer la recherche' : '← Réinitialiser les filtres'}</span>
       </button>
     </div>
   )

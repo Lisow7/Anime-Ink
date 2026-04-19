@@ -10,6 +10,7 @@ import { HistoryProvider } from './context/HistoryContext'
 import { ModalProvider } from './context/ModalContext'
 import { WatchlistProvider } from './context/WatchlistContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { AgeFilterProvider } from './context/AgeFilterContext'
 import AnimeModal from './components/AnimeModal'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
@@ -17,6 +18,7 @@ import ScrollToTop from './components/ScrollToTop'
 export default function App() {
   return (
     <ThemeProvider>
+    <AgeFilterProvider>
     <HistoryProvider>
     <FavoritesProvider>
     <WatchlistProvider>
@@ -40,6 +42,7 @@ export default function App() {
     </WatchlistProvider>
     </FavoritesProvider>
     </HistoryProvider>
+    </AgeFilterProvider>
     </ThemeProvider>
   )
 }
