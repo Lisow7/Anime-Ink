@@ -27,10 +27,10 @@ export default function AnimeCard({ anime }) {
     : null
 
   return (
-    <div className="relative group">
+    <div className="relative group h-full">
       <div
         onClick={() => openModal(mal_id)}
-        className="cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200"
+        className="cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200 h-full"
       >
         <div className="relative aspect-[2/3] overflow-hidden">
           {/* Poster */}

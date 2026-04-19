@@ -48,3 +48,9 @@ export async function getGenres() {
   const data = await res.json()
   return data.data
 }
+
+export async function getAnimeRecommendations(id) {
+  const res = await fetch(`${BASE_URL}/anime/${id}/recommendations`)
+  const data = await res.json()
+  return (data.data ?? []).slice(0, 6).map(r => r.entry)
+}

@@ -68,13 +68,13 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-[#1a1a1a] rounded-xl aspect-[2/3] animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
             {topAnimes.map((anime) => (
               <AnimeCard key={anime.mal_id} anime={anime} />
             ))}

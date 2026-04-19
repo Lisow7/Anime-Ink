@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useModal } from '../context/ModalContext'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
-import { getAnimeById } from '../services/jikan'
+import { getAnimeById, getAnimeRecommendations } from '../services/jikan'
 import { translateSynopsis } from '../services/translate'
 
 const statusLabel = {
@@ -32,6 +32,7 @@ export default function AnimeModal() {
   const [loading, setLoading] = useState(false)
   const [synopsis, setSynopsis] = useState(null)
   const [translating, setTranslating] = useState(false)
+  const [recommendations, setRecommendations] = useState([])
 
   const close = useCallback(() => {
     closeModal()
@@ -58,6 +59,7 @@ export default function AnimeModal() {
     setLoading(true)
     setAnime(null)
     setSynopsis(null)
+    setRecommendations([])
     getAnimeById(animeId).then(async (data) => {
       setAnime(data)
       setLoading(false)
@@ -67,6 +69,7 @@ export default function AnimeModal() {
         setSynopsis(fr)
         setTranslating(false)
       }
+      getAnimeRecommendations(animeId).then(setRecommendations)
       if (data) addToHistory({
         mal_id: data.mal_id, title: data.title, images: data.images,
         score: data.score, episodes: data.episodes, status: data.status,
@@ -240,6 +243,33 @@ export default function AnimeModal() {
                     className="w-full h-full"
                     allowFullScreen
                   />
+                </div>
+              </div>
+            )}
+
+            {/* Recommandations */}
+            {recommendations.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-[#f5f5f5] font-semibold">Vous aimerez aussi</h3>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {recommendations.map((rec) => (
+                    <button
+                      key={rec.mal_id}
+                      onClick={() => openModal(rec.mal_id)}
+                      className="shrink-0 flex flex-col gap-1.5 w-24 text-left group"
+                    >
+                      <div className="w-24 h-36 rounded-lg overflow-hidden bg-[#1a1a1a]">
+                        <img
+                          src={rec.images?.jpg?.large_image_url}
+                          alt={rec.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        />
+                      </div>
+                      <span className="text-[#6b7280] text-[11px] leading-snug line-clamp-2 group-hover:text-[#f5f5f5] transition-colors">
+                        {rec.title}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}

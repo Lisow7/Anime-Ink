@@ -29,13 +29,22 @@ export default function Catalogue() {
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({ current: 1, last: 1, total: null })
   const [inputValue, setInputValue] = useState('')
-  const [tab, setTab] = useState('catalogue')
+  const [tab, setTab] = useState(() => searchParams.get('tab') || 'catalogue')
+
+  useEffect(() => {
+    setTab(searchParams.get('tab') || 'catalogue')
+  }, [searchParams.toString()])
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('anime-ink-view') || 'grid')
 
   const { favorites, toggle, isFavorite, clearFavorites } = useFavorites()
   const { history, removeFromHistory, clearHistory: clearHistoryBase } = useHistory()
-  const clearHistory = () => { clearHistoryBase(); setTab('catalogue') }
-  const resetAll = () => { clearFavorites(); clearHistoryBase(); setTab('catalogue') }
+  const clearTabParam = () => {
+    const next = new URLSearchParams(searchParams)
+    next.delete('tab')
+    setSearchParams(next)
+  }
+  const clearHistory = () => { clearHistoryBase(); clearTabParam() }
+  const resetAll = () => { clearFavorites(); clearHistoryBase(); clearTabParam() }
 
   const query = searchParams.get('q') || ''
   const genre = searchParams.get('genre') || ''
@@ -120,7 +129,9 @@ export default function Catalogue() {
 
       {/* Header + onglets */}
       {!isEmpty && <div className="flex items-center justify-between gap-8">
-        <h1 className="text-3xl font-bold text-[#f5f5f5] tracking-tight shrink-0">Catalogue</h1>
+        <h1 className="text-3xl font-bold text-[#f5f5f5] tracking-tight shrink-0">
+          {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : 'Catalogue'}
+        </h1>
         <div className="flex items-center gap-3">
         {(favorites.length > 0 || history.length > 0) && (
           <button onClick={resetAll} className="text-[#6b7280] text-xs hover:text-red-400 transition-colors shrink-0">
@@ -282,7 +293,7 @@ export default function Catalogue() {
       {/* Résultats */}
       {tab === 'catalogue' && loading ? (
         isGrid ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {Array.from({ length: 24 }).map((_, i) => (
               <div key={i} className="bg-[#1a1a1a] rounded-xl aspect-[2/3] animate-pulse" />
             ))}
@@ -301,7 +312,7 @@ export default function Catalogue() {
           ? <EmptyState query="" onReset={() => setTab('catalogue')} emptyRecents />
           : <EmptyState query={query} onReset={resetFilters} />
       ) : isGrid ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
           {displayList.map((anime) => (
             <AnimeCard key={anime.mal_id} anime={anime} />
           ))}

@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useFavorites } from '../context/FavoritesContext'
 
 export default function Navbar() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  const isFavorisTab = pathname === '/catalogue' && search.includes('tab=favoris')
   const navigate = useNavigate()
+  const { favorites } = useFavorites()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
@@ -39,16 +42,19 @@ export default function Navbar() {
     }
   }
 
-  const navLink = (to, label) => (
-    <Link
-      to={to}
-      className={`text-sm font-medium transition-colors hover:text-[#22c55e] ${
-        pathname === to ? 'text-[#22c55e]' : 'text-[#6b7280]'
-      }`}
-    >
-      {label}
-    </Link>
-  )
+  const navLink = (to, label) => {
+    const isActive = pathname === to && !isFavorisTab
+    return (
+      <Link
+        to={to}
+        className={`text-sm font-medium transition-colors hover:text-[#22c55e] ${
+          isActive ? 'text-[#22c55e]' : 'text-[#6b7280]'
+        }`}
+      >
+        {label}
+      </Link>
+    )
+  }
 
   return (
     <nav className="sticky top-0 z-50 bg-[#0f0f0f]/90 backdrop-blur border-b border-white/5">
@@ -60,6 +66,18 @@ export default function Navbar() {
 
         <div className="flex items-center gap-8">
           {navLink('/catalogue', 'Catalogue')}
+
+          {/* Bouton favoris */}
+          <Link to="/catalogue?tab=favoris" className={`relative transition-colors hover:text-[#22c55e] ${isFavorisTab ? 'text-[#22c55e]' : 'text-[#6b7280]'}`} aria-label="Mes favoris">
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {favorites.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-[#22c55e] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {favorites.length > 9 ? '9+' : favorites.length}
+              </span>
+            )}
+          </Link>
 
           {/* Loupe + barre de recherche dépliable (masquée sur l'accueil) */}
           {pathname !== '/' && <form ref={formRef} onSubmit={handleSearch} className="flex items-center gap-2">

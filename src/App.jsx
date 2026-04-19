@@ -8,6 +8,8 @@ import { FavoritesProvider } from './context/FavoritesContext'
 import { HistoryProvider } from './context/HistoryContext'
 import { ModalProvider } from './context/ModalContext'
 import AnimeModal from './components/AnimeModal'
+import Footer from './components/Footer'
+import ScrollToTop from './components/ScrollToTop'
 
 export default function App() {
   return (
@@ -24,6 +26,8 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AnimeModal />
+          <Footer />
+          <ScrollToTop />
         </div>
       </BrowserRouter>
     </ModalProvider>
