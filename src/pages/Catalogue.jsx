@@ -129,26 +129,26 @@ export default function Catalogue() {
 
       {/* Header + onglets */}
       {!isEmpty && <div className="flex items-center justify-between gap-8">
-        <h1 className="text-3xl font-bold text-[#f5f5f5] tracking-tight shrink-0">
+        <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
           {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : 'Catalogue'}
         </h1>
         <div className="flex items-center gap-3">
         {(favorites.length > 0 || history.length > 0) && (
-          <button onClick={resetAll} className="text-[#6b7280] text-xs hover:text-red-400 transition-colors shrink-0">
+          <button onClick={resetAll} className="text-[var(--text-muted)] text-xs hover:text-red-400 transition-colors shrink-0">
             Tout réinitialiser
           </button>
         )}
-        <div className="flex items-center gap-1 bg-[#1a1a1a] border border-white/10 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1">
           <button
             onClick={() => setTab('catalogue')}
-            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'catalogue' ? 'bg-[#22c55e] text-white' : 'text-[#6b7280] hover:text-[#f5f5f5]'}`}
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'catalogue' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             Catalogue
           </button>
           <div className="w-px h-4 bg-white/10 mx-1" />
           <button
             onClick={() => setTab('favoris')}
-            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'favoris' ? 'bg-[#22c55e] text-white' : 'text-[#6b7280] hover:text-[#f5f5f5]'}`}
+            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'favoris' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             Favoris
             {favorites.length > 0 && (
@@ -160,7 +160,7 @@ export default function Catalogue() {
           {history.length > 0 && (
             <button
               onClick={() => setTab('recents')}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'recents' ? 'bg-[#22c55e] text-white' : 'text-[#6b7280] hover:text-[#f5f5f5]'}`}
+              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'recents' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
             >
               Récents
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tab === 'recents' ? 'bg-white/20' : 'bg-white/10'}`}>
@@ -181,21 +181,21 @@ export default function Catalogue() {
               type="text"
               value={inputValue}
               placeholder="Rechercher..."
-              className="bg-[#1a1a1a] border border-white/10 text-[#f5f5f5] placeholder-[#6b7280] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 max-w-sm"
+              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 max-w-sm"
               onChange={(e) => { setInputValue(e.target.value); updateParam('q', e.target.value) }}
             />
             {/* Toggle grille / liste */}
-            <div className="flex items-center gap-1 bg-[#1a1a1a] border border-white/10 rounded-lg p-1 ml-auto">
+            <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
               <button
                 onClick={() => switchView('grid')}
-                className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#f5f5f5]'}`}
+                className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 aria-label="Vue grille"
               >
                 <IconGrid />
               </button>
               <button
                 onClick={() => switchView('list')}
-                className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#f5f5f5]'}`}
+                className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 aria-label="Vue liste"
               >
                 <IconList />
@@ -208,7 +208,7 @@ export default function Catalogue() {
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => updateParam('letter', '')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${!letter ? 'bg-[#22c55e] text-white' : 'bg-[#1a1a1a] text-[#6b7280] hover:text-[#f5f5f5]'}`}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${!letter ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 Tous
               </button>
@@ -216,7 +216,7 @@ export default function Catalogue() {
                 <button
                   key={l}
                   onClick={() => updateParam('letter', letter === l ? '' : l)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${letter === l ? 'bg-[#22c55e] text-white' : 'bg-[#1a1a1a] text-[#6b7280] hover:text-[#f5f5f5]'}`}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${letter === l ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {l}
                 </button>
@@ -227,13 +227,13 @@ export default function Catalogue() {
           {/* Filtres dropdowns */}
           <div className="flex flex-wrap gap-3">
             <select value={genre} onChange={(e) => updateParam('genre', e.target.value)}
-              className="bg-[#1a1a1a] border border-white/10 text-[#6b7280] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les genres</option>
               {genres.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
             </select>
 
             <select value={type} onChange={(e) => updateParam('type', e.target.value)}
-              className="bg-[#1a1a1a] border border-white/10 text-[#6b7280] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les types</option>
               <option value="tv">Série TV</option>
               <option value="movie">Film</option>
@@ -243,7 +243,7 @@ export default function Catalogue() {
             </select>
 
             <select value={status} onChange={(e) => updateParam('status', e.target.value)}
-              className="bg-[#1a1a1a] border border-white/10 text-[#6b7280] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les statuts</option>
               <option value="airing">En cours</option>
               <option value="complete">Terminé</option>
@@ -251,7 +251,7 @@ export default function Catalogue() {
             </select>
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}
-              className="bg-[#1a1a1a] border border-white/10 text-[#6b7280] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="score">Meilleure note</option>
               <option value="title">Alphabétique</option>
               <option value="start_date">Date de sortie</option>
@@ -261,7 +261,7 @@ export default function Catalogue() {
 
           {/* Compteur */}
           {!loading && animes.length > 0 && (
-            <p className="text-[#6b7280] text-xs">
+            <p className="text-[var(--text-muted)] text-xs">
               {total} animé{total > 1 ? 's' : ''} trouvé{total > 1 ? 's' : ''}
             </p>
           )}
@@ -270,7 +270,7 @@ export default function Catalogue() {
 
       {/* Compteur favoris */}
       {tab === 'favoris' && favorites.length > 0 && !isEmpty && (
-        <p className="text-[#6b7280] text-xs -mt-4">
+        <p className="text-[var(--text-muted)] text-xs -mt-4">
           {favorites.length} favori{favorites.length > 1 ? 's' : ''}
         </p>
       )}
@@ -278,12 +278,12 @@ export default function Catalogue() {
       {/* Compteur + effacer récents */}
       {tab === 'recents' && history.length > 0 && !isEmpty && (
         <div className="flex items-center justify-between -mt-4">
-          <p className="text-[#6b7280] text-xs">
+          <p className="text-[var(--text-muted)] text-xs">
             {history.length} animé{history.length > 1 ? 's' : ''} consulté{history.length > 1 ? 's' : ''}
           </p>
           <button
             onClick={clearHistory}
-            className="text-[#6b7280] text-xs hover:text-[#f5f5f5] transition-colors"
+            className="text-[var(--text-muted)] text-xs hover:text-[var(--text-primary)] transition-colors"
           >
             Effacer l'historique
           </button>
@@ -295,13 +295,13 @@ export default function Catalogue() {
         isGrid ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} className="bg-[#1a1a1a] rounded-xl aspect-[2/3] animate-pulse" />
+              <div key={i} className="bg-[var(--bg-surface)] rounded-xl aspect-[2/3] animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="bg-[#1a1a1a] rounded-xl h-28 animate-pulse" />
+              <div key={i} className="bg-[var(--bg-surface)] rounded-xl h-28 animate-pulse" />
             ))}
           </div>
         )
@@ -331,17 +331,17 @@ export default function Catalogue() {
           <button
             onClick={() => goToPage(pagination.current - 1)}
             disabled={pagination.current <= 1}
-            className="px-4 py-2 bg-[#1a1a1a] text-[#6b7280] rounded-lg text-sm disabled:opacity-30 hover:text-[#f5f5f5] transition-colors"
+            className="px-4 py-2 bg-[var(--bg-surface)] text-[var(--text-muted)] rounded-lg text-sm disabled:opacity-30 hover:text-[var(--text-primary)] transition-colors"
           >
             ← Précédent
           </button>
-          <span className="px-4 py-2 text-[#6b7280] text-sm">
+          <span className="px-4 py-2 text-[var(--text-muted)] text-sm">
             {pagination.current} / {pagination.last}
           </span>
           <button
             onClick={() => goToPage(pagination.current + 1)}
             disabled={pagination.current >= pagination.last}
-            className="px-4 py-2 bg-[#1a1a1a] text-[#6b7280] rounded-lg text-sm disabled:opacity-30 hover:text-[#f5f5f5] transition-colors"
+            className="px-4 py-2 bg-[var(--bg-surface)] text-[var(--text-muted)] rounded-lg text-sm disabled:opacity-30 hover:text-[var(--text-primary)] transition-colors"
           >
             Suivant →
           </button>

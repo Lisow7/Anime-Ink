@@ -11,7 +11,7 @@ export default function EmptyState({ query, onReset, emptyFavoris, emptyRecents 
 
       {/* Titre glitch */}
       <div className="relative select-none mb-2">
-        <span className="glitch text-[clamp(3.5rem,12vw,7rem)] font-black leading-none tracking-tighter text-[#f5f5f5]" data-text="空">
+        <span className="glitch text-[clamp(3.5rem,12vw,7rem)] font-black leading-none tracking-tighter text-[var(--text-primary)]" data-text="空">
           空
         </span>
       </div>
@@ -24,7 +24,7 @@ export default function EmptyState({ query, onReset, emptyFavoris, emptyRecents 
       </div>
 
       {/* Message */}
-      <p className="text-[#6b7280] text-sm leading-relaxed mb-8 max-w-xs">
+      <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-8 max-w-xs">
         {emptyFavoris
           ? <>Tu n'as encore rien marqué.<br />L'encre attend tes favoris.</>
           : emptyRecents
@@ -38,7 +38,7 @@ export default function EmptyState({ query, onReset, emptyFavoris, emptyRecents 
       {/* Bouton reset */}
       <button
         onClick={onReset}
-        className="group relative inline-flex items-center gap-2 px-6 py-2.5 border border-[#22c55e]/40 rounded-full text-sm text-[#f5f5f5] tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
+        className="group relative inline-flex items-center gap-2 px-6 py-2.5 border border-[#22c55e]/40 rounded-full text-sm text-[var(--text-primary)] tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
       >
         <span className="absolute inset-0 bg-[#22c55e]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         <span className="relative">{(emptyFavoris || emptyRecents) ? '← Retour au catalogue' : '← Réinitialiser'}</span>

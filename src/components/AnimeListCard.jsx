@@ -16,25 +16,21 @@ export default function AnimeListCard({ anime }) {
   return (
     <div
       onClick={() => openModal(mal_id)}
-      className="relative group cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden flex gap-4 p-3 hover:ring-1 hover:ring-[#22c55e] transition-all duration-200"
+      className="relative group cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex gap-4 p-3 hover:ring-1 hover:ring-[#22c55e] transition-all duration-200"
     >
       <div className="shrink-0">
-        <img
-          src={images?.jpg?.large_image_url}
-          alt={title}
-          className="w-16 h-24 object-cover rounded-lg"
-        />
+        <img src={images?.jpg?.large_image_url} alt={title} className="w-16 h-24 object-cover rounded-lg" />
       </div>
 
       <div className="flex-1 flex flex-col gap-1 min-w-0 pr-8">
-        <h3 className="text-[#f5f5f5] text-sm font-semibold line-clamp-1 leading-snug">{title}</h3>
+        <h3 className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 leading-snug">{title}</h3>
 
         <div className="flex items-center gap-2 flex-wrap">
           {score && <span className="text-[#22c55e] text-xs font-bold">★ {score}</span>}
-          <span className="text-[#6b7280] text-xs">{episodes ? `${episodes} ép.` : '? ép.'}</span>
+          <span className="text-[var(--text-muted)] text-xs">{episodes ? `${episodes} ép.` : '? ép.'}</span>
           {status && (
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-white/5 text-[#6b7280]'
+              status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
             }`}>
               {statusLabel[status] ?? status}
             </span>
@@ -44,7 +40,7 @@ export default function AnimeListCard({ anime }) {
         {genres?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {genres.slice(0, 3).map(g => (
-              <span key={g.mal_id} className="text-[10px] text-[#6b7280] bg-white/5 px-2 py-0.5 rounded-full">
+              <span key={g.mal_id} className="text-[10px] text-[var(--text-muted)] bg-[var(--overlay-soft)] px-2 py-0.5 rounded-full">
                 {g.name}
               </span>
             ))}
@@ -52,13 +48,13 @@ export default function AnimeListCard({ anime }) {
         )}
 
         {synopsis && (
-          <p className="text-[#6b7280] text-xs line-clamp-2 leading-relaxed mt-auto">{synopsis}</p>
+          <p className="text-[var(--text-muted)] text-xs line-clamp-2 leading-relaxed mt-auto">{synopsis}</p>
         )}
       </div>
 
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
-        className={`absolute top-3 right-3 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
+        className={`absolute top-3 right-3 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
         aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <svg viewBox="0 0 24 24" className="w-4 h-4" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">

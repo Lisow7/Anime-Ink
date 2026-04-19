@@ -29,11 +29,11 @@ export default function Home() {
       {/* Hero */}
       <section className="flex flex-col items-center text-center gap-8 max-w-xl w-full">
         <div className="flex flex-col gap-4">
-          <h1 className="text-5xl font-bold text-[#f5f5f5] tracking-tight leading-tight">
+          <h1 className="text-5xl font-bold text-[var(--text-primary)] tracking-tight leading-tight">
             Découvre l'univers<br />
             <span className="text-[#22c55e]">des animés</span>
           </h1>
-          <p className="text-[#6b7280] text-lg">
+          <p className="text-[var(--text-muted)] text-lg">
             Recherche, explore et découvre des milliers d'animés.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default function Home() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un animé..."
-            className="flex-1 bg-[#1a1a1a] border border-white/10 text-[#f5f5f5] placeholder-[#6b7280] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
+            className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
           />
           <button
             type="submit"
@@ -58,10 +58,10 @@ export default function Home() {
       {/* Top animés */}
       <section className="w-full flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#f5f5f5]">Top animés du moment</h2>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">Top animés du moment</h2>
           <a
             href="/catalogue"
-            className="text-[#6b7280] text-sm hover:text-[#22c55e] transition-colors"
+            className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors"
           >
             Voir tout →
           </a>
@@ -70,7 +70,7 @@ export default function Home() {
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-[#1a1a1a] rounded-xl aspect-[2/3] animate-pulse" />
+              <div key={i} className="bg-[var(--bg-surface)] rounded-xl aspect-[2/3] animate-pulse" />
             ))}
           </div>
         ) : (

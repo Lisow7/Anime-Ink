@@ -7,12 +7,14 @@ import NotFound from './pages/NotFound'
 import { FavoritesProvider } from './context/FavoritesContext'
 import { HistoryProvider } from './context/HistoryContext'
 import { ModalProvider } from './context/ModalContext'
+import { ThemeProvider } from './context/ThemeContext'
 import AnimeModal from './components/AnimeModal'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
 
 export default function App() {
   return (
+    <ThemeProvider>
     <HistoryProvider>
     <FavoritesProvider>
     <ModalProvider>
@@ -33,5 +35,6 @@ export default function App() {
     </ModalProvider>
     </FavoritesProvider>
     </HistoryProvider>
+    </ThemeProvider>
   )
 }

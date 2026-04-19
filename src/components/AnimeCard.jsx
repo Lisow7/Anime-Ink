@@ -30,10 +30,9 @@ export default function AnimeCard({ anime }) {
     <div className="relative group h-full">
       <div
         onClick={() => openModal(mal_id)}
-        className="cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200 h-full"
+        className="cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200 h-full"
       >
         <div className="relative aspect-[2/3] overflow-hidden">
-          {/* Poster */}
           <img
             src={images?.jpg?.large_image_url}
             alt={title}
@@ -43,14 +42,9 @@ export default function AnimeCard({ anime }) {
             }`}
           />
 
-          {/* Miniature YouTube au survol */}
           {thumbUrl && (
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <img
-                src={thumbUrl}
-                alt={`Trailer ${title}`}
-                className="w-full h-full object-cover"
-              />
+              <img src={thumbUrl} alt={`Trailer ${title}`} className="w-full h-full object-cover" />
               <a
                 href={`https://www.youtube.com/watch?v=${youtubeId}`}
                 target="_blank"
@@ -68,7 +62,12 @@ export default function AnimeCard({ anime }) {
             </div>
           )}
 
-          {/* Badge "Déjà vu" */}
+          {score && (
+            <span className={`absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md ${scoreColor(score)}`}>
+              ★ {score}
+            </span>
+          )}
+
           {seen && (
             <span className="absolute bottom-2 right-2 bg-black/60 text-[#6b7280] text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-1">
               <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth="2">
@@ -78,26 +77,19 @@ export default function AnimeCard({ anime }) {
               Vu
             </span>
           )}
-
-          {/* Score coloré */}
-          {score && (
-            <span className={`absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md ${scoreColor(score)}`}>
-              ★ {score}
-            </span>
-          )}
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <h3 className="text-[#f5f5f5] text-sm font-medium line-clamp-2 leading-snug">{title}</h3>
+          <h3 className="text-[var(--text-primary)] text-sm font-medium line-clamp-2 leading-snug">{title}</h3>
           <div className="mt-auto flex items-center justify-between pt-2">
-            <span className="text-[#6b7280] text-xs">
+            <span className="text-[var(--text-muted)] text-xs">
               {episodes ? `${episodes} ép.` : '? ép.'}
             </span>
             {status && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 status === 'Currently Airing'
                   ? 'bg-[#22c55e]/20 text-[#22c55e]'
-                  : 'bg-white/5 text-[#6b7280]'
+                  : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
               }`}>
                 {statusLabel[status] ?? status}
               </span>
@@ -106,7 +98,6 @@ export default function AnimeCard({ anime }) {
         </div>
       </div>
 
-      {/* Bouton favori */}
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
         className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}

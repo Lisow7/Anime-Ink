@@ -19,8 +19,8 @@ const scoreColor = (score) => {
 
 const infoItem = (label, value) => value ? (
   <div className="flex flex-col gap-0.5">
-    <span className="text-[#6b7280] text-xs uppercase tracking-wider">{label}</span>
-    <span className="text-[#f5f5f5] text-sm">{value}</span>
+    <span className="text-[var(--text-muted)] text-xs uppercase tracking-wider">{label}</span>
+    <span className="text-[var(--text-primary)] text-sm">{value}</span>
   </div>
 ) : null
 
@@ -87,24 +87,24 @@ export default function AnimeModal() {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) close() }}
     >
-      <div className="modal-box relative bg-[#0f0f0f] border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
 
         {/* Bouton fermer */}
         <button
           onClick={close}
-          className="sticky top-4 float-right mr-4 z-10 bg-[#1a1a1a] border border-white/10 text-[#6b7280] hover:text-[#f5f5f5] rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+          className="sticky top-4 float-right mr-4 z-10 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-full w-8 h-8 flex items-center justify-center transition-colors"
         >
           ✕
         </button>
 
         {loading ? (
           <div className="p-8 animate-pulse flex flex-col md:flex-row gap-8 clear-both">
-            <div className="w-40 shrink-0 aspect-[2/3] bg-[#1a1a1a] rounded-xl" />
+            <div className="w-40 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
             <div className="flex-1 flex flex-col gap-4">
-              <div className="h-8 bg-[#1a1a1a] rounded w-2/3" />
-              <div className="h-4 bg-[#1a1a1a] rounded w-full" />
-              <div className="h-4 bg-[#1a1a1a] rounded w-5/6" />
-              <div className="h-4 bg-[#1a1a1a] rounded w-4/6" />
+              <div className="h-8 bg-[var(--bg-surface)] rounded w-2/3" />
+              <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
+              <div className="h-4 bg-[var(--bg-surface)] rounded w-5/6" />
+              <div className="h-4 bg-[var(--bg-surface)] rounded w-4/6" />
             </div>
           </div>
         ) : anime ? (
@@ -120,15 +120,15 @@ export default function AnimeModal() {
               <div className="flex flex-col gap-4 flex-1">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#f5f5f5] leading-tight">{anime.title}</h2>
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
                     {anime.title_japanese && (
-                      <p className="text-[#6b7280] text-sm mt-1">{anime.title_japanese}</p>
+                      <p className="text-[var(--text-muted)] text-sm mt-1">{anime.title_japanese}</p>
                     )}
                   </div>
                   {/* Bouton favori */}
                   <button
                     onClick={() => toggle(anime)}
-                    className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
+                    className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
                     aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                   >
                     <svg viewBox="0 0 24 24" className="w-6 h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
@@ -141,15 +141,15 @@ export default function AnimeModal() {
                 {anime.score && (
                   <div className="flex items-baseline gap-2">
                     <span className={`text-4xl font-bold ${scoreColor(anime.score)}`}>{anime.score}</span>
-                    <span className="text-[#6b7280] text-sm">/ 10</span>
+                    <span className="text-[var(--text-muted)] text-sm">/ 10</span>
                     {anime.scored_by && (
-                      <span className="text-[#6b7280] text-xs">({anime.scored_by.toLocaleString()} votes)</span>
+                      <span className="text-[var(--text-muted)] text-xs">({anime.scored_by.toLocaleString()} votes)</span>
                     )}
                   </div>
                 )}
 
                 {/* Infos */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[#1a1a1a] rounded-xl p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[var(--bg-surface)] rounded-xl p-4">
                   {infoItem('Statut', statusLabel[anime.status] ?? anime.status)}
                   {infoItem('Épisodes', anime.episodes)}
                   {infoItem('Durée / ép.', anime.duration)}
@@ -164,7 +164,7 @@ export default function AnimeModal() {
                 {anime.genres?.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {anime.genres.map((g) => (
-                      <span key={g.mal_id} className="bg-[#1a1a1a] border border-white/10 text-[#6b7280] text-xs px-3 py-1 rounded-full">
+                      <span key={g.mal_id} className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] text-xs px-3 py-1 rounded-full">
                         {g.name}
                       </span>
                     ))}
@@ -197,7 +197,7 @@ export default function AnimeModal() {
               if (links.length === 0) return null
               return (
                 <div className="flex flex-col gap-3">
-                  <h3 className="text-[#f5f5f5] font-semibold">Regarder</h3>
+                  <h3 className="text-[var(--text-primary)] font-semibold">Regarder</h3>
                   <div className="flex flex-wrap gap-2">
                     {links.map(({ label, color, href }) => (
                       <a
@@ -206,7 +206,7 @@ export default function AnimeModal() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-[#1a1a1a] text-sm text-[#f5f5f5] hover:border-white/30 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm text-[var(--text-primary)] hover:border-[var(--border-medium)] transition-colors"
                       >
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                         {label}
@@ -220,14 +220,14 @@ export default function AnimeModal() {
             {/* Synopsis */}
             {anime.synopsis && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-[#f5f5f5] font-semibold">Synopsis</h3>
+                <h3 className="text-[var(--text-primary)] font-semibold">Synopsis</h3>
                 {translating ? (
-                  <div className="flex items-center gap-2 text-[#6b7280] text-sm">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
                     <div className="w-3 h-3 border border-[#6b7280] border-t-transparent rounded-full animate-spin" />
                     Traduction en cours…
                   </div>
                 ) : (
-                  <p className="text-[#6b7280] text-sm leading-relaxed">{synopsis || anime.synopsis}</p>
+                  <p className="text-[var(--text-muted)] text-sm leading-relaxed">{synopsis || anime.synopsis}</p>
                 )}
               </div>
             )}
@@ -235,8 +235,8 @@ export default function AnimeModal() {
             {/* Trailer */}
             {anime.trailer?.embed_url && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-[#f5f5f5] font-semibold">Bande-annonce</h3>
-                <div className="aspect-video rounded-xl overflow-hidden bg-[#1a1a1a]">
+                <h3 className="text-[var(--text-primary)] font-semibold">Bande-annonce</h3>
+                <div className="aspect-video rounded-xl overflow-hidden bg-[var(--bg-surface)]">
                   <iframe
                     src={anime.trailer.embed_url}
                     title={`Trailer ${anime.title}`}
@@ -250,7 +250,7 @@ export default function AnimeModal() {
             {/* Recommandations */}
             {recommendations.length > 0 && (
               <div className="flex flex-col gap-3">
-                <h3 className="text-[#f5f5f5] font-semibold">Vous aimerez aussi</h3>
+                <h3 className="text-[var(--text-primary)] font-semibold">Vous aimerez aussi</h3>
                 <div className="flex gap-3 overflow-x-auto pb-1">
                   {recommendations.map((rec) => (
                     <button
@@ -258,14 +258,14 @@ export default function AnimeModal() {
                       onClick={() => openModal(rec.mal_id)}
                       className="shrink-0 flex flex-col gap-1.5 w-24 text-left group"
                     >
-                      <div className="w-24 h-36 rounded-lg overflow-hidden bg-[#1a1a1a]">
+                      <div className="w-24 h-36 rounded-lg overflow-hidden bg-[var(--bg-surface)]">
                         <img
                           src={rec.images?.jpg?.large_image_url}
                           alt={rec.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
                       </div>
-                      <span className="text-[#6b7280] text-[11px] leading-snug line-clamp-2 group-hover:text-[#f5f5f5] transition-colors">
+                      <span className="text-[var(--text-muted)] text-[11px] leading-snug line-clamp-2 group-hover:text-[var(--text-primary)] transition-colors">
                         {rec.title}
                       </span>
                     </button>
