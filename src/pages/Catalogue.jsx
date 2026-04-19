@@ -303,31 +303,13 @@ export default function Catalogue() {
       ) : isGrid ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {displayList.map((anime) => (
-            <div key={anime.mal_id} className="relative">
-              <AnimeCard anime={anime} />
-              {(tab === 'recents' || tab === 'favoris') && (
-                <button
-                  onClick={() => tab === 'recents' ? removeFromHistory(anime.mal_id) : toggle(anime)}
-                  className="absolute top-2 right-2 bg-[#1a1a1a] border border-white/20 text-[#f5f5f5] hover:bg-red-500/80 hover:border-red-500 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition-all z-10"
-                  aria-label="Retirer"
-                >✕</button>
-              )}
-            </div>
+            <AnimeCard key={anime.mal_id} anime={anime} />
           ))}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           {displayList.map((anime) => (
-            <div key={anime.mal_id} className="relative">
-              <AnimeListCard anime={anime} />
-              {(tab === 'recents' || tab === 'favoris') && (
-                <button
-                  onClick={() => tab === 'recents' ? removeFromHistory(anime.mal_id) : toggle(anime)}
-                  className="absolute top-2 right-2 bg-[#1a1a1a] border border-white/20 text-[#f5f5f5] hover:bg-red-500/80 hover:border-red-500 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold transition-all z-10"
-                  aria-label="Retirer"
-                >✕</button>
-              )}
-            </div>
+            <AnimeListCard key={anime.mal_id} anime={anime} />
           ))}
         </div>
       )}
