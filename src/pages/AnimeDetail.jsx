@@ -38,7 +38,7 @@ export default function AnimeDetail() {
   if (loading) {
     return (
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="animate-pulse flex flex-col md:flex-row gap-8">
+        <div className="animate-pulse flex flex-col sm:flex-row gap-6 sm:gap-8">
           <div className="w-48 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
           <div className="flex-1 flex flex-col gap-4">
             <div className="h-8 bg-[var(--bg-surface)] rounded w-2/3" />
@@ -60,16 +60,16 @@ export default function AnimeDetail() {
   } = anime
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 flex flex-col gap-10">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
       <Link to="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors w-fit">
         ← Retour au catalogue
       </Link>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col min-[500px]:flex-row gap-6 min-[500px]:gap-8">
         <img
           src={images?.jpg?.large_image_url}
           alt={title}
-          className="w-48 shrink-0 rounded-xl object-cover self-start"
+          className="w-36 min-[500px]:w-44 sm:w-48 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
         />
         <div className="flex flex-col gap-4">
           <div>
@@ -81,7 +81,7 @@ export default function AnimeDetail() {
 
           {score && (
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold" style={{ color: scoreColor(score) }}>{score}</span>
+              <span className="text-3xl sm:text-4xl font-bold" style={{ color: scoreColor(score) }}>{score}</span>
               <span className="text-[var(--text-muted)] text-sm">/ 10</span>
               {scored_by && (
                 <span className="text-[var(--text-muted)] text-xs">({scored_by.toLocaleString()} votes)</span>
@@ -89,7 +89,7 @@ export default function AnimeDetail() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-[var(--bg-surface)] rounded-xl p-4">
+          <div className="grid grid-cols-2 min-[500px]:grid-cols-3 gap-3 sm:gap-4 bg-[var(--bg-surface)] rounded-xl p-3 sm:p-4">
             {infoItem('Statut', STATUS_LABEL[status] ?? status)}
             {infoItem('Épisodes', episodes)}
             {infoItem('Durée / ép.', duration)}

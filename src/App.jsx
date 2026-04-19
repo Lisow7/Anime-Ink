@@ -24,7 +24,7 @@ export default function App() {
     <WatchlistProvider>
     <ModalProvider>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col overflow-x-hidden">
           <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />

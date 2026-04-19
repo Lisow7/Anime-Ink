@@ -19,7 +19,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-base)] mt-auto">
-      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col items-center gap-3">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col items-center gap-3">
 
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full shrink-0 ${

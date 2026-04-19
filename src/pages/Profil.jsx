@@ -7,10 +7,10 @@ import { Link } from 'react-router-dom'
 
 function StatCard({ label, value, sub }) {
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-5 flex flex-col gap-1">
-      <span className="text-[var(--text-muted)] text-xs uppercase tracking-wider">{label}</span>
-      <span className="text-[var(--text-primary)] text-3xl font-bold">{value}</span>
-      {sub && <span className="text-[var(--text-muted)] text-xs">{sub}</span>}
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-3 sm:p-5 flex flex-col gap-1">
+      <span className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider">{label}</span>
+      <span className="text-[var(--text-primary)] text-2xl sm:text-3xl font-bold">{value}</span>
+      {sub && <span className="text-[var(--text-muted)] text-[10px] sm:text-xs">{sub}</span>}
     </div>
   )
 }
@@ -38,7 +38,7 @@ export default function Profil() {
   const isEmpty = favorites.length === 0 && history.length === 0 && watchlist.length === 0
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 flex flex-col gap-10">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-full bg-[#22c55e]/20 border border-[#22c55e]/40 flex items-center justify-center">
           <svg viewBox="0 0 24 24" className="w-7 h-7 text-[#22c55e] fill-none stroke-current" strokeWidth="1.5">
@@ -68,7 +68,7 @@ export default function Profil() {
           {/* Stats */}
           <section className="flex flex-col gap-4">
             <h2 className="text-[var(--text-primary)] font-semibold text-lg">Statistiques</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
               <StatCard label="Favoris" value={favorites.length} sub="animés sauvegardés" />
               <StatCard label="Consultés" value={history.length} sub="animés visités" />
               <StatCard label="Ma liste" value={watchlist.length} sub="animés suivis" />

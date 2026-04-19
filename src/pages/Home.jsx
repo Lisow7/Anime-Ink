@@ -61,7 +61,7 @@ export default function Home() {
   const randomAgeBadge = randomIsHentai ? '-18' : '-16'
 
   return (
-    <main className="flex flex-col items-center px-6 py-16 gap-16 max-w-6xl mx-auto w-full">
+    <main className="flex flex-col items-center px-4 sm:px-6 py-10 sm:py-16 gap-10 sm:gap-16 max-w-6xl mx-auto w-full">
 
       {/* Hero */}
       <section className="flex flex-col items-center text-center gap-8 max-w-xl w-full">
@@ -99,7 +99,7 @@ export default function Home() {
         {randomLoading ? (
           <div className="relative w-full h-64 rounded-2xl overflow-hidden bg-[var(--bg-surface)] animate-pulse" />
         ) : random ? (
-          <div className={`relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden transition-all duration-300 ${isRefreshing ? 'opacity-30 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
+          <div className={`relative w-full h-52 sm:h-64 md:h-72 rounded-2xl overflow-hidden transition-all duration-300 ${isRefreshing ? 'opacity-30 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
 
             {/* Fond flouté */}
             <img
@@ -128,7 +128,7 @@ export default function Home() {
             </button>
 
             {/* Contenu */}
-            <div className="absolute inset-0 z-10 flex items-center gap-6 px-6 sm:px-8">
+            <div className="absolute inset-0 z-10 flex items-center gap-4 sm:gap-6 px-4 sm:px-6 md:px-8">
 
               {/* Poster */}
               <div className="relative hidden sm:block shrink-0">
@@ -209,13 +209,13 @@ export default function Home() {
         </div>
 
         {topLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
+          <div className="grid grid-cols-2 min-[540px]:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-[var(--bg-surface)] rounded-xl aspect-[2/3] animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
+          <div className="grid grid-cols-2 min-[540px]:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {topAnimes.map((anime) => (
               <AnimeCard key={anime.mal_id} anime={anime} />
             ))}

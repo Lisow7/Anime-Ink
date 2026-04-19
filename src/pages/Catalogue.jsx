@@ -166,67 +166,73 @@ export default function Catalogue() {
   const isEmpty = !loading && displayList.length === 0
 
   return (
-    <main className={`${tab === 'liste' ? 'max-w-[1400px] px-10' : 'max-w-6xl px-6'} mx-auto py-10 flex flex-col gap-8`}>
+    <main className={`${tab === 'liste' ? 'max-w-[1400px] px-4 sm:px-10' : 'max-w-6xl px-4 sm:px-6'} w-full mx-auto py-6 sm:py-10 flex flex-col gap-6 sm:gap-8 min-w-0`}>
 
       {/* Header + onglets */}
-      <div className="flex items-center justify-between gap-8">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
           {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : tab === 'liste' ? 'Ma liste' : 'Catalogue'}
         </h1>
-        <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1">
-          <button
-            onClick={() => switchTab('catalogue')}
-            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'catalogue' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-          >
-            Catalogue
-          </button>
-          <div className="w-px h-4 bg-white/10 mx-1" />
-          <button
-            onClick={() => switchTab('favoris')}
-            className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'favoris' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-          >
-            Favoris
-            {favorites.length > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tab === 'favoris' ? 'bg-white/20' : 'bg-white/10'}`}>
-                {favorites.length}
-              </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 flex-1 sm:flex-none min-w-0">
+            <button
+              onClick={() => switchTab('catalogue')}
+              className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${tab === 'catalogue' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              Catalogue
+            </button>
+            <div className="w-px h-4 bg-white/10 shrink-0" />
+            <button
+              onClick={() => switchTab('favoris')}
+              className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'favoris' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              Favoris
+              {favorites.length > 0 && (
+                <span className={`text-[10px] px-1 py-0.5 rounded-full ${tab === 'favoris' ? 'bg-white/20' : 'bg-white/10'}`}>
+                  {favorites.length}
+                </span>
+              )}
+            </button>
+            {history.length > 0 && (
+              <>
+                <div className="w-px h-4 bg-white/10 shrink-0" />
+                <button
+                  onClick={() => switchTab('recents')}
+                  className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'recents' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                >
+                  Récents
+                  <span className={`text-[10px] px-1 py-0.5 rounded-full ${tab === 'recents' ? 'bg-white/20' : 'bg-white/10'}`}>
+                    {history.length}
+                  </span>
+                </button>
+              </>
             )}
-          </button>
-          {history.length > 0 && (
+            {watchlist.length > 0 && (
+              <>
+                <div className="w-px h-4 bg-white/10 shrink-0" />
+                <button
+                  onClick={() => switchTab('liste')}
+                  className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'liste' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                >
+                  Ma liste
+                  <span className={`text-[10px] px-1 py-0.5 rounded-full ${tab === 'liste' ? 'bg-white/20' : 'bg-white/10'}`}>
+                    {watchlist.length}
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
+          {(favorites.length > 0 || history.length > 0 || watchlist.length > 0) && (
             <button
-              onClick={() => switchTab('recents')}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'recents' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              onClick={resetAll}
+              aria-label="Tout réinitialiser"
+              className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border border-[#e63946]/30 text-[#e63946]/70 hover:border-[#e63946] hover:text-[#e63946] hover:bg-[#e63946]/5 transition-all"
             >
-              Récents
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tab === 'recents' ? 'bg-white/20' : 'bg-white/10'}`}>
-                {history.length}
-              </span>
-            </button>
-          )}
-          {watchlist.length > 0 && (
-            <button
-              onClick={() => switchTab('liste')}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'liste' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-            >
-              Ma liste
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${tab === 'liste' ? 'bg-white/20' : 'bg-white/10'}`}>
-                {watchlist.length}
-              </span>
-            </button>
-          )}
-        </div>
-        {(favorites.length > 0 || history.length > 0 || watchlist.length > 0) && (
-          <>
-            <div className="w-px h-6 bg-[var(--border-color)] shrink-0" />
-            <button onClick={resetAll} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-[#e63946]/30 text-[#e63946]/70 hover:border-[#e63946] hover:text-[#e63946] hover:bg-[#e63946]/5 transition-all shrink-0">
-              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth="2.5">
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth="2.5">
                 <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Tout réinitialiser
             </button>
-          </>
-        )}
+          )}
         </div>
       </div>
 
@@ -237,7 +243,7 @@ export default function Catalogue() {
             type="text"
             value={inputValue}
             placeholder="Rechercher un animé..."
-            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 max-w-sm"
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 sm:max-w-sm"
             onChange={(e) => setInputValue(e.target.value)}
           />
           {/* Toggle grille / liste */}
@@ -265,10 +271,10 @@ export default function Catalogue() {
         <div className="flex flex-col gap-4">
           {/* Filtre alphabétique */}
           {!query && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => updateParam('letter', '')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${!letter ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 Tous
               </button>
@@ -276,7 +282,7 @@ export default function Catalogue() {
                 <button
                   key={l}
                   onClick={() => updateParam('letter', letter === l ? '' : l)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${letter === l ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {l}
                 </button>
@@ -285,15 +291,15 @@ export default function Catalogue() {
           )}
 
           {/* Filtres dropdowns */}
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <select value={genre} onChange={(e) => updateParam('genre', e.target.value)}
-              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les genres</option>
               {genres.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
             </select>
 
             <select value={type} onChange={(e) => updateParam('type', e.target.value)}
-              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les types</option>
               <option value="tv">Série TV</option>
               <option value="movie">Film</option>
@@ -303,7 +309,7 @@ export default function Catalogue() {
             </select>
 
             <select value={status} onChange={(e) => updateParam('status', e.target.value)}
-              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les statuts</option>
               <option value="airing">En cours</option>
               <option value="complete">Terminé</option>
@@ -311,7 +317,7 @@ export default function Catalogue() {
             </select>
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}
-              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
               <option value="score">Meilleure note</option>
               <option value="title">Alphabétique</option>
               <option value="start_date">Date de sortie</option>
@@ -384,7 +390,7 @@ export default function Catalogue() {
       {/* Résultats */}
       {!error && tab === 'catalogue' && loading ? (
         isGrid ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {Array.from({ length: 24 }).map((_, i) => (
               <div key={i} className="bg-[var(--bg-surface)] rounded-xl aspect-[2/3] animate-pulse" />
             ))}
@@ -407,7 +413,7 @@ export default function Catalogue() {
       ) : !error && tab === 'liste' ? (
         <WatchlistTable list={displayList} />
       ) : !error && isGrid ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {displayList.map((anime) => (
             <AnimeCard key={anime.mal_id} anime={anime} />
           ))}

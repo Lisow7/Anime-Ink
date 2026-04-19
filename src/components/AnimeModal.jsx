@@ -71,81 +71,80 @@ export default function AnimeModal() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) close() }}
     >
-      <div className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
 
         {/* Bouton fermer */}
-        <button
-          onClick={close}
-          className="sticky top-4 float-right mr-4 z-10 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-        >
-          ✕
-        </button>
+        <div className="sticky top-0 z-10 flex justify-end p-3 bg-[var(--bg-base)]/80 backdrop-blur-sm">
+          <button
+            onClick={close}
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-full w-8 h-8 flex items-center justify-center transition-colors shrink-0"
+          >
+            ✕
+          </button>
+        </div>
 
         {loading ? (
-          <div className="p-8 animate-pulse flex flex-col md:flex-row gap-8 clear-both">
-            <div className="w-40 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
+          <div className="px-4 sm:px-8 pb-6 sm:pb-8 animate-pulse flex flex-col sm:flex-row gap-6">
+            <div className="w-28 sm:w-40 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl mx-auto sm:mx-0" />
             <div className="flex-1 flex flex-col gap-4">
-              <div className="h-8 bg-[var(--bg-surface)] rounded w-2/3" />
+              <div className="h-6 bg-[var(--bg-surface)] rounded w-2/3" />
               <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
               <div className="h-4 bg-[var(--bg-surface)] rounded w-5/6" />
-              <div className="h-4 bg-[var(--bg-surface)] rounded w-4/6" />
             </div>
           </div>
         ) : anime ? (
-          <div className="p-8 flex flex-col gap-8 clear-both">
+          <div className="px-4 sm:px-8 pb-6 sm:pb-8 flex flex-col gap-5 sm:gap-8">
 
             {/* Hero */}
-            <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col min-[500px]:flex-row gap-4 min-[500px]:gap-6">
               <img
                 src={anime.images?.jpg?.large_image_url}
                 alt={anime.title}
-                className="w-40 shrink-0 rounded-xl object-cover self-start"
+                className="w-28 min-[500px]:w-36 sm:w-40 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
               />
-              <div className="flex flex-col gap-4 flex-1">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
-                    {anime.title_japanese && (
-                      <p className="text-[var(--text-muted)] text-sm mt-1">{anime.title_japanese}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {/* Bouton Ma liste */}
-                    <button
-                      onClick={() => watchStatus ? remove(anime.mal_id) : setStatus(anime, 'to_watch')}
-                      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                        watchStatus
-                          ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[#22c55e]'
-                          : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[#22c55e]'
-                      }`}
-                      aria-label={watchStatus ? 'Retirer de ma liste' : 'Ajouter à ma liste'}
-                    >
-                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth="2">
-                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      {watchStatus ? 'Dans ma liste' : 'Ma liste'}
-                    </button>
+              <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
+                {/* Titre */}
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
+                  {anime.title_japanese && (
+                    <p className="text-[var(--text-muted)] text-sm mt-1 truncate">{anime.title_japanese}</p>
+                  )}
+                </div>
 
-                    {/* Bouton favori */}
-                    <button
-                      onClick={() => toggle(anime)}
-                      className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
-                      aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                    >
-                      <svg viewBox="0 0 24 24" className="w-6 h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                  </div>
+                {/* Actions */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => watchStatus ? remove(anime.mal_id) : setStatus(anime, 'to_watch')}
+                    className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                      watchStatus
+                        ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[#22c55e]'
+                        : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[#22c55e]'
+                    }`}
+                    aria-label={watchStatus ? 'Retirer de ma liste' : 'Ajouter à ma liste'}
+                  >
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current shrink-0" strokeWidth="2">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {watchStatus ? 'Dans ma liste' : 'Ma liste'}
+                  </button>
+                  <button
+                    onClick={() => toggle(anime)}
+                    className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
+                    aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
                 </div>
 
                 {/* Score */}
                 {anime.score && (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold" style={{ color: scoreColor(anime.score) }}>{anime.score}</span>
+                    <span className="text-3xl sm:text-4xl font-bold" style={{ color: scoreColor(anime.score) }}>{anime.score}</span>
                     <span className="text-[var(--text-muted)] text-sm">/ 10</span>
                     {anime.scored_by && (
                       <span className="text-[var(--text-muted)] text-xs">({anime.scored_by.toLocaleString()} votes)</span>
@@ -154,7 +153,7 @@ export default function AnimeModal() {
                 )}
 
                 {/* Infos */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[var(--bg-surface)] rounded-xl p-4">
+                <div className="grid grid-cols-2 min-[500px]:grid-cols-3 gap-3 bg-[var(--bg-surface)] rounded-xl p-3 sm:p-4">
                   {infoItem('Statut', STATUS_LABEL[anime.status] ?? anime.status)}
                   {infoItem('Épisodes', anime.episodes)}
                   {infoItem('Durée / ép.', anime.duration)}
