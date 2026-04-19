@@ -1,11 +1,6 @@
 import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
-
-const statusLabel = {
-  'Finished Airing': 'Terminé',
-  'Currently Airing': 'En cours',
-  'Not yet aired': 'À venir',
-}
+import { STATUS_LABEL } from '../constants/anime'
 
 export default function AnimeListCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
@@ -32,7 +27,7 @@ export default function AnimeListCard({ anime }) {
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
             }`}>
-              {statusLabel[status] ?? status}
+              {STATUS_LABEL[status] ?? status}
             </span>
           )}
         </div>

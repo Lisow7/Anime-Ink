@@ -1,20 +1,11 @@
+import { memo } from 'react'
 import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
 import { useHistory } from '../context/HistoryContext'
+import { STATUS_LABEL } from '../constants/anime'
+import { scoreColor } from '../utils/score'
 
-const statusLabel = {
-  'Finished Airing': 'Terminé',
-  'Currently Airing': 'En cours',
-  'Not yet aired': 'À venir',
-}
-
-function scoreColor(score) {
-  if (score >= 7.5) return 'text-[#22c55e]'
-  if (score >= 6) return 'text-[#f59e0b]'
-  return 'text-[#e63946]'
-}
-
-export default function AnimeCard({ anime }) {
+function AnimeCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
   const { openModal } = useModal()
   const { history } = useHistory()
@@ -91,7 +82,7 @@ export default function AnimeCard({ anime }) {
                   ? 'bg-[#22c55e]/20 text-[#22c55e]'
                   : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
               }`}>
-                {statusLabel[status] ?? status}
+                {STATUS_LABEL[status] ?? status}
               </span>
             )}
           </div>
@@ -110,3 +101,5 @@ export default function AnimeCard({ anime }) {
     </div>
   )
 }
+
+export default memo(AnimeCard)

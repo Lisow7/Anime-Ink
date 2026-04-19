@@ -4,28 +4,12 @@ import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { getAnimeById, getAnimeRecommendations } from '../services/jikan'
 import { translateSynopsis } from '../services/translate'
-
-const statusLabel = {
-  'Finished Airing': 'Terminé',
-  'Currently Airing': 'En cours',
-  'Not yet aired': 'À venir',
-}
-
-const scoreColor = (score) => {
-  if (score >= 7.5) return 'text-[#22c55e]'
-  if (score >= 6) return 'text-[#f59e0b]'
-  return 'text-[#e63946]'
-}
-
-const infoItem = (label, value) => value ? (
-  <div className="flex flex-col gap-0.5">
-    <span className="text-[var(--text-muted)] text-xs uppercase tracking-wider">{label}</span>
-    <span className="text-[var(--text-primary)] text-sm">{value}</span>
-  </div>
-) : null
+import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
+import { scoreColor } from '../utils/score'
+import { infoItem } from '../utils/anime'
 
 export default function AnimeModal() {
-  const { animeId, closeModal } = useModal()
+  const { animeId, openModal, closeModal } = useModal()
   const { isFavorite, toggle } = useFavorites()
   const { addToHistory } = useHistory()
   const [anime, setAnime] = useState(null)
@@ -150,7 +134,7 @@ export default function AnimeModal() {
 
                 {/* Infos */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[var(--bg-surface)] rounded-xl p-4">
-                  {infoItem('Statut', statusLabel[anime.status] ?? anime.status)}
+                  {infoItem('Statut', STATUS_LABEL[anime.status] ?? anime.status)}
                   {infoItem('Épisodes', anime.episodes)}
                   {infoItem('Durée / ép.', anime.duration)}
                   {infoItem('Diffusion', anime.aired?.string)}
@@ -175,19 +159,9 @@ export default function AnimeModal() {
 
             {/* Liens de visionnage */}
             {(() => {
-              const platformColors = {
-                'crunchyroll': '#f47521',
-                'netflix': '#e50914',
-                'adn': '#00aaff',
-                'animation digital network': '#00aaff',
-                'amazon prime video': '#00a8e0',
-                'funimation': '#410099',
-                'hidive': '#00bacc',
-                'disney+': '#113ccf',
-              }
               const streaming = (anime.streaming || []).map(s => ({
                 label: s.name,
-                color: platformColors[s.name.toLowerCase()] || '#6b7280',
+                color: PLATFORM_COLORS[s.name.toLowerCase()] || '#6b7280',
                 href: s.url,
               }))
               const malLink = anime.url

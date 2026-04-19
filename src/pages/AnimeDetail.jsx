@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getAnimeById } from '../services/jikan'
 import { useHistory } from '../context/HistoryContext'
+import { STATUS_LABEL } from '../constants/anime'
+import { scoreColor } from '../utils/score'
+import { infoItem } from '../utils/anime'
 
 export default function AnimeDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(true)
   const { addToHistory } = useHistory()
 
   useEffect(() => {
     setLoading(true)
-    getAnimeById(id).then((data) => {
-      setAnime(data)
-      setLoading(false)
-      if (data) addToHistory({
+    getAnimeById(id)
+      .then((data) => {
+        if (!data) { navigate('/404'); return }
+        setAnime(data)
+        setLoading(false)
+        addToHistory({
         mal_id: data.mal_id,
         title: data.title,
         images: data.images,
@@ -26,17 +32,18 @@ export default function AnimeDetail() {
         synopsis: data.synopsis,
       })
     })
+    .catch(() => navigate('/404'))
   }, [id])
 
   if (loading) {
     return (
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="animate-pulse flex flex-col md:flex-row gap-8">
-          <div className="w-48 shrink-0 aspect-[2/3] bg-[#1a1a1a] rounded-xl" />
+          <div className="w-48 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
           <div className="flex-1 flex flex-col gap-4">
-            <div className="h-8 bg-[#1a1a1a] rounded w-2/3" />
-            <div className="h-4 bg-[#1a1a1a] rounded w-full" />
-            <div className="h-4 bg-[#1a1a1a] rounded w-5/6" />
+            <div className="h-8 bg-[var(--bg-surface)] rounded w-2/3" />
+            <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
+            <div className="h-4 bg-[var(--bg-surface)] rounded w-5/6" />
           </div>
         </div>
       </main>
@@ -45,32 +52,19 @@ export default function AnimeDetail() {
 
   if (!anime) return null
 
+
   const {
     title, title_japanese, images, synopsis, score, scored_by,
     episodes, duration, status, aired, season, year, genres,
     studios, trailer, rank, popularity
   } = anime
 
-  const statusLabel = {
-    'Finished Airing': 'Terminé',
-    'Currently Airing': 'En cours',
-    'Not yet aired': 'À venir',
-  }
-
-  const infoItem = (label, value) => value ? (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[#6b7280] text-xs uppercase tracking-wider">{label}</span>
-      <span className="text-[#f5f5f5] text-sm">{value}</span>
-    </div>
-  ) : null
-
   return (
     <main className="max-w-6xl mx-auto px-6 py-10 flex flex-col gap-10">
-      <Link to="/catalogue" className="text-[#6b7280] text-sm hover:text-[#22c55e] transition-colors w-fit">
+      <Link to="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors w-fit">
         ← Retour au catalogue
       </Link>
 
-      {/* Hero */}
       <div className="flex flex-col md:flex-row gap-8">
         <img
           src={images?.jpg?.large_image_url}
@@ -79,26 +73,24 @@ export default function AnimeDetail() {
         />
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-[#f5f5f5] leading-tight">{title}</h1>
+            <h1 className="text-3xl font-bold text-[var(--text-primary)] leading-tight">{title}</h1>
             {title_japanese && (
-              <p className="text-[#6b7280] text-sm mt-1">{title_japanese}</p>
+              <p className="text-[var(--text-muted)] text-sm mt-1">{title_japanese}</p>
             )}
           </div>
 
-          {/* Score */}
           {score && (
             <div className="flex items-baseline gap-2">
-              <span className="text-[#22c55e] text-4xl font-bold">{score}</span>
-              <span className="text-[#6b7280] text-sm">/ 10</span>
+              <span className={`text-4xl font-bold ${scoreColor(score)}`}>{score}</span>
+              <span className="text-[var(--text-muted)] text-sm">/ 10</span>
               {scored_by && (
-                <span className="text-[#6b7280] text-xs">({scored_by.toLocaleString()} votes)</span>
+                <span className="text-[var(--text-muted)] text-xs">({scored_by.toLocaleString()} votes)</span>
               )}
             </div>
           )}
 
-          {/* Infos rapides */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-[#1a1a1a] rounded-xl p-4">
-            {infoItem('Statut', statusLabel[status] ?? status)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-[var(--bg-surface)] rounded-xl p-4">
+            {infoItem('Statut', STATUS_LABEL[status] ?? status)}
             {infoItem('Épisodes', episodes)}
             {infoItem('Durée / ép.', duration)}
             {infoItem('Diffusion', aired?.string)}
@@ -108,11 +100,10 @@ export default function AnimeDetail() {
             {infoItem('Studios', studios?.map(s => s.name).join(', '))}
           </div>
 
-          {/* Genres */}
           {genres?.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {genres.map((g) => (
-                <span key={g.mal_id} className="bg-[#1a1a1a] border border-white/10 text-[#6b7280] text-xs px-3 py-1 rounded-full">
+                <span key={g.mal_id} className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] text-xs px-3 py-1 rounded-full">
                   {g.name}
                 </span>
               ))}
@@ -121,19 +112,17 @@ export default function AnimeDetail() {
         </div>
       </div>
 
-      {/* Synopsis */}
       {synopsis && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-[#f5f5f5] font-semibold text-lg">Synopsis</h2>
-          <p className="text-[#6b7280] text-sm leading-relaxed">{synopsis}</p>
+          <h2 className="text-[var(--text-primary)] font-semibold text-lg">Synopsis</h2>
+          <p className="text-[var(--text-muted)] text-sm leading-relaxed">{synopsis}</p>
         </div>
       )}
 
-      {/* Trailer */}
       {trailer?.embed_url && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-[#f5f5f5] font-semibold text-lg">Bande-annonce</h2>
-          <div className="aspect-video rounded-xl overflow-hidden bg-[#1a1a1a]">
+          <h2 className="text-[var(--text-primary)] font-semibold text-lg">Bande-annonce</h2>
+          <div className="aspect-video rounded-xl overflow-hidden bg-[var(--bg-surface)]">
             <iframe
               src={trailer.embed_url}
               title={`Trailer ${title}`}

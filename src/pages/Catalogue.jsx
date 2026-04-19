@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useDebounce } from '../hooks/useDebounce'
 import { useSearchParams } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import AnimeListCard from '../components/AnimeListCard'
@@ -27,8 +28,12 @@ export default function Catalogue() {
   const [animes, setAnimes] = useState([])
   const [genres, setGenres] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
   const [pagination, setPagination] = useState({ current: 1, last: 1, total: null })
   const [inputValue, setInputValue] = useState('')
+  const debouncedInput = useDebounce(inputValue)
+  const isMounted = useRef(false)
   const [tab, setTab] = useState(() => searchParams.get('tab') || 'catalogue')
 
   useEffect(() => {
@@ -36,15 +41,22 @@ export default function Catalogue() {
   }, [searchParams.toString()])
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('anime-ink-view') || 'grid')
 
-  const { favorites, toggle, isFavorite, clearFavorites } = useFavorites()
-  const { history, removeFromHistory, clearHistory: clearHistoryBase } = useHistory()
-  const clearTabParam = () => {
+  const { favorites, clearFavorites } = useFavorites()
+  const { history, clearHistory: clearHistoryBase } = useHistory()
+  const switchTab = (tabName) => {
     const next = new URLSearchParams(searchParams)
-    next.delete('tab')
+    if (tabName === 'catalogue') next.delete('tab')
+    else next.set('tab', tabName)
     setSearchParams(next)
   }
-  const clearHistory = () => { clearHistoryBase(); clearTabParam() }
-  const resetAll = () => { clearFavorites(); clearHistoryBase(); clearTabParam() }
+  const clearHistory = () => { clearHistoryBase(); switchTab('catalogue') }
+  const resetAll = () => {
+    clearFavorites()
+    clearHistoryBase()
+    setTab('catalogue')
+    setInputValue('')
+    setSearchParams(new URLSearchParams())
+  }
 
   const query = searchParams.get('q') || ''
   const genre = searchParams.get('genre') || ''
@@ -57,8 +69,18 @@ export default function Catalogue() {
   useEffect(() => { setInputValue(query) }, [query])
 
   useEffect(() => {
+    if (!isMounted.current) { isMounted.current = true; return }
+    const next = new URLSearchParams(searchParams)
+    if (debouncedInput) next.set('q', debouncedInput)
+    else next.delete('q')
+    next.delete('page')
+    setSearchParams(next)
+  }, [debouncedInput])
+
+  useEffect(() => {
     setLoading(true)
-    const timer = setTimeout(async () => {
+    setError(false)
+    const run = async () => {
       try {
         if (query) {
           const data = await searchAnime(query)
@@ -83,12 +105,14 @@ export default function Catalogue() {
             total: result.pagination?.items?.total ?? null,
           })
         }
+      } catch {
+        setError(true)
       } finally {
         setLoading(false)
       }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [query, genre, status, type, orderBy, letter, page])
+    }
+    run()
+  }, [query, genre, status, type, orderBy, letter, page, retryKey])
 
   useEffect(() => {
     getGenres().then(setGenres)
@@ -128,7 +152,7 @@ export default function Catalogue() {
     <main className="max-w-6xl mx-auto px-6 py-10 flex flex-col gap-8">
 
       {/* Header + onglets */}
-      {!isEmpty && <div className="flex items-center justify-between gap-8">
+      <div className="flex items-center justify-between gap-8">
         <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
           {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : 'Catalogue'}
         </h1>
@@ -140,14 +164,14 @@ export default function Catalogue() {
         )}
         <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1">
           <button
-            onClick={() => setTab('catalogue')}
+            onClick={() => switchTab('catalogue')}
             className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === 'catalogue' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             Catalogue
           </button>
           <div className="w-px h-4 bg-white/10 mx-1" />
           <button
-            onClick={() => setTab('favoris')}
+            onClick={() => switchTab('favoris')}
             className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'favoris' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             Favoris
@@ -159,7 +183,7 @@ export default function Catalogue() {
           </button>
           {history.length > 0 && (
             <button
-              onClick={() => setTab('recents')}
+              onClick={() => switchTab('recents')}
               className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${tab === 'recents' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
             >
               Récents
@@ -170,7 +194,7 @@ export default function Catalogue() {
           )}
         </div>
         </div>
-      </div>}
+      </div>
 
       {/* Filtres — uniquement sur l'onglet catalogue */}
       {tab === 'catalogue' && !isEmpty && (
@@ -182,7 +206,7 @@ export default function Catalogue() {
               value={inputValue}
               placeholder="Rechercher..."
               className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 max-w-sm"
-              onChange={(e) => { setInputValue(e.target.value); updateParam('q', e.target.value) }}
+              onChange={(e) => setInputValue(e.target.value)}
             />
             {/* Toggle grille / liste */}
             <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
@@ -290,8 +314,23 @@ export default function Catalogue() {
         </div>
       )}
 
+      {/* Erreur API */}
+      {tab === 'catalogue' && error && !loading && (
+        <div className="flex flex-col items-center gap-4 py-20 text-center">
+          <span className="text-5xl">⚠️</span>
+          <p className="text-[var(--text-primary)] font-semibold text-lg">Impossible de charger les animés</p>
+          <p className="text-[var(--text-muted)] text-sm">L'API Jikan est momentanément indisponible. Réessaie dans quelques instants.</p>
+          <button
+            onClick={() => { setError(false); setRetryKey(k => k + 1) }}
+            className="mt-2 px-5 py-2 bg-[#22c55e] text-black text-sm font-semibold rounded-lg hover:bg-[#16a34a] transition-colors"
+          >
+            Réessayer
+          </button>
+        </div>
+      )}
+
       {/* Résultats */}
-      {tab === 'catalogue' && loading ? (
+      {!error && tab === 'catalogue' && loading ? (
         isGrid ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {Array.from({ length: 24 }).map((_, i) => (
@@ -305,25 +344,25 @@ export default function Catalogue() {
             ))}
           </div>
         )
-      ) : displayList.length === 0 ? (
+      ) : !error && displayList.length === 0 ? (
         tab === 'favoris'
-          ? <EmptyState query="" onReset={() => setTab('catalogue')} emptyFavoris />
+          ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyFavoris />
           : tab === 'recents'
-          ? <EmptyState query="" onReset={() => setTab('catalogue')} emptyRecents />
+          ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyRecents />
           : <EmptyState query={query} onReset={resetFilters} />
-      ) : isGrid ? (
+      ) : !error && isGrid ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
           {displayList.map((anime) => (
             <AnimeCard key={anime.mal_id} anime={anime} />
           ))}
         </div>
-      ) : (
+      ) : !error ? (
         <div className="flex flex-col gap-3">
           {displayList.map((anime) => (
             <AnimeListCard key={anime.mal_id} anime={anime} />
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Pagination */}
       {tab === 'catalogue' && !query && pagination.last > 1 && (
