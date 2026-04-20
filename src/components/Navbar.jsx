@@ -1,54 +1,26 @@
-import { useState, useRef, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useFavorites } from '../context/FavoritesContext'
 import { useTheme } from '../context/ThemeContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 
 export default function Navbar() {
   const { pathname, search } = useLocation()
-  const navigate = useNavigate()
   const { favorites } = useFavorites()
   const { theme, toggle } = useTheme()
   const { blurHentai, toggle: toggleAgeFilter } = useAgeFilter()
-  const [open, setOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const inputRef = useRef(null)
-  const formRef = useRef(null)
   const isFavorisTab = pathname === '/catalogue' && search.includes('tab=favoris')
 
   useEffect(() => { setMenuOpen(false) }, [pathname, search])
 
   useEffect(() => {
-    if (open) inputRef.current?.focus()
-  }, [open])
-
-  useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') { close(); setMenuOpen(false) }
+      if (e.key === 'Escape') setMenuOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
-
-  useEffect(() => {
-    const onClickOutside = (e) => {
-      if (open && !query.trim() && formRef.current && !formRef.current.contains(e.target)) close()
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [open, query])
-
-  const close = () => { setOpen(false); setQuery('') }
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (query.trim()) {
-      navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`)
-      close()
-      setMenuOpen(false)
-    }
-  }
 
   const ThemeIcon = () => theme === 'dark' ? (
     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
@@ -92,33 +64,8 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden lg:flex items-center gap-5">
-          {pathname !== '/' && pathname !== '/catalogue' && (
-            <form ref={formRef} onSubmit={handleSearch} className="flex items-center gap-2">
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${open ? 'w-52' : 'w-0'}`}>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Rechercher..."
-                  className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
-                />
-              </div>
-              <button
-                type={open && query.trim() ? 'submit' : 'button'}
-                onClick={() => { if (!open) setOpen(true) }}
-                className="text-[var(--text-muted)] hover:text-[#22c55e] transition-colors shrink-0"
-                aria-label="Rechercher"
-              >
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" strokeLinecap="round" />
-                </svg>
-              </button>
-            </form>
-          )}
 
-          {navLink('/catalogue', 'Catalogue')}
+          {(pathname !== '/catalogue' || search.includes('tab=')) && navLink('/catalogue', 'Catalogue')}
           {navLink('/profil', 'Profil')}
 
           <Link
@@ -189,28 +136,10 @@ export default function Navbar() {
       {menuOpen && (
         <div className="lg:hidden border-t border-[var(--border-subtle)] bg-[var(--navbar-bg)] px-4 py-4 flex flex-col gap-3">
 
-          {/* Recherche (hors home et catalogue) */}
-          {pathname !== '/' && pathname !== '/catalogue' && (
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher un animé..."
-                className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
-              />
-              <button type="submit" className="px-3 py-2 bg-[#22c55e] text-black rounded-lg" aria-label="Rechercher">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" />
-                </svg>
-              </button>
-            </form>
-          )}
-
           {/* Liens de navigation */}
           <div className="flex flex-col gap-0.5">
             {[
-              { to: '/catalogue', label: 'Catalogue' },
+              ...(pathname !== '/catalogue' || search.includes('tab=') ? [{ to: '/catalogue', label: 'Catalogue' }] : []),
               { to: '/profil', label: 'Profil' },
             ].map(({ to, label }) => {
               const isActive = pathname === to && !isFavorisTab

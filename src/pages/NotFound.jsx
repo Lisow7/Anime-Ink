@@ -39,7 +39,7 @@ export default function NotFound() {
       {/* Bouton retour */}
       <Link
         to="/"
-        className="group relative inline-flex items-center gap-3 px-5 sm:px-8 py-3 border border-[#22c55e]/40 rounded-full text-xs sm:text-sm text-[var(--text-primary)] tracking-wide sm:tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
+        className="group relative inline-flex items-center gap-3 px-5 sm:px-8 py-3 border border-[#22c55e]/40 rounded-lg text-xs sm:text-sm text-[var(--text-primary)] tracking-wide sm:tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
       >
         <span className="absolute inset-0 bg-[#22c55e]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         <span className="relative">← Retour à l'accueil</span>

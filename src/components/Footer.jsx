@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { useCookieConsent } from '../context/CookieContext'
 
 export default function Footer() {
   const [apiStatus, setApiStatus] = useState(null)
+  const { openSettings } = useCookieConsent()
 
   useEffect(() => {
     const check = async () => {
@@ -43,9 +46,27 @@ export default function Footer() {
           </a>
           {' '}· Source non officielle de MyAnimeList
         </p>
+
         <p className="text-[var(--text-muted)]/50 text-[11px]">
           Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
+
+        <div className="flex items-center gap-4">
+          <Link
+            to="/mentions-legales"
+            className="text-[var(--text-muted)]/50 text-[11px] hover:text-[var(--text-muted)] transition-colors underline underline-offset-2"
+          >
+            Mentions légales
+          </Link>
+          <span className="text-[var(--text-muted)]/30 text-[11px]">·</span>
+          <button
+            onClick={openSettings}
+            className="text-[var(--text-muted)]/50 text-[11px] hover:text-[var(--text-muted)] transition-colors underline underline-offset-2"
+          >
+            Gérer les cookies
+          </button>
+        </div>
+
       </div>
     </footer>
   )

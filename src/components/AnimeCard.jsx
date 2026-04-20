@@ -103,7 +103,7 @@ function AnimeCard({ anime }) {
               {episodes ? `${episodes} ép.` : '? ép.'}
             </span>
             {status && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
                 status === 'Currently Airing'
                   ? 'bg-[#22c55e]/20 text-[#22c55e]'
                   : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'

@@ -1,15 +1,32 @@
+import { ANIME_ACRONYMS } from '../constants/acronyms'
+
 const BASE_URL = 'https://api.jikan.moe/v4'
 
+function generateAcronym(title) {
+  if (!title) return ''
+  return title
+    .split(/[\s\-:!?.,+×x\/]+/)
+    .filter(w => /[a-zA-Z\u00C0-\u024F]/.test(w))
+    .map(w => w[0].toUpperCase())
+    .join('')
+}
+
 export async function searchAnime(query, signal) {
+  const upperQ = query.trim().toUpperCase()
+  const expandedQuery = ANIME_ACRONYMS[upperQ] || query.trim()
+  const isAcronym = expandedQuery !== query.trim()
+
   try {
-    const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`, { signal })
+    const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
     if (!res.ok) return []
     const data = await res.json()
-    const q = query.toLowerCase()
+    const lower = expandedQuery.toLowerCase()
     return (data.data ?? [])
       .filter((anime) =>
-        anime.title?.toLowerCase().includes(q) ||
-        anime.title_english?.toLowerCase().includes(q)
+        anime.title?.toLowerCase().includes(lower) ||
+        anime.title_english?.toLowerCase().includes(lower) ||
+        (isAcronym ? false : generateAcronym(anime.title || '') === upperQ) ||
+        (isAcronym ? false : generateAcronym(anime.title_english || '') === upperQ)
       )
       .sort((a, b) => {
         const dateA = a.aired?.from ? new Date(a.aired.from) : new Date(0)

@@ -1,19 +1,29 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDebounce } from '../hooks/useDebounce'
+import { useSEO } from '../hooks/useSEO'
 import AnimeCard from '../components/AnimeCard'
-import { getTopAnime, getRandomAnime } from '../services/jikan'
+import { getTopAnime, getRandomAnime, searchAnime } from '../services/jikan'
 import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
 
 export default function Home() {
+  useSEO()
   const [query, setQuery] = useState('')
   const [topAnimes, setTopAnimes] = useState([])
   const [topLoading, setTopLoading] = useState(true)
   const [random, setRandom] = useState(null)
   const [randomLoading, setRandomLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshCount, setRefreshCount] = useState(1)
+  const [showPopover, setShowPopover] = useState(false)
+  const [suggestions, setSuggestions] = useState([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const debouncedQuery = useDebounce(query, 400)
+  const searchContainerRef = useRef(null)
   const navigate = useNavigate()
   const { openModal } = useModal()
   const { blurHentai } = useAgeFilter()
@@ -37,6 +47,7 @@ export default function Home() {
 
     if (isRefresh) {
       setIsRefreshing(true)
+      setRefreshCount(c => c + 1)
       getRandomAnime()
         .then((data) => apply(data, () => setIsRefreshing(false)))
         .catch(() => setIsRefreshing(false))
@@ -50,9 +61,35 @@ export default function Home() {
 
   useEffect(() => { fetchRandom(false) }, [])
 
+  useEffect(() => {
+    const q = debouncedQuery.trim()
+    if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
+    setSuggestionsLoading(true)
+    searchAnime(q)
+      .then(results => { setSuggestions(results?.slice(0, 6) ?? []); setSuggestionsLoading(false) })
+      .catch(() => { setSuggestions([]); setSuggestionsLoading(false) })
+  }, [debouncedQuery])
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
   const handleSearch = (e) => {
     e.preventDefault()
-    if (query.trim()) navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`)
+    if (query.trim()) { setShowSuggestions(false); navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`) }
+  }
+
+  const pickSuggestion = (anime) => {
+    setShowSuggestions(false)
+    setQuery('')
+    setSuggestions([])
+    openModal(anime.mal_id)
   }
 
   const randomIsHentai = random?.genres?.some(g => HENTAI_GENRES.includes(g.name))
@@ -75,26 +112,88 @@ export default function Home() {
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="w-full flex gap-2">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un animé..."
-            className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
-          />
-          <button
-            type="submit"
-            className="bg-[#22c55e] hover:bg-[#22c55e]/80 text-white font-medium px-6 py-3 rounded-lg text-sm transition-colors"
-          >
-            Chercher
-          </button>
-        </form>
+        <div ref={searchContainerRef} className="w-full relative">
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true) }}
+              onFocus={() => { if (query.trim()) setShowSuggestions(true) }}
+              placeholder="Rechercher un animé..."
+              className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
+            />
+            <button
+              type="submit"
+              className="bg-[#15803d] hover:bg-[#166534] text-white font-medium px-6 py-3 rounded-lg text-sm transition-colors shrink-0"
+            >
+              Chercher
+            </button>
+          </form>
+
+          {/* Dropdown suggestions */}
+          {showSuggestions && query.trim() && (
+            <div className="absolute top-full left-0 right-0 mt-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden z-50">
+              {suggestionsLoading ? (
+                <div className="flex items-center gap-2 px-4 py-3 text-[var(--text-muted)] text-sm">
+                  <div className="w-3.5 h-3.5 border border-[var(--text-muted)] border-t-transparent rounded-full animate-spin shrink-0" />
+                  Recherche en cours…
+                </div>
+              ) : suggestions.length === 0 ? (
+                <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
+                  Aucun animé trouvé pour «&nbsp;{debouncedQuery}&nbsp;».
+                </p>
+              ) : (
+                <>
+                  {suggestions.map(anime => (
+                    <button
+                      key={anime.mal_id}
+                      type="button"
+                      onClick={() => pickSuggestion(anime)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--bg-base)] transition-colors text-left border-b border-[var(--border-subtle)] last:border-0"
+                    >
+                      <img
+                        src={anime.images?.jpg?.image_url}
+                        alt={anime.title}
+                        className="w-8 h-11 object-cover rounded shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[var(--text-primary)] text-sm font-medium truncate">{anime.title}</p>
+                        <p className="text-[var(--text-muted)] text-[11px]">
+                          {anime.year ?? '—'}{anime.score ? ` · ★ ${anime.score}` : ''}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => { setShowSuggestions(false); navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`) }}
+                    className="w-full px-4 py-2.5 text-[#22c55e] text-xs font-medium hover:bg-[var(--bg-base)] transition-colors text-center"
+                  >
+                    Voir tous les résultats pour «&nbsp;{query}&nbsp;» →
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Animé surprise */}
       <section className="w-full flex flex-col gap-4">
-        <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Animé surprise</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#16a34a] fill-none stroke-current shrink-0" strokeWidth="2">
+              <rect x="2" y="2" width="20" height="20" rx="4"/>
+              <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+              <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+              <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+              <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            </svg>
+            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Animé surprise</span>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
+        </div>
 
         {randomLoading ? (
           <div className="relative w-full h-64 rounded-2xl overflow-hidden bg-[var(--bg-surface)] animate-pulse" />
@@ -114,18 +213,40 @@ export default function Home() {
             {/* Gradient bas */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-            {/* Bouton refresh */}
-            <button
-              onClick={() => fetchRandom(true)}
-              disabled={isRefreshing}
-              aria-label="Nouvelle suggestion"
-              className="absolute top-4 right-4 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all backdrop-blur-sm disabled:opacity-50"
-            >
-              <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 fill-none stroke-current transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth="2">
-                <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+            {/* Bouton refresh + popover */}
+            <div className="absolute top-4 right-4 z-20">
+              <button
+                onClick={() => fetchRandom(true)}
+                disabled={isRefreshing}
+                onMouseEnter={() => setShowPopover(true)}
+                onMouseLeave={() => setShowPopover(false)}
+                aria-label="Nouvelle suggestion"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all backdrop-blur-sm disabled:opacity-50"
+              >
+                <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 fill-none stroke-current transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth="2">
+                  <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+
+              {showPopover && (
+                <div className="absolute top-10 right-0 w-56 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-3 shadow-2xl text-left pointer-events-none">
+                  <p className="text-[var(--text-primary)] text-xs font-semibold mb-1">Anime aléatoire</p>
+                  <p className="text-[var(--text-muted)] text-[11px] leading-relaxed">
+                    Chaque suggestion appelle l'API Jikan (MyAnimeList). Limitée à 3 requêtes / seconde.
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-[var(--border-subtle)]">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-[#22c55e] fill-none stroke-current shrink-0" strokeWidth="2">
+                      <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="text-[11px] text-[var(--text-muted)]">
+                      <span className="text-[#22c55e] font-semibold">{refreshCount}</span> requête{refreshCount > 1 ? 's' : ''} effectuée{refreshCount > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Contenu */}
             <div className="absolute inset-0 z-10 flex items-center gap-4 sm:gap-6 px-4 sm:px-6 md:px-8">
@@ -180,7 +301,7 @@ export default function Home() {
 
                 <div className="flex flex-wrap gap-1.5">
                   {random.genres?.slice(0, 3).map(g => (
-                    <span key={g.mal_id} className="text-[10px] px-2.5 py-0.5 rounded-full border border-white/20 text-white/60">
+                    <span key={g.mal_id} className="text-[10px] px-2.5 py-0.5 rounded border border-white/20 text-white/60">
                       {g.name}
                     </span>
                   ))}
@@ -201,9 +322,15 @@ export default function Home() {
 
       {/* Top animés */}
       <section className="w-full flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[var(--text-primary)]">Top animés du moment</h2>
-          <a href="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#16a34a] fill-none stroke-current shrink-0" strokeWidth="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</span>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
+          <a href="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[#16a34a] transition-colors">
             Voir tout →
           </a>
         </div>

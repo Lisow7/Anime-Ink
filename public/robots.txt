@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /catalogue?tab=favoris
+Disallow: /catalogue?tab=recents
+Disallow: /catalogue?tab=liste
+
+Sitemap: https://anime-ink.app/sitemap.xml

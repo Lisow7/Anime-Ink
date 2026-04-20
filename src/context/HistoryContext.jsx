@@ -1,19 +1,37 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { useCookieConsent, hasConsent } from './CookieContext'
 
 const KEY = 'anime-ink-history'
 const MAX = 20
+const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
 const HistoryContext = createContext(null)
 
 export function HistoryProvider({ children }) {
+  const { consent } = useCookieConsent()
+  const canStore = consent?.userdata === true
+
   const [history, setHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(KEY)) || [] }
+    if (!hasConsent('userdata')) return []
+    try { return dedup(JSON.parse(localStorage.getItem(KEY)) || []) }
     catch { return [] }
   })
 
+  const mounted = useRef(false)
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return }
+    if (canStore) {
+      try { setHistory(dedup(JSON.parse(localStorage.getItem(KEY)) || [])) }
+      catch { setHistory([]) }
+    } else {
+      setHistory([])
+      localStorage.removeItem(KEY)
+    }
+  }, [canStore])
+
   const addToHistory = (anime) => {
+    if (!canStore) return
     setHistory(prev => {
-      const filtered = prev.filter(a => a.mal_id !== anime.mal_id)
-      const next = [anime, ...filtered].slice(0, MAX)
+      const next = [anime, ...prev.filter(a => a.mal_id !== anime.mal_id)].slice(0, MAX)
       localStorage.setItem(KEY, JSON.stringify(next))
       return next
     })
@@ -22,7 +40,7 @@ export function HistoryProvider({ children }) {
   const removeFromHistory = (id) => {
     setHistory(prev => {
       const next = prev.filter(a => a.mal_id !== id)
-      localStorage.setItem(KEY, JSON.stringify(next))
+      if (canStore) localStorage.setItem(KEY, JSON.stringify(next))
       return next
     })
   }

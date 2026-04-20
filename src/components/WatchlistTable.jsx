@@ -14,26 +14,6 @@ const SORTS = [
   { value: 'genre',  label: 'Genre' },
 ]
 
-function TrackerPill({ children, className = '' }) {
-  return (
-    <div className={`flex items-center gap-0.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-full px-1 py-1 ${className}`}>
-      {children}
-    </div>
-  )
-}
-
-function StepBtn({ onClick, disabled, children }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="w-4 h-4 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:pointer-events-none transition-colors text-xs leading-none shrink-0"
-    >
-      {children}
-    </button>
-  )
-}
-
 function EpisodeTracker({ anime, setEpisode, setSeason }) {
   const ep = anime.currentEpisode ?? 0
   const season = anime.currentSeason ?? 1
@@ -44,39 +24,50 @@ function EpisodeTracker({ anime, setEpisode, setSeason }) {
   const isRoot = franchiseIndex === 0
   const canNavigate = isRoot && maxSeasons !== undefined && maxSeasons > 1
 
+  const pill = 'flex items-center gap-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg px-2 py-1'
+  const sel  = 'bg-[var(--bg-surface)] text-[11px] font-semibold text-[var(--text-primary)] focus:outline-none cursor-pointer tabular-nums'
+  const tag  = 'text-[11px] font-semibold text-[var(--text-primary)] tabular-nums whitespace-nowrap'
+
   return (
     <div className="flex items-stretch gap-2" onClick={e => e.stopPropagation()}>
-      <TrackerPill>
-        <StepBtn onClick={() => setSeason(anime.mal_id, season - 1)} disabled={!canNavigate || season <= 1}>−</StepBtn>
-        <span className="text-[11px] font-semibold text-[var(--text-primary)] px-1.5 tabular-nums whitespace-nowrap">
-          {seasonData === undefined
-            ? `Saison ${season}…`
-            : canNavigate
-              ? `Saison ${season} / ${maxSeasons}`
-              : `Saison ${season}`}
-        </span>
-        <StepBtn onClick={() => setSeason(anime.mal_id, season + 1)} disabled={!canNavigate || season >= maxSeasons}>+</StepBtn>
-      </TrackerPill>
-      <TrackerPill>
-        <StepBtn onClick={() => setEpisode(anime.mal_id, Math.max(0, ep - 1))} disabled={ep <= 0}>−</StepBtn>
-        <span className="text-[10px] text-[var(--text-muted)] px-1 shrink-0 whitespace-nowrap">Épisode</span>
-        <input
-          type="number"
-          value={ep}
-          min={0}
-          max={episodeMax ?? undefined}
-          onChange={e => {
-            const v = parseInt(e.target.value, 10)
-            if (!isNaN(v)) setEpisode(anime.mal_id, Math.max(0, episodeMax ? Math.min(episodeMax, v) : v))
-          }}
-          className="w-7 text-center text-[11px] font-semibold bg-transparent text-[var(--text-primary)] focus:outline-none tabular-nums shrink-0"
-        />
-        {episodeMax
-          ? <span className="text-[10px] text-[var(--text-muted)] pr-1 tabular-nums shrink-0 whitespace-nowrap">/ {episodeMax}</span>
-          : null
-        }
-        <StepBtn onClick={() => setEpisode(anime.mal_id, Math.min(episodeMax ?? 9999, ep + 1))} disabled={!!episodeMax && ep >= episodeMax}>+</StepBtn>
-      </TrackerPill>
+
+      {/* Saison : dropdown si plusieurs saisons, tag sinon */}
+      <div className={pill}>
+        {canNavigate ? (
+          <select
+            value={season}
+            onChange={e => setSeason(anime.mal_id, parseInt(e.target.value))}
+            className={sel}
+          >
+            {Array.from({ length: maxSeasons }, (_, i) => (
+              <option key={i + 1} value={i + 1}>Saison {i + 1}</option>
+            ))}
+          </select>
+        ) : (
+          <span className={tag}>
+            {seasonData === undefined ? `Saison ${season}…` : `Saison ${season}`}
+          </span>
+        )}
+      </div>
+
+      {/* Épisode : dropdown si plus d'un épisode connu, tag sinon */}
+      <div className={pill}>
+        <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap shrink-0">Ép.</span>
+        {episodeMax > 1 ? (
+          <select
+            value={ep < 1 ? 1 : ep}
+            onChange={e => setEpisode(anime.mal_id, parseInt(e.target.value))}
+            className={sel}
+          >
+            {Array.from({ length: episodeMax }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{i + 1} / {episodeMax}</option>
+            ))}
+          </select>
+        ) : (
+          <span className={tag}>{Math.max(1, ep)}</span>
+        )}
+      </div>
+
     </div>
   )
 }
@@ -132,7 +123,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
               <button
                 key={ws.value}
                 onClick={() => setStatus(anime, ws.value)}
-                className={`text-[10px] px-2 py-0.5 rounded-full border font-medium transition-colors ${
+                className={`text-[10px] px-2 py-0.5 rounded border font-medium transition-colors ${
                   anime.watchStatus === ws.value ? 'text-black border-transparent' : 'border-[var(--border-color)] text-[var(--text-muted)]'
                 }`}
                 style={anime.watchStatus === ws.value ? { backgroundColor: ws.color } : {}}
@@ -181,7 +172,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
               key={ws.value}
               onClick={() => setStatus(anime, ws.value)}
               title={ws.label}
-              className={`w-[4.5rem] whitespace-nowrap text-center text-xs py-1.5 rounded-full border font-medium transition-colors ${
+              className={`w-[4.5rem] whitespace-nowrap text-center text-xs py-1.5 rounded-lg border font-medium transition-colors ${
                 anime.watchStatus === ws.value ? 'border-transparent text-black' : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[var(--border-medium)]'
               }`}
               style={anime.watchStatus === ws.value ? { backgroundColor: ws.color } : {}}
@@ -191,7 +182,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
           ))}
           <button
             onClick={() => remove(anime.mal_id)}
-            className="w-7 h-7 flex items-center justify-center rounded-full border border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#e63946] hover:text-[#e63946] transition-colors shrink-0"
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#e63946] hover:text-[#e63946] transition-colors shrink-0"
             aria-label="Retirer de la liste"
           >
             <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth="2.5">
@@ -263,7 +254,7 @@ export default function WatchlistTable({ list }) {
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1.5">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === 'all' ? 'bg-[#22c55e] text-black' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === 'all' ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
           >
             Tous · {counts.all}
           </button>

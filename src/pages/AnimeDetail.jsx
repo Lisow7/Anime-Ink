@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 import { getAnimeById } from '../services/jikan'
 import { useHistory } from '../context/HistoryContext'
 import { STATUS_LABEL } from '../constants/anime'
@@ -12,6 +13,12 @@ export default function AnimeDetail() {
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(true)
   const { addToHistory } = useHistory()
+  useSEO({
+    title: anime?.title ?? undefined,
+    description: anime?.synopsis
+      ? anime.synopsis.replace(/\[Written by.*?\]/g, '').trim().slice(0, 160)
+      : undefined,
+  })
 
   useEffect(() => {
     setLoading(true)
@@ -37,7 +44,7 @@ export default function AnimeDetail() {
 
   if (loading) {
     return (
-      <main className="max-w-6xl mx-auto px-6 py-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <div className="animate-pulse flex flex-col sm:flex-row gap-6 sm:gap-8">
           <div className="w-48 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
           <div className="flex-1 flex flex-col gap-4">
@@ -103,7 +110,7 @@ export default function AnimeDetail() {
           {genres?.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {genres.map((g) => (
-                <span key={g.mal_id} className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] text-xs px-3 py-1 rounded-full">
+                <span key={g.mal_id} className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] text-xs px-3 py-1 rounded">
                   {g.name}
                 </span>
               ))}

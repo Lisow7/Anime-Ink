@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
+import { useSEO } from '../hooks/useSEO'
 import { useSearchParams } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import AnimeListCard from '../components/AnimeListCard'
@@ -34,9 +35,8 @@ export default function Catalogue() {
   const [error, setError] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
   const [pagination, setPagination] = useState({ current: 1, last: 1, total: null })
-  const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState(() => searchParams.get('q') || '')
   const debouncedInput = useDebounce(inputValue)
-  const isMounted = useRef(false)
   const [tab, setTab] = useState(() => searchParams.get('tab') || 'catalogue')
 
   useEffect(() => {
@@ -65,6 +65,13 @@ export default function Catalogue() {
 
   const query = searchParams.get('q') || ''
   const genre = searchParams.get('genre') || ''
+
+  const seoTitle = tab === 'favoris' ? 'Mes favoris'
+    : tab === 'recents' ? 'Récemment consultés'
+    : tab === 'liste' ? 'Ma liste'
+    : query ? `Recherche : ${query}`
+    : 'Catalogue'
+  useSEO({ title: seoTitle, description: 'Parcours le catalogue complet des animés, filtre par genre, type, statut et trouve ton prochain coup de cœur.' })
   const status = searchParams.get('status') || ''
   const type = searchParams.get('type') || ''
   const orderBy = searchParams.get('orderBy') || 'title'
@@ -74,7 +81,7 @@ export default function Catalogue() {
   useEffect(() => { setInputValue(query) }, [query])
 
   useEffect(() => {
-    if (!isMounted.current) { isMounted.current = true; return }
+    if (debouncedInput === (searchParams.get('q') || '')) return
     const next = new URLSearchParams(searchParams)
     if (debouncedInput) next.set('q', debouncedInput)
     else next.delete('q')
@@ -88,8 +95,10 @@ export default function Catalogue() {
     setError(false)
     const run = async () => {
       try {
+        const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
+
         if (query) {
-          const data = await searchAnime(query, controller.signal)
+          const data = dedup(await searchAnime(query, controller.signal))
           if (controller.signal.aborted) return
           setAnimes(data)
           setPagination({ current: 1, last: 1, total: data.length })
@@ -97,7 +106,7 @@ export default function Catalogue() {
           const result = await getAnimeByFilter({ genre, status, type, orderBy, letter, page }, controller.signal)
           if (controller.signal.aborted) return
           const norm = (t) => t.replace(/^[^a-zA-Z0-9\u00C0-\u024F]+/, '')
-          const data = result.data ?? []
+          const data = dedup(result.data ?? [])
           const sorted = (orderBy === 'title' || letter)
             ? [...data].sort((a, b) => {
                 const cmp = norm(a.title ?? '').localeCompare(norm(b.title ?? ''), undefined, { sensitivity: 'base' })
@@ -166,74 +175,55 @@ export default function Catalogue() {
   const isEmpty = !loading && displayList.length === 0
 
   return (
-    <main className={`${tab === 'liste' ? 'max-w-[1400px] px-4 sm:px-10' : 'max-w-6xl px-4 sm:px-6'} w-full mx-auto py-6 sm:py-10 flex flex-col gap-6 sm:gap-8 min-w-0`}>
+    <main className="max-w-6xl px-4 sm:px-6 w-full mx-auto py-6 sm:py-10 flex flex-col gap-6 sm:gap-8 min-w-0">
 
       {/* Header + onglets */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
           {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : tab === 'liste' ? 'Ma liste' : 'Catalogue'}
         </h1>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 flex-1 sm:flex-none min-w-0">
-            <button
-              onClick={() => switchTab('catalogue')}
-              className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${tab === 'catalogue' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-            >
-              Catalogue
-            </button>
-            <div className="w-px h-4 bg-white/10 shrink-0" />
-            <button
-              onClick={() => switchTab('favoris')}
-              className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'favoris' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-            >
-              Favoris
-              {favorites.length > 0 && (
-                <span className={`text-[10px] px-1 py-0.5 rounded-full ${tab === 'favoris' ? 'bg-white/20' : 'bg-white/10'}`}>
-                  {favorites.length}
-                </span>
-              )}
-            </button>
-            {history.length > 0 && (
-              <>
-                <div className="w-px h-4 bg-white/10 shrink-0" />
+        {(history.length > 0 || watchlist.length > 0) && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 flex-1 sm:flex-none min-w-0">
+              {history.length > 0 && (
                 <button
-                  onClick={() => switchTab('recents')}
-                  className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'recents' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  onClick={() => switchTab(tab === 'recents' ? 'catalogue' : 'recents')}
+                  className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'recents' ? 'bg-[#15803d] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   Récents
-                  <span className={`text-[10px] px-1 py-0.5 rounded-full ${tab === 'recents' ? 'bg-white/20' : 'bg-white/10'}`}>
+                  <span className={`text-[10px] px-1 py-0.5 rounded ${tab === 'recents' ? 'bg-white/20' : 'bg-white/10'}`}>
                     {history.length}
                   </span>
                 </button>
-              </>
-            )}
-            {watchlist.length > 0 && (
-              <>
+              )}
+              {history.length > 0 && watchlist.length > 0 && (
                 <div className="w-px h-4 bg-white/10 shrink-0" />
+              )}
+              {watchlist.length > 0 && (
                 <button
-                  onClick={() => switchTab('liste')}
-                  className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'liste' ? 'bg-[#22c55e] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  onClick={() => switchTab(tab === 'liste' ? 'catalogue' : 'liste')}
+                  className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'liste' ? 'bg-[#15803d] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   Ma liste
-                  <span className={`text-[10px] px-1 py-0.5 rounded-full ${tab === 'liste' ? 'bg-white/20' : 'bg-white/10'}`}>
+                  <span className={`text-[10px] px-1 py-0.5 rounded ${tab === 'liste' ? 'bg-white/20' : 'bg-white/10'}`}>
                     {watchlist.length}
                   </span>
                 </button>
-              </>
+              )}
+            </div>
+            {(history.length > 0 || watchlist.length > 0) && (
+              <button
+                onClick={resetAll}
+                aria-label="Tout réinitialiser"
+                className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border border-[#e63946]/30 text-[#e63946]/70 hover:border-[#e63946] hover:text-[#e63946] hover:bg-[#e63946]/5 transition-all"
+              >
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth="2.5">
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             )}
           </div>
-          {(favorites.length > 0 || history.length > 0 || watchlist.length > 0) && (
-            <button
-              onClick={resetAll}
-              aria-label="Tout réinitialiser"
-              className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border border-[#e63946]/30 text-[#e63946]/70 hover:border-[#e63946] hover:text-[#e63946] hover:bg-[#e63946]/5 transition-all"
-            >
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth="2.5">
-                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Barre de recherche — toujours visible sur catalogue */}
@@ -274,7 +264,7 @@ export default function Catalogue() {
             <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => updateParam('letter', '')}
-                className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 Tous
               </button>
@@ -282,7 +272,7 @@ export default function Catalogue() {
                 <button
                   key={l}
                   onClick={() => updateParam('letter', letter === l ? '' : l)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#22c55e] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {l}
                 </button>
@@ -380,7 +370,7 @@ export default function Catalogue() {
           <p className="text-[var(--text-muted)] text-sm">L'API Jikan est momentanément indisponible. Réessaie dans quelques instants.</p>
           <button
             onClick={() => { setError(false); setRetryKey(k => k + 1) }}
-            className="mt-2 px-5 py-2 bg-[#22c55e] text-black text-sm font-semibold rounded-lg hover:bg-[#16a34a] transition-colors"
+            className="mt-2 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Réessayer
           </button>
@@ -404,7 +394,29 @@ export default function Catalogue() {
         )
       ) : !error && displayList.length === 0 ? (
         tab === 'favoris'
-          ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyFavoris />
+          ? (
+            <div className="relative">
+              <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 opacity-30 pointer-events-none select-none">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className="flex flex-col gap-2">
+                    <div className="aspect-[2/3] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)]" />
+                    <div className="h-3 bg-[var(--bg-surface)] rounded w-4/5" />
+                    <div className="h-2.5 bg-[var(--bg-surface)] rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center">
+                <p className="text-[var(--text-primary)] font-semibold text-lg">Aucun favori pour l'instant</p>
+                <p className="text-[var(--text-muted)] text-sm max-w-xs">Explore le catalogue, ouvre un animé et ajoute-le à tes favoris pour le retrouver ici.</p>
+                <button
+                  onClick={() => switchTab('catalogue')}
+                  className="mt-1 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  Explorer le catalogue
+                </button>
+              </div>
+            </div>
+          )
           : tab === 'recents'
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyRecents />
           : tab === 'liste'

@@ -19,6 +19,7 @@ export default function AnimeModal() {
   const [synopsis, setSynopsis] = useState(null)
   const [translating, setTranslating] = useState(false)
   const [recommendations, setRecommendations] = useState([])
+  const [deadLinks, setDeadLinks] = useState(new Set())
 
   const close = useCallback(() => {
     closeModal()
@@ -48,6 +49,7 @@ export default function AnimeModal() {
     setRecommendations([])
     getAnimeById(animeId).then(async (data) => {
       setAnime(data)
+      setDeadLinks(new Set())
       setLoading(false)
       if (data?.synopsis) {
         setTranslating(true)
@@ -63,6 +65,29 @@ export default function AnimeModal() {
       })
     })
   }, [animeId])
+
+  // Vérifier les liens morts
+  useEffect(() => {
+    if (!anime) return
+    const urls = [
+      ...(anime.streaming || []).map(s => s.url),
+      anime.url,
+    ].filter(Boolean)
+
+    urls.forEach(async (url) => {
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
+        if (res.status === 404) setDeadLinks(prev => new Set([...prev, url]))
+      } catch {
+        // CORS bloqué → tenter no-cors pour détecter serveur hors ligne
+        try {
+          await fetch(url, { mode: 'no-cors', signal: AbortSignal.timeout(5000) })
+        } catch {
+          setDeadLinks(prev => new Set([...prev, url]))
+        }
+      }
+    })
+  }, [anime?.mal_id])
 
   if (!animeId) return null
 
@@ -168,7 +193,7 @@ export default function AnimeModal() {
                 {anime.genres?.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {anime.genres.map((g) => (
-                      <span key={g.mal_id} className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] text-xs px-3 py-1 rounded-full">
+                      <span key={g.mal_id} className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] text-xs px-3 py-1 rounded">
                         {g.name}
                       </span>
                     ))}
@@ -187,7 +212,7 @@ export default function AnimeModal() {
               const malLink = anime.url
                 ? [{ label: 'MyAnimeList', color: '#2e51a2', href: anime.url }]
                 : []
-              const links = [...streaming, ...malLink]
+              const links = [...streaming, ...malLink].filter(l => !deadLinks.has(l.href))
               if (links.length === 0) return null
               return (
                 <div className="flex flex-col gap-3">
