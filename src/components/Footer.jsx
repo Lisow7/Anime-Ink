@@ -48,7 +48,7 @@ export default function Footer() {
         </p>
 
         <p className="text-[var(--text-muted)] text-[11px]">
-          Version 1.0 · Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          Version 1.1 · Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
 
         <div className="flex items-center gap-4">
