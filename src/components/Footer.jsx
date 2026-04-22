@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useCookieConsent } from '../context/CookieContext'
+import ChangelogModal from './ChangelogModal'
+import { CURRENT_VERSION } from '../data/changelog'
 
 export default function Footer() {
   const [apiStatus, setApiStatus] = useState(null)
+  const [showChangelog, setShowChangelog] = useState(false)
   const { openSettings } = useCookieConsent()
 
   useEffect(() => {
@@ -21,6 +24,7 @@ export default function Footer() {
   }, [])
 
   return (
+    <>
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-base)] mt-auto">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col items-center gap-3">
 
@@ -47,9 +51,12 @@ export default function Footer() {
           {' '}· Source non officielle de MyAnimeList
         </p>
 
-        <p className="text-[var(--text-muted)] text-[11px]">
-          Version 1.1 · Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
+        <button
+          onClick={() => setShowChangelog(true)}
+          className="text-[var(--text-muted)] text-[11px] hover:text-[var(--color-accent)] transition-colors"
+        >
+          Version {CURRENT_VERSION} · Voir les nouveautés
+        </button>
 
         <div className="flex items-center gap-4">
           <Link
@@ -69,5 +76,8 @@ export default function Footer() {
 
       </div>
     </footer>
+
+    {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
+  </>
   )
 }
