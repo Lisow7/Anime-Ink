@@ -139,6 +139,12 @@ export default function MentionsLegales() {
         </p>
       </Section>
 
+      <Section title="Développement">
+        <p>
+          Ce site a été conçu et développé par son auteur, avec l'assistance d'outils d'intelligence artificielle utilisés comme aide au développement.
+        </p>
+      </Section>
+
       <Section title="Droit applicable">
         <p>
           Les présentes mentions légales sont soumises au droit français. En cas de litige, les tribunaux français seront seuls compétents.
