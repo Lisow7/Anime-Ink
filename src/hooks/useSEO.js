@@ -2,8 +2,8 @@ import { useEffect } from 'react'
 
 const DEFAULT_TITLE = "Anime-Ink — Découvre l'univers des animés"
 const DEFAULT_DESC  = "Recherche, explore et découvre des milliers d'animés. Catalogue complet, favoris, suivi de progression et filtres avancés."
-const DEFAULT_IMAGE = 'https://anime-ink.app/og-image.svg'
-const BASE_URL      = 'https://anime-ink.app'
+const DEFAULT_IMAGE = 'https://lisow7.github.io/Anime-Ink/og-image.svg'
+const BASE_URL      = 'https://lisow7.github.io/Anime-Ink'
 
 export function useSEO({ title, description, canonical, ogImage, robots } = {}) {
   useEffect(() => {
