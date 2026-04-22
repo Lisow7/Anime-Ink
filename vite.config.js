@@ -21,6 +21,7 @@ const inlineCssPlugin = {
 }
 
 export default defineConfig({
+  base: '/Anime-Ink/',
   plugins: [react(), tailwindcss(), inlineCssPlugin],
   build: {
     rollupOptions: {
