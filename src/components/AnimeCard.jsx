@@ -99,7 +99,7 @@ function AnimeCard({ anime }) {
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <p className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</p>
+          <p title={title} className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</p>
           <div className="mt-auto flex items-center justify-between pt-2">
             <span className="text-[var(--text-muted)] text-xs">
               {episodes ? `${episodes} ép.` : airing ? 'En cours' : '? ép.'}

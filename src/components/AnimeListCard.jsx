@@ -46,7 +46,7 @@ export default function AnimeListCard({ anime }) {
       </div>
 
       <div className="flex-1 flex flex-col gap-1 min-w-0 pr-8">
-        <h3 className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 leading-snug">{title}</h3>
+        <h3 title={title} className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 leading-snug">{title}</h3>
 
         <div className="flex items-center gap-2 flex-wrap">
           {score && <span className="text-xs font-bold" style={{ color: scoreColor(score) }}>★ {score}</span>}
