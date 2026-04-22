@@ -1,0 +1,36 @@
+/* ── Animations ── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+@keyframes ink-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.4; }
+  50%       { transform: scale(1.06); opacity: 0.15; }
+}
+
+@keyframes glitch-top {
+  0%, 90%, 100% { transform: translate(0);          opacity: 0; }
+  91%           { transform: translate(-4px, -2px); opacity: 1; }
+  93%           { transform: translate(4px,  1px);  opacity: 1; }
+  95%           { transform: translate(-2px, 0);    opacity: 1; }
+  97%           { transform: translate(0);           opacity: 0; }
+}
+
+@keyframes glitch-bot {
+  0%, 88%, 100% { transform: translate(0);          opacity: 0; }
+  89%           { transform: translate(4px,  2px);  opacity: 1; }
+  92%           { transform: translate(-4px, -1px); opacity: 1; }
+  94%           { transform: translate(2px,  0);    opacity: 1; }
+  96%           { transform: translate(0);           opacity: 0; }
+}

@@ -1,0 +1,45 @@
+/* ── Modale ── */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease;
+}
+
+.modal-box {
+  animation: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Page 404 / EmptyState ── */
+.ink-circle {
+  position: absolute;
+  border-radius: 9999px;
+  border: 1px solid #22c55e18;
+  animation: ink-pulse 6s ease-in-out infinite;
+}
+
+.glitch {
+  position: relative;
+  color: var(--text-primary);
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+
+.glitch::before {
+  color: #22c55e;
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+  animation: glitch-top 4s steps(1) infinite;
+}
+
+.glitch::after {
+  color: var(--text-primary);
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+  animation: glitch-bot 4s steps(1) infinite;
+}

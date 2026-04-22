@@ -1,47 +1,69 @@
+import { memo } from 'react'
 import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
+import { useHistory } from '../context/HistoryContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
+import { STATUS_LABEL } from '../constants/anime'
+import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
+import { scoreColor } from '../utils/score'
 
-const statusLabel = {
-  'Finished Airing': 'Terminé',
-  'Currently Airing': 'En cours',
-  'Not yet aired': 'À venir',
-}
-
-export default function AnimeCard({ anime }) {
+function AnimeCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
   const { openModal } = useModal()
-  const { mal_id, title, images, score, episodes, status, trailer } = anime
+  const { history } = useHistory()
+  const { blurHentai } = useAgeFilter()
+  const { mal_id, title, images, score, episodes, airing, status, trailer, genres } = anime
+  const isHentai = genres?.some(g => HENTAI_GENRES.includes(g.name))
+  const isEcchi = genres?.some(g => ECCHI_GENRES.includes(g.name))
+  const blurred = blurHentai && (isHentai || isEcchi)
+  const ageBadge = isHentai ? '-18' : '-16'
   const fav = isFavorite(mal_id)
+  const seen = history.some(a => a.mal_id === mal_id)
   const youtubeId = trailer?.youtube_id
   const thumbUrl = youtubeId
     ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
     : null
 
   return (
-    <div className="relative group">
+    <div className="relative group h-full">
       <div
         onClick={() => openModal(mal_id)}
-        className="cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200"
+        className="cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200 h-full"
       >
         <div className="relative aspect-[2/3] overflow-hidden">
-          {/* Poster */}
           <img
-            src={images?.jpg?.large_image_url}
+            src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
             alt={title}
+            loading="lazy"
+            width={225}
+            height={338}
             className={`w-full h-full object-cover transition-all duration-300 ${
               thumbUrl ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
+            style={blurred ? { filter: 'blur(12px)', transform: 'scale(1.1)' } : undefined}
           />
+          {blurred && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center border-2 backdrop-blur-sm select-none"
+                style={isHentai
+                  ? { borderColor: '#e63946', background: 'rgba(230,57,70,0.18)', boxShadow: '0 0 22px rgba(230,57,70,0.45)' }
+                  : { borderColor: '#a855f7', background: 'rgba(168,85,247,0.18)', boxShadow: '0 0 22px rgba(168,85,247,0.45)' }
+                }
+              >
+                <span
+                  className="text-sm font-black tracking-tight leading-none"
+                  style={{ color: isHentai ? '#e63946' : '#a855f7' }}
+                >
+                  {ageBadge}
+                </span>
+              </div>
+            </div>
+          )}
 
-          {/* Miniature YouTube au survol */}
           {thumbUrl && (
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <img
-                src={thumbUrl}
-                alt={`Trailer ${title}`}
-                className="w-full h-full object-cover"
-              />
-              {/* Bouton play YouTube */}
+              <img src={thumbUrl} alt={`Trailer ${title}`} className="w-full h-full object-cover" />
               <a
                 href={`https://www.youtube.com/watch?v=${youtubeId}`}
                 target="_blank"
@@ -60,25 +82,35 @@ export default function AnimeCard({ anime }) {
           )}
 
           {score && (
-            <span className="absolute bottom-2 right-2 bg-black/70 text-[#f5f5f5] text-xs font-semibold px-2 py-1 rounded-md">
+            <span className="absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md" style={{ color: scoreColor(score) }}>
               ★ {score}
+            </span>
+          )}
+
+          {seen && (
+            <span className="absolute bottom-2 right-2 bg-black/60 text-[#6b7280] text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-1">
+              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Vu
             </span>
           )}
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <h3 className="text-[#f5f5f5] text-sm font-medium line-clamp-2 leading-snug">{title}</h3>
+          <p className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</p>
           <div className="mt-auto flex items-center justify-between pt-2">
-            <span className="text-[#6b7280] text-xs">
-              {episodes ? `${episodes} ép.` : '? ép.'}
+            <span className="text-[var(--text-muted)] text-xs">
+              {episodes ? `${episodes} ép.` : airing ? 'En cours' : '? ép.'}
             </span>
             {status && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
                 status === 'Currently Airing'
-                  ? 'bg-[#22c55e]/20 text-[#22c55e]'
-                  : 'bg-white/5 text-[#6b7280]'
+                  ? 'bg-[var(--badge-airing-bg)] text-[var(--badge-airing-text)]'
+                  : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
               }`}>
-                {statusLabel[status] ?? status}
+                {STATUS_LABEL[status] ?? status}
               </span>
             )}
           </div>
@@ -87,7 +119,7 @@ export default function AnimeCard({ anime }) {
 
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
-        className={`absolute top-2 left-2 transition-colors bg-black/50 rounded-full p-1 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
+        className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
         aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
@@ -97,3 +129,5 @@ export default function AnimeCard({ anime }) {
     </div>
   )
 }
+
+export default memo(AnimeCard)

@@ -1,8 +1,14 @@
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 
 export default function NotFound() {
+  useSEO({
+    title: 'Page non trouvée',
+    description: "Cette page n'existe pas sur Anime-Ink. Retourne à l'accueil pour explorer le catalogue.",
+    robots: 'noindex, follow',
+  })
   return (
-    <main className="relative flex-1 flex flex-col items-center justify-center min-h-[90vh] overflow-hidden px-6 text-center">
+    <main className="relative flex-1 flex flex-col items-center justify-center min-h-[90vh] overflow-hidden px-4 sm:px-6 text-center">
 
       {/* Cercles flottants en arrière-plan */}
       <div className="absolute inset-0 pointer-events-none">
@@ -18,7 +24,7 @@ export default function NotFound() {
 
       {/* 404 glitch */}
       <div className="relative select-none mb-2">
-        <span className="glitch text-[clamp(7rem,22vw,16rem)] font-black leading-none tracking-tighter text-[#f5f5f5]" data-text="404">
+        <span className="glitch text-[clamp(7rem,22vw,16rem)] font-black leading-none tracking-tighter text-[var(--text-primary)]" data-text="404">
           404
         </span>
       </div>
@@ -31,7 +37,7 @@ export default function NotFound() {
       </div>
 
       {/* Message */}
-      <p className="text-[#6b7280] text-sm max-w-xs leading-relaxed mb-10 tracking-wide">
+      <p className="text-[var(--text-muted)] text-sm max-w-xs leading-relaxed mb-10 tracking-wide">
         Cette page s'est dissoute dans l'encre.<br />
         Il ne reste plus rien ici.
       </p>
@@ -39,7 +45,7 @@ export default function NotFound() {
       {/* Bouton retour */}
       <Link
         to="/"
-        className="group relative inline-flex items-center gap-3 px-8 py-3 border border-[#22c55e]/40 rounded-full text-sm text-[#f5f5f5] tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
+        className="group relative inline-flex items-center gap-3 px-5 sm:px-8 py-3 border border-[#22c55e]/40 rounded-lg text-xs sm:text-sm text-[var(--text-primary)] tracking-wide sm:tracking-widest uppercase overflow-hidden transition-all duration-300 hover:border-[#22c55e]"
       >
         <span className="absolute inset-0 bg-[#22c55e]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         <span className="relative">← Retour à l'accueil</span>

@@ -1,13 +1,31 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { useCookieConsent, hasConsent } from './CookieContext'
 
 const KEY = 'anime-ink-favorites'
+const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
 const FavoritesContext = createContext(null)
 
 export function FavoritesProvider({ children }) {
+  const { consent } = useCookieConsent()
+  const canStore = consent?.userdata === true
+
   const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(KEY)) || [] }
+    if (!hasConsent('userdata')) return []
+    try { return dedup(JSON.parse(localStorage.getItem(KEY)) || []) }
     catch { return [] }
   })
+
+  const mounted = useRef(false)
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return }
+    if (canStore) {
+      try { setFavorites(dedup(JSON.parse(localStorage.getItem(KEY)) || [])) }
+      catch { setFavorites([]) }
+    } else {
+      setFavorites([])
+      localStorage.removeItem(KEY)
+    }
+  }, [canStore])
 
   const toggle = (anime) => {
     setFavorites(prev => {
@@ -15,17 +33,11 @@ export function FavoritesProvider({ children }) {
       const next = exists
         ? prev.filter(f => f.mal_id !== anime.mal_id)
         : [...prev, {
-            mal_id: anime.mal_id,
-            title: anime.title,
-            images: anime.images,
-            score: anime.score,
-            episodes: anime.episodes,
-            status: anime.status,
-            aired: anime.aired,
-            genres: anime.genres,
-            synopsis: anime.synopsis,
+            mal_id: anime.mal_id, title: anime.title, images: anime.images,
+            score: anime.score, episodes: anime.episodes, status: anime.status,
+            aired: anime.aired, genres: anime.genres, synopsis: anime.synopsis,
           }]
-      localStorage.setItem(KEY, JSON.stringify(next))
+      if (canStore) localStorage.setItem(KEY, JSON.stringify(next))
       return next
     })
   }
