@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useDebounce } from '../hooks/useDebounce'
 import { useSEO } from '../hooks/useSEO'
 import AnimeCard from '../components/AnimeCard'
@@ -371,9 +371,9 @@ export default function Home() {
             <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</span>
           </div>
           <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
-          <a href="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[#16a34a] transition-colors">
+          <Link to="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[#16a34a] transition-colors">
             Voir tout →
-          </a>
+          </Link>
         </div>
 
         {topLoading ? (
