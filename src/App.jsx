@@ -35,7 +35,7 @@ export default function App() {
     <FavoritesProvider>
     <WatchlistProvider>
     <ModalProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/Anime-Ink">
         <div className="min-h-screen flex flex-col overflow-x-hidden">
           <Navbar />
           <Suspense fallback={<PageFallback />}>
