@@ -6,6 +6,7 @@ import { WATCH_STATUS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { Link } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
+import { groupAnime } from '../utils/groupAnime'
 
 function StatCard({ label, value, sub }) {
   return (
@@ -18,7 +19,7 @@ function StatCard({ label, value, sub }) {
 }
 
 export default function Profil() {
-  useSEO({ title: 'Mon profil', description: 'Tes statistiques, favoris, historique et liste de suivi sur Anime-Ink.' })
+  useSEO({ title: 'Mon profil', description: 'Tes statistiques, favoris, historique et liste de suivi sur Anime-Ink.', robots: 'noindex, follow' })
   const { favorites } = useFavorites()
   const { history } = useHistory()
   const { watchlist } = useWatchlist()
@@ -193,7 +194,7 @@ export default function Profil() {
                 </Link>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                {favorites.slice(0, 6).map(anime => (
+                {favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i).slice(0, 6).map(anime => (
                   <AnimeCard key={anime.mal_id} anime={anime} />
                 ))}
               </div>

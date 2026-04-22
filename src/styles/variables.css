@@ -3,22 +3,28 @@
   --bg-base: #0f0f0f;
   --bg-surface: #1a1a1a;
   --text-primary: #f5f5f5;
-  --text-muted: #6b7280;
+  --text-muted: #9ca3af;
   --border-color: rgba(255, 255, 255, 0.1);
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-medium: rgba(255, 255, 255, 0.2);
   --navbar-bg: rgba(15, 15, 15, 0.9);
   --overlay-soft: rgba(255, 255, 255, 0.05);
+  --color-accent: #22c55e;
+  --badge-airing-bg: rgba(34, 197, 94, 0.2);
+  --badge-airing-text: #22c55e;
 }
 
 :root.light {
   --bg-base: #f5f5f5;
   --bg-surface: #ffffff;
   --text-primary: #0f0f0f;
-  --text-muted: #6b7280;
+  --text-muted: #4b5563;
   --border-color: rgba(0, 0, 0, 0.1);
   --border-subtle: rgba(0, 0, 0, 0.06);
   --border-medium: rgba(0, 0, 0, 0.15);
   --navbar-bg: rgba(245, 245, 245, 0.9);
   --overlay-soft: rgba(0, 0, 0, 0.05);
+  --color-accent: #15803d;
+  --badge-airing-bg: #15803d;
+  --badge-airing-text: #ffffff;
 }

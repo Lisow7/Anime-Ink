@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useSEO } from '../hooks/useSEO'
 
 export default function NotFound() {
+  useSEO({
+    title: 'Page non trouvée',
+    description: "Cette page n'existe pas sur Anime-Ink. Retourne à l'accueil pour explorer le catalogue.",
+    robots: 'noindex, follow',
+  })
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center min-h-[90vh] overflow-hidden px-4 sm:px-6 text-center">
 

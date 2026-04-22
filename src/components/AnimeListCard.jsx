@@ -23,7 +23,7 @@ export default function AnimeListCard({ anime }) {
     >
       <div className="shrink-0 relative">
         <img
-          src={images?.jpg?.large_image_url}
+          src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
           alt={title}
           className="w-16 h-24 object-cover rounded-lg"
           style={blurred ? { filter: 'blur(8px)', transform: 'scale(1.05)' } : undefined}

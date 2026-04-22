@@ -1,7 +1,12 @@
 User-agent: *
 Allow: /
+
+# Pages privées — données personnelles
+Disallow: /profil
 Disallow: /catalogue?tab=favoris
 Disallow: /catalogue?tab=recents
 Disallow: /catalogue?tab=liste
+
+Crawl-delay: 1
 
 Sitemap: https://anime-ink.app/sitemap.xml

@@ -18,6 +18,8 @@ export default function AnimeDetail() {
     description: anime?.synopsis
       ? anime.synopsis.replace(/\[Written by.*?\]/g, '').trim().slice(0, 160)
       : undefined,
+    canonical: `https://anime-ink.app/anime/${id}`,
+    ogImage: anime?.images?.jpg?.large_image_url,
   })
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function AnimeDetail() {
 
   const {
     title, title_japanese, images, synopsis, score, scored_by,
-    episodes, duration, status, aired, season, year, genres,
+    episodes, airing, duration, status, aired, season, year, genres,
     studios, trailer, rank, popularity
   } = anime
 
@@ -76,6 +78,9 @@ export default function AnimeDetail() {
         <img
           src={images?.jpg?.large_image_url}
           alt={title}
+          width={192}
+          height={288}
+          fetchpriority="high"
           className="w-36 min-[500px]:w-44 sm:w-48 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
         />
         <div className="flex flex-col gap-4">
@@ -98,7 +103,7 @@ export default function AnimeDetail() {
 
           <div className="grid grid-cols-2 min-[500px]:grid-cols-3 gap-3 sm:gap-4 bg-[var(--bg-surface)] rounded-xl p-3 sm:p-4">
             {infoItem('Statut', STATUS_LABEL[status] ?? status)}
-            {infoItem('Épisodes', episodes)}
+            {infoItem('Épisodes', episodes ?? (airing ? 'En cours' : '?'))}
             {infoItem('Durée / ép.', duration)}
             {infoItem('Diffusion', aired?.string)}
             {infoItem('Saison', season && year ? `${season} ${year}` : year)}

@@ -7,6 +7,17 @@ import { useModal } from '../context/ModalContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { getAnimeSeasons } from '../services/jikan'
 
+const TYPE_TAG_LABELS = { Movie: 'Film', OVA: 'OVA', ONA: 'ONA', Special: 'Spécial', 'TV Special': 'Spécial TV' }
+
+function TypeTag({ type }) {
+  const label = TYPE_TAG_LABELS[type] ?? type ?? 'Autre'
+  return (
+    <span className="w-fit text-[11px] px-2 py-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-muted)] font-semibold whitespace-nowrap">
+      {label}
+    </span>
+  )
+}
+
 const SORTS = [
   { value: 'added',  label: "Ordre d'ajout" },
   { value: 'title',  label: 'A → Z' },
@@ -45,7 +56,7 @@ function EpisodeTracker({ anime, setEpisode, setSeason }) {
           </select>
         ) : (
           <span className={tag}>
-            {seasonData === undefined ? `Saison ${season}…` : `Saison ${season}`}
+            Saison {season}
           </span>
         )}
       </div>
@@ -90,7 +101,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
       <div className="flex min-[825px]:hidden items-start gap-3 px-4 py-3">
         <button onClick={() => openModal(anime.mal_id)} className="shrink-0">
           <img
-            src={anime.images?.jpg?.large_image_url}
+            src={anime.images?.jpg?.image_url ?? anime.images?.jpg?.large_image_url}
             alt={anime.title}
             className="w-12 h-[72px] object-cover rounded-lg"
           />
@@ -132,6 +143,11 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
               </button>
             ))}
           </div>
+          {anime.watchStatus !== 'completed' && (
+            anime.type && anime.type !== 'TV'
+              ? <TypeTag type={anime.type} />
+              : <EpisodeTracker anime={anime} setEpisode={setEpisode} setSeason={setSeason} />
+          )}
         </div>
       </div>
 
@@ -150,7 +166,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
         <span className="text-[var(--text-muted)] text-xs text-right tabular-nums">{index + 1}</span>
         <button onClick={() => openModal(anime.mal_id)} className="group">
           <img
-            src={anime.images?.jpg?.large_image_url}
+            src={anime.images?.jpg?.image_url ?? anime.images?.jpg?.large_image_url}
             alt={anime.title}
             className="w-14 h-20 object-cover rounded-lg group-hover:ring-1 group-hover:ring-[#22c55e] transition-all"
           />
@@ -163,7 +179,9 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
             </p>
           </div>
           {anime.watchStatus !== 'completed' && (
-            <EpisodeTracker anime={anime} setEpisode={setEpisode} setSeason={setSeason} />
+            anime.type && anime.type !== 'TV'
+              ? <TypeTag type={anime.type} />
+              : <EpisodeTracker anime={anime} setEpisode={setEpisode} setSeason={setSeason} />
           )}
         </div>
         <div className="flex items-center gap-1.5">
@@ -196,11 +214,127 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
   )
 }
 
+const EMPTY_STATUS_CONFIG = {
+  to_watch: {
+    color: '#6b7280',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+    title: 'Aucun titre en attente',
+    sub: 'Explore le catalogue et ajoute des animés à ta liste',
+  },
+  watching: {
+    color: '#f59e0b',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+      </svg>
+    ),
+    title: 'Rien en lecture',
+    sub: 'Les animés que tu regardes en ce moment apparaîtront ici',
+  },
+  completed: {
+    color: '#22c55e',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    ),
+    title: 'Aucun animé terminé',
+    sub: 'Marque un animé comme terminé pour le retrouver ici',
+  },
+  all: {
+    color: '#6b7280',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="13" y2="13"/>
+      </svg>
+    ),
+    title: 'Liste vide',
+    sub: 'Ajoute un premier animé depuis le catalogue',
+  },
+}
+
+function EmptyStatusState({ status }) {
+  const cfg = EMPTY_STATUS_CONFIG[status] ?? EMPTY_STATUS_CONFIG.all
+  return (
+    <div className="flex flex-col items-center gap-4 py-16 text-center select-none">
+      <div
+        className="w-20 h-20 rounded-2xl flex items-center justify-center"
+        style={{ backgroundColor: `${cfg.color}12`, color: `${cfg.color}60` }}
+      >
+        {cfg.icon}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[var(--text-primary)] text-base font-semibold">{cfg.title}</p>
+        <p className="text-[var(--text-muted)] text-sm max-w-[260px] leading-relaxed">{cfg.sub}</p>
+      </div>
+      <div className="flex gap-1 mt-1">
+        {[20, 14, 8].map((w, i) => (
+          <span key={i} className="h-[3px] rounded-full" style={{ width: w, backgroundColor: i === 0 ? cfg.color : `${cfg.color}30` }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function WatchlistSkeleton() {
+  return (
+    <div className="rounded-xl border border-[var(--border-color)] overflow-hidden animate-pulse">
+      <div className="h-[2px] bg-gradient-to-r from-[#22c55e] via-[#22c55e]/40 to-transparent" />
+      <div className="flex flex-col">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className={i > 0 ? 'border-t border-[var(--border-subtle)]' : ''}>
+            {/* Mobile */}
+            <div className="flex min-[825px]:hidden items-start gap-3 px-4 py-3">
+              <div className="w-12 h-[72px] rounded-lg bg-[var(--bg-surface)] shrink-0" />
+              <div className="flex-1 flex flex-col gap-2 pt-1">
+                <div className="h-3.5 bg-[var(--bg-surface)] rounded w-3/4" />
+                <div className="h-2.5 bg-[var(--bg-surface)] rounded w-1/2" />
+                <div className="flex gap-1 mt-1">
+                  {[40, 52, 60].map(w => (
+                    <div key={w} className="h-6 rounded-lg bg-[var(--bg-surface)]" style={{ width: w }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Desktop */}
+            <div className="hidden min-[825px]:grid grid-cols-[1.5rem_2rem_5rem_1fr_auto] items-center gap-4 px-5 py-4">
+              <div className="w-3.5 h-3.5 rounded bg-[var(--bg-surface)]" />
+              <div className="w-5 h-3 rounded bg-[var(--bg-surface)] ml-auto" />
+              <div className="w-14 h-20 rounded-lg bg-[var(--bg-surface)]" />
+              <div className="flex flex-col gap-2">
+                <div className="h-3.5 bg-[var(--bg-surface)] rounded w-2/3" />
+                <div className="h-2.5 bg-[var(--bg-surface)] rounded w-1/3" />
+                <div className="flex gap-2 mt-1">
+                  <div className="h-7 w-20 rounded-lg bg-[var(--bg-surface)]" />
+                  <div className="h-7 w-24 rounded-lg bg-[var(--bg-surface)]" />
+                </div>
+              </div>
+              <div className="flex gap-1.5">
+                {[72, 72, 72].map((w, j) => (
+                  <div key={j} className="h-8 rounded-lg bg-[var(--bg-surface)]" style={{ width: w }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function WatchlistTable({ list }) {
   const { setStatus, setEpisode, setSeason, setSeasonData, remove, reorder } = useWatchlist()
   const { openModal } = useModal()
   const [filterStatus, setFilterStatus] = useState('all')
   const [sort, setSort] = useState('added')
+  const [isReady, setIsReady] = useState(false)
   const fetchedIds = useRef(new Set())
   const listIds = useMemo(() => list.map(a => a.mal_id).join(','), [list])
 
@@ -218,6 +352,12 @@ export default function WatchlistTable({ list }) {
     })()
     return () => { active = false }
   }, [listIds])
+
+  useEffect(() => {
+    setIsReady(false)
+    const t = setTimeout(() => setIsReady(true), 480)
+    return () => clearTimeout(t)
+  }, [filterStatus])
 
   const isDragEnabled = sort === 'added' && filterStatus === 'all'
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -275,6 +415,7 @@ export default function WatchlistTable({ list }) {
           <select
             value={sort}
             onChange={e => setSort(e.target.value)}
+            aria-label="Trier la liste"
             className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#22c55e] cursor-pointer"
           >
             {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -293,10 +434,10 @@ export default function WatchlistTable({ list }) {
         </p>
       )}
 
-      {filtered.length === 0 ? (
-        <p className="text-center text-[var(--text-muted)] text-sm py-12">
-          Aucun animé avec ce statut.
-        </p>
+      {!isReady && list.length > 0 ? (
+        <WatchlistSkeleton />
+      ) : filtered.length === 0 ? (
+        <EmptyStatusState status={filterStatus} />
       ) : (
         <div className="rounded-xl border border-[var(--border-color)] overflow-hidden">
           <div className="flex flex-col">

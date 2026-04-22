@@ -4,6 +4,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import { useSEO } from '../hooks/useSEO'
 import AnimeCard from '../components/AnimeCard'
 import { getTopAnime, getRandomAnime, searchAnime } from '../services/jikan'
+import { groupAnime } from '../utils/groupAnime'
 import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
@@ -35,11 +36,14 @@ export default function Home() {
     })
   }, [])
 
+  const CACHE_KEY = 'anime-ink-random'
+  const CACHE_TTL = 3600 * 1000
+
   const fetchRandom = useCallback((isRefresh = false) => {
     const apply = (data, setDone) => {
       if (!data) { setDone(); return }
       const img = new Image()
-      img.src = data.images?.jpg?.large_image_url
+      img.src = data.images?.jpg?.image_url ?? data.images?.jpg?.large_image_url
       const done = () => { setRandom(data); setDone() }
       img.onload = done
       img.onerror = done
@@ -49,12 +53,36 @@ export default function Home() {
       setIsRefreshing(true)
       setRefreshCount(c => c + 1)
       getRandomAnime()
-        .then((data) => apply(data, () => setIsRefreshing(false)))
+        .then((data) => {
+          if (data) {
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
+          }
+          apply(data, () => setIsRefreshing(false))
+        })
         .catch(() => setIsRefreshing(false))
     } else {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null')
+        if (cached && Date.now() - cached.ts < CACHE_TTL) {
+          setRandom(cached.data)
+          setRandomLoading(false)
+          getRandomAnime().then(data => {
+            if (data) {
+              try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
+              setRandom(data)
+            }
+          }).catch(() => {})
+          return
+        }
+      } catch {}
       setRandomLoading(true)
       getRandomAnime()
-        .then((data) => apply(data, () => setRandomLoading(false)))
+        .then((data) => {
+          if (data) {
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
+          }
+          apply(data, () => setRandomLoading(false))
+        })
         .catch(() => setRandomLoading(false))
     }
   }, [])
@@ -66,7 +94,7 @@ export default function Home() {
     if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
     setSuggestionsLoading(true)
     searchAnime(q)
-      .then(results => { setSuggestions(results?.slice(0, 6) ?? []); setSuggestionsLoading(false) })
+      .then(results => { setSuggestions(groupAnime(results ?? []).slice(0, 6)); setSuggestionsLoading(false) })
       .catch(() => { setSuggestions([]); setSuggestionsLoading(false) })
   }, [debouncedQuery])
 
@@ -105,7 +133,7 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <h1 className="text-5xl font-bold text-[var(--text-primary)] tracking-tight leading-tight">
             Découvre l'univers<br />
-            <span className="text-[#22c55e]">des animés</span>
+            <span className="text-[var(--color-accent)]">des animés</span>
           </h1>
           <p className="text-[var(--text-muted)] text-lg">
             Recherche, explore et découvre des milliers d'animés.
@@ -198,14 +226,17 @@ export default function Home() {
         {randomLoading ? (
           <div className="relative w-full h-64 rounded-2xl overflow-hidden bg-[var(--bg-surface)] animate-pulse" />
         ) : random ? (
-          <div className={`relative w-full h-52 sm:h-64 md:h-72 rounded-2xl overflow-hidden transition-all duration-300 ${isRefreshing ? 'opacity-30 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
+          <div className={`relative w-full h-52 sm:h-64 md:h-72 rounded-2xl overflow-hidden bg-gradient-to-br from-[#0d1f10] to-[#0f0f0f] transition-all duration-300 ${isRefreshing ? 'opacity-30 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
 
-            {/* Fond flouté */}
-            <img
-              src={random.images?.jpg?.large_image_url}
-              alt=""
+            {/* Fond flouté — masqué sur mobile pour que le LCP soit le <h1> (statique) */}
+            <div
               aria-hidden
-              className="absolute inset-0 w-full h-full object-cover scale-110 blur-lg opacity-20"
+              className="absolute inset-0 w-full h-full scale-110 blur-lg opacity-20 hidden sm:block"
+              style={{
+                backgroundImage: `url(${random.images?.jpg?.image_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
             />
 
             {/* Gradient gauche */}
@@ -251,12 +282,19 @@ export default function Home() {
             {/* Contenu */}
             <div className="absolute inset-0 z-10 flex items-center gap-4 sm:gap-6 px-4 sm:px-6 md:px-8">
 
-              {/* Poster */}
-              <div className="relative hidden sm:block shrink-0">
+              {/* Poster cliquable */}
+              <button
+                className="relative hidden sm:block shrink-0 group"
+                onClick={() => openModal(random.mal_id)}
+                aria-label={`Ouvrir ${random.title}`}
+              >
                 <img
-                  src={random.images?.jpg?.large_image_url}
+                  src={random.images?.jpg?.image_url ?? random.images?.jpg?.large_image_url}
                   alt={random.title}
-                  className="h-44 rounded-xl shadow-2xl object-cover"
+                  fetchpriority="high"
+                  width={176}
+                  height={264}
+                  className="h-44 rounded-xl shadow-2xl object-cover transition-transform duration-200 group-hover:scale-105"
                   style={randomBlurred ? { filter: 'blur(10px)', transform: 'scale(1.05)' } : undefined}
                 />
                 {randomBlurred && (
@@ -274,16 +312,19 @@ export default function Home() {
                   </div>
                   </div>
                 )}
-              </div>
+              </button>
 
               {/* Texte */}
               <div className="flex flex-col gap-3 min-w-0">
                 {random.title_japanese && !randomBlurred && (
                   <p className="text-white/40 text-xs tracking-wide truncate">{random.title_japanese}</p>
                 )}
-                <h3 className="text-white font-bold text-xl sm:text-2xl leading-tight line-clamp-2">
+                <h2
+                  className="text-white font-bold text-xl sm:text-2xl leading-tight line-clamp-2 cursor-pointer hover:text-[#22c55e] transition-colors"
+                  onClick={() => openModal(random.mal_id)}
+                >
                   {randomBlurred ? '??? — Contenu adulte' : random.title}
-                </h3>
+                </h2>
 
                 {!randomBlurred && (
                   <div className="flex items-center gap-3">
@@ -343,7 +384,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 min-[540px]:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {topAnimes.map((anime) => (
+            {groupAnime(topAnimes).map((anime) => (
               <AnimeCard key={anime.mal_id} anime={anime} />
             ))}
           </div>

@@ -59,7 +59,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
         <Link to="/" className="text-[var(--text-primary)] font-bold text-xl tracking-tight shrink-0">
-          Anime-<span className="text-[#22c55e]">Ink</span>
+          Anime-<span className="text-[var(--color-accent)]">Ink</span>
         </Link>
 
         {/* Desktop nav */}
