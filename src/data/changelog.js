@@ -11,6 +11,7 @@ export const CHANGELOG = [
       { type: 'fix',   label: 'URLs canoniques, SEO et sitemap mis à jour' },
       { type: 'ui',    label: 'Tooltip sur les titres tronqués au survol' },
       { type: 'ui',    label: 'Footer — version affichée et cliquable' },
+      { type: 'chore', label: '.gitignore — rapports Lighthouse exclus du dépôt' },
     ],
   },
   {

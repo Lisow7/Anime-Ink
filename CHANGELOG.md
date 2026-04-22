@@ -17,6 +17,9 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 - Tooltip sur les titres tronqués : nom complet visible au survol
 - Footer : bouton version cliquable ouvrant les notes de version (changelog)
 
+### Maintenance
+- `.gitignore` : rapports Lighthouse exclus du dépôt
+
 ---
 
 ## [1.0] — 22 avril 2026
