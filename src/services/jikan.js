@@ -1,15 +1,33 @@
+import { ANIME_ACRONYMS } from '../constants/acronyms'
+import { normalizeTitle } from '../utils/groupAnime'
+
 const BASE_URL = 'https://api.jikan.moe/v4'
 
+function generateAcronym(title) {
+  if (!title) return ''
+  return title
+    .split(/[\s\-:!?.,+×x\/]+/)
+    .filter(w => /[a-zA-Z\u00C0-\u024F]/.test(w))
+    .map(w => w[0].toUpperCase())
+    .join('')
+}
+
 export async function searchAnime(query, signal) {
+  const upperQ = query.trim().toUpperCase()
+  const expandedQuery = ANIME_ACRONYMS[upperQ] || query.trim()
+  const isAcronym = expandedQuery !== query.trim()
+
   try {
-    const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`, { signal })
+    const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
     if (!res.ok) return []
     const data = await res.json()
-    const q = query.toLowerCase()
+    const lower = expandedQuery.toLowerCase()
     return (data.data ?? [])
       .filter((anime) =>
-        anime.title?.toLowerCase().includes(q) ||
-        anime.title_english?.toLowerCase().includes(q)
+        anime.title?.toLowerCase().includes(lower) ||
+        anime.title_english?.toLowerCase().includes(lower) ||
+        (isAcronym ? false : generateAcronym(anime.title || '') === upperQ) ||
+        (isAcronym ? false : generateAcronym(anime.title_english || '') === upperQ)
       )
       .sort((a, b) => {
         const dateA = a.aired?.from ? new Date(a.aired.from) : new Date(0)
@@ -100,6 +118,74 @@ export async function getAnimeRecommendations(id) {
   return (data.data ?? []).slice(0, 6).map(r => r.entry)
 }
 
+export async function getAnimeFranchise(animeTitle) {
+  if (!animeTitle) return { seasons: [], others: [] }
+
+  // Filtre qui accepte un titre direct ou un titre inversé "SousTitre: Franchise"
+  function matchesBase(a, norm) {
+    if (normalizeTitle(a.title || '') === norm) return true
+    const ci = (a.title || '').indexOf(': ')
+    return ci > 0 && normalizeTitle(a.title.slice(ci + 2)) === norm
+  }
+
+  async function fetchRelated(norm) {
+    const res = await fetch(
+      `${BASE_URL}/anime?q=${encodeURIComponent(norm)}&limit=25&order_by=start_date&sort=asc`
+    )
+    if (!res.ok) return []
+    const json = await res.json()
+    return (json.data ?? []).filter(a => matchesBase(a, norm))
+  }
+
+  try {
+    let baseTitle = normalizeTitle(animeTitle)
+    if (!baseTitle) return { seasons: [], others: [] }
+
+    let related = await fetchRelated(baseTitle)
+
+    // Cas "SousTitre: FranchiseName" (ex: "Steel Ball Run: JoJo no Kimyou na Bouken")
+    // Si la recherche principale donne peu de résultats et que le sous-titre est plus long,
+    // on tente le sous-titre comme clé de franchise
+    const colonIdx = animeTitle.indexOf(': ')
+    if (colonIdx > 0 && related.length <= 2) {
+      const subtitleNorm = normalizeTitle(animeTitle.slice(colonIdx + 2))
+      if (subtitleNorm && subtitleNorm.length > baseTitle.length) {
+        const subtitleRelated = await fetchRelated(subtitleNorm)
+        if (subtitleRelated.length > related.length) {
+          baseTitle = subtitleNorm
+          related = subtitleRelated
+        }
+      }
+    }
+
+    const seasons = related
+      .filter(a => a.type === 'TV')
+      .map(a => ({ mal_id: a.mal_id, title: a.title, episodes: a.episodes, year: a.year }))
+
+    const seasonIds = new Set(seasons.map(s => s.mal_id))
+    const others = related
+      .filter(a => a.type !== 'TV' && !seasonIds.has(a.mal_id))
+      .map(a => {
+        const t = a.title || ''
+        const ci = t.indexOf(': ')
+        let label
+        if (ci > 0) {
+          const sub = t.slice(ci + 2)
+          // Titre inversé ("Steel Ball Run: JoJo no Kimyou na Bouken") → label = partie avant
+          label = normalizeTitle(sub) === baseTitle ? t.slice(0, ci) : sub
+        } else {
+          const cleaned = t.replace(/\s*\([^)]*\)\s*$/, '').trim()
+          label = normalizeTitle(cleaned) === baseTitle ? a.type : cleaned
+        }
+        return { mal_id: a.mal_id, title: a.title, type: a.type, label }
+      })
+
+    return { seasons, others }
+  } catch {
+    return { seasons: [], others: [] }
+  }
+}
+
 export async function getAnimeSeasons(animeId, ownEpisodes) {
   const cache = new Map()
 
@@ -161,7 +247,7 @@ export async function getAnimeSeasons(animeId, ownEpisodes) {
   while (queue.length > 0) {
     const next = []
     for (const id of queue) {
-      const data = await fetchFull(id) // cache si déjà récupéré via prequels
+      const data = await fetchFull(id)
       if (!data) continue
       if (data.type === 'TV') {
         seasons.push({

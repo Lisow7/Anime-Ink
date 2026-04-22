@@ -1,9 +1,12 @@
+import { useSEO } from '../hooks/useSEO'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { Link } from 'react-router-dom'
+import AnimeCard from '../components/AnimeCard'
+import { groupAnime } from '../utils/groupAnime'
 
 function StatCard({ label, value, sub }) {
   return (
@@ -16,6 +19,7 @@ function StatCard({ label, value, sub }) {
 }
 
 export default function Profil() {
+  useSEO({ title: 'Mon profil', description: 'Tes statistiques, favoris, historique et liste de suivi sur Anime-Ink.', robots: 'noindex, follow' })
   const { favorites } = useFavorites()
   const { history } = useHistory()
   const { watchlist } = useWatchlist()
@@ -53,15 +57,66 @@ export default function Profil() {
       </div>
 
       {isEmpty ? (
-        <div className="flex flex-col items-center gap-4 py-20 text-center">
-          <p className="text-[var(--text-muted)] text-lg">Aucune activité pour l'instant.</p>
-          <p className="text-[var(--text-muted)] text-sm">Explore le catalogue et ajoute des animés à tes favoris pour voir tes stats ici.</p>
-          <Link
-            to="/catalogue"
-            className="mt-2 px-5 py-2 bg-[#22c55e] text-black text-sm font-semibold rounded-lg hover:bg-[#16a34a] transition-colors"
-          >
-            Explorer le catalogue
-          </Link>
+        <div className="relative">
+          {/* Skeleton flou en arrière-plan */}
+          <div className="flex flex-col gap-8 sm:gap-10 opacity-30 pointer-events-none select-none">
+          {/* Skeleton stats */}
+          <section className="flex flex-col gap-4">
+            <div className="h-4 w-28 bg-[var(--bg-surface)] rounded-md" />
+            <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-4 sm:p-6 flex flex-col gap-3">
+                  <div className="h-3 w-20 bg-[var(--border-color)] rounded" />
+                  <div className="h-10 w-14 bg-[var(--border-color)] rounded-md" />
+                  <div className="h-2.5 w-24 bg-[var(--border-color)] rounded" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Skeleton genres */}
+          <section className="flex flex-col gap-4">
+            <div className="h-4 w-32 bg-[var(--bg-surface)] rounded-md" />
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-28 h-3.5 bg-[var(--bg-surface)] rounded" />
+                  <div className="flex-1 bg-[var(--bg-surface)] rounded-full h-2.5">
+                    <div className="h-2.5 bg-[var(--border-color)] rounded-full" style={{ width: `${85 - i * 14}%` }} />
+                  </div>
+                  <div className="w-5 h-3.5 bg-[var(--bg-surface)] rounded" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Skeleton favoris */}
+          <section className="flex flex-col gap-4">
+            <div className="h-4 w-28 bg-[var(--bg-surface)] rounded-md" />
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                  <div className="aspect-[2/3] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)]" />
+                  <div className="h-3 bg-[var(--bg-surface)] rounded w-4/5" />
+                  <div className="h-2.5 bg-[var(--bg-surface)] rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          </div>
+
+          {/* Message flottant par-dessus */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center">
+            <p className="text-[var(--text-primary)] font-semibold text-lg">Ton profil t'attend</p>
+            <p className="text-[var(--text-muted)] text-sm max-w-xs">Explore le catalogue, ajoute des favoris et suis tes animés pour voir tes stats ici.</p>
+            <Link
+              to="/catalogue"
+              className="mt-1 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              Explorer le catalogue
+            </Link>
+          </div>
         </div>
       ) : (
         <>
@@ -139,22 +194,8 @@ export default function Profil() {
                 </Link>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                {favorites.slice(0, 6).map(anime => (
-                  <Link key={anime.mal_id} to={`/anime/${anime.mal_id}`} className="flex flex-col gap-1.5 group">
-                    <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[var(--bg-surface)]">
-                      <img
-                        src={anime.images?.jpg?.large_image_url}
-                        alt={anime.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                    <span className="text-[var(--text-muted)] text-[10px] leading-snug line-clamp-2 group-hover:text-[var(--text-primary)] transition-colors">
-                      {anime.title}
-                    </span>
-                    {anime.score && (
-                      <span className="text-[10px] font-semibold" style={{ color: scoreColor(anime.score) }}>★ {anime.score}</span>
-                    )}
-                  </Link>
+                {favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i).slice(0, 6).map(anime => (
+                  <AnimeCard key={anime.mal_id} anime={anime} />
                 ))}
               </div>
             </section>

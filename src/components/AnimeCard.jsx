@@ -12,7 +12,7 @@ function AnimeCard({ anime }) {
   const { openModal } = useModal()
   const { history } = useHistory()
   const { blurHentai } = useAgeFilter()
-  const { mal_id, title, images, score, episodes, status, trailer, genres } = anime
+  const { mal_id, title, images, score, episodes, airing, status, trailer, genres } = anime
   const isHentai = genres?.some(g => HENTAI_GENRES.includes(g.name))
   const isEcchi = genres?.some(g => ECCHI_GENRES.includes(g.name))
   const blurred = blurHentai && (isHentai || isEcchi)
@@ -32,9 +32,11 @@ function AnimeCard({ anime }) {
       >
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
-            src={images?.jpg?.large_image_url}
+            src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
             alt={title}
             loading="lazy"
+            width={225}
+            height={338}
             className={`w-full h-full object-cover transition-all duration-300 ${
               thumbUrl ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
@@ -97,15 +99,15 @@ function AnimeCard({ anime }) {
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <h3 className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</h3>
+          <p className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</p>
           <div className="mt-auto flex items-center justify-between pt-2">
             <span className="text-[var(--text-muted)] text-xs">
-              {episodes ? `${episodes} ép.` : '? ép.'}
+              {episodes ? `${episodes} ép.` : airing ? 'En cours' : '? ép.'}
             </span>
             {status && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
                 status === 'Currently Airing'
-                  ? 'bg-[#22c55e]/20 text-[#22c55e]'
+                  ? 'bg-[var(--badge-airing-bg)] text-[var(--badge-airing-text)]'
                   : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
               }`}>
                 {STATUS_LABEL[status] ?? status}

@@ -23,7 +23,7 @@ export default function AnimeListCard({ anime }) {
     >
       <div className="shrink-0 relative">
         <img
-          src={images?.jpg?.large_image_url}
+          src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
           alt={title}
           className="w-16 h-24 object-cover rounded-lg"
           style={blurred ? { filter: 'blur(8px)', transform: 'scale(1.05)' } : undefined}
@@ -52,7 +52,7 @@ export default function AnimeListCard({ anime }) {
           {score && <span className="text-xs font-bold" style={{ color: scoreColor(score) }}>★ {score}</span>}
           <span className="text-[var(--text-muted)] text-xs">{episodes ? `${episodes} ép.` : '? ép.'}</span>
           {status && (
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            <span className={`text-xs px-2 py-0.5 rounded font-medium ${
               status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
             }`}>
               {STATUS_LABEL[status] ?? status}
@@ -63,7 +63,7 @@ export default function AnimeListCard({ anime }) {
         {genres?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {genres.slice(0, 3).map(g => (
-              <span key={g.mal_id} className="text-[10px] text-[var(--text-muted)] bg-[var(--overlay-soft)] px-2 py-0.5 rounded-full">
+              <span key={g.mal_id} className="text-[10px] text-[var(--text-muted)] bg-[var(--overlay-soft)] px-2 py-0.5 rounded">
                 {g.name}
               </span>
             ))}
