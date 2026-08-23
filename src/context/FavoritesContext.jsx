@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useCookieConsent, hasConsent } from './CookieContext'
+import { readStorage, removeStorage, writeStorage } from '../utils/storage'
 
 const KEY = 'anime-ink-favorites'
 const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
@@ -11,19 +12,17 @@ export function FavoritesProvider({ children }) {
 
   const [favorites, setFavorites] = useState(() => {
     if (!hasConsent('userdata')) return []
-    try { return dedup(JSON.parse(localStorage.getItem(KEY)) || []) }
-    catch { return [] }
+    return dedup(readStorage(KEY, [], Array.isArray))
   })
 
   const mounted = useRef(false)
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return }
     if (canStore) {
-      try { setFavorites(dedup(JSON.parse(localStorage.getItem(KEY)) || [])) }
-      catch { setFavorites([]) }
+      setFavorites(dedup(readStorage(KEY, [], Array.isArray)))
     } else {
       setFavorites([])
-      localStorage.removeItem(KEY)
+      removeStorage(KEY)
     }
   }, [canStore])
 
@@ -37,7 +36,7 @@ export function FavoritesProvider({ children }) {
             score: anime.score, episodes: anime.episodes, status: anime.status,
             aired: anime.aired, genres: anime.genres, synopsis: anime.synopsis,
           }]
-      if (canStore) localStorage.setItem(KEY, JSON.stringify(next))
+      if (canStore) writeStorage(KEY, next)
       return next
     })
   }
@@ -46,7 +45,7 @@ export function FavoritesProvider({ children }) {
 
   const clearFavorites = () => {
     setFavorites([])
-    localStorage.removeItem(KEY)
+    removeStorage(KEY)
   }
 
   return (

@@ -197,12 +197,12 @@ export async function getRandomAnime() {
   return data.data
 }
 
-export async function getAnimeRecommendations(id) {
-  const data = await requestJson(`/anime/${id}/recommendations`)
+export async function getAnimeRecommendations(id, signal) {
+  const data = await requestJson(`/anime/${id}/recommendations`, { signal })
   return (data.data ?? []).slice(0, 6).map(r => r.entry)
 }
 
-export async function getAnimeFranchise(animeTitle) {
+export async function getAnimeFranchise(animeTitle, signal) {
   if (!animeTitle) return { seasons: [], others: [] }
 
   // Filtre qui accepte un titre direct ou un titre inversé "SousTitre: Franchise"
@@ -214,7 +214,8 @@ export async function getAnimeFranchise(animeTitle) {
 
   async function fetchRelated(norm) {
     const json = await requestJson(
-      `/anime?q=${encodeURIComponent(norm)}&limit=25&order_by=start_date&sort=asc`
+      `/anime?q=${encodeURIComponent(norm)}&limit=25&order_by=start_date&sort=asc`,
+      { signal }
     )
     return (json.data ?? []).filter(a => matchesBase(a, norm))
   }

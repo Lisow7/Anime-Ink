@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCookieConsent } from '../context/CookieContext'
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -23,6 +24,12 @@ function Toggle({ checked, onChange, disabled }) {
 export default function CookieBanner() {
   const { consent, acceptAll, refuseAll, saveConsent, settingsOpen, openSettings, closeSettings } = useCookieConsent()
   const [prefs, setPrefs] = useState({ preferences: true, userdata: true })
+  const settingsTriggerRef = useRef(null)
+  const { dialogRef, titleId } = useAccessibleDialog({
+    open: settingsOpen,
+    onClose: closeSettings,
+    returnFocusRef: settingsTriggerRef,
+  })
 
   useEffect(() => {
     if (settingsOpen) {
@@ -56,6 +63,7 @@ export default function CookieBanner() {
                 Tout refuser
               </button>
               <button
+                ref={settingsTriggerRef}
                 onClick={openSettings}
                 className="text-xs px-3 py-2 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:border-[var(--border-medium)] transition-colors"
               >
@@ -77,10 +85,17 @@ export default function CookieBanner() {
           className="fixed inset-0 z-[101] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) closeSettings() }}
         >
-          <div className="bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl shadow-2xl w-full max-w-md flex flex-col gap-5 p-6">
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
+            className="bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl shadow-2xl w-full max-w-md flex flex-col gap-5 p-6"
+          >
 
             <div className="flex items-center justify-between">
-              <h2 className="text-[var(--text-primary)] font-semibold text-base">Préférences de cookies</h2>
+              <h2 id={titleId} className="text-[var(--text-primary)] font-semibold text-base">Préférences de cookies</h2>
               <button
                 onClick={closeSettings}
                 className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1"

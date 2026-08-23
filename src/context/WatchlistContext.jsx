@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useCookieConsent, hasConsent } from './CookieContext'
+import { readStorage, removeStorage, writeStorage } from '../utils/storage'
 
 const KEY = 'anime-ink-watchlist'
 const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
@@ -11,25 +12,23 @@ export function WatchlistProvider({ children }) {
 
   const [watchlist, setWatchlist] = useState(() => {
     if (!hasConsent('userdata')) return []
-    try { return dedup(JSON.parse(localStorage.getItem(KEY)) || []) }
-    catch { return [] }
+    return dedup(readStorage(KEY, [], Array.isArray))
   })
 
   const mounted = useRef(false)
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return }
     if (canStore) {
-      try { setWatchlist(dedup(JSON.parse(localStorage.getItem(KEY)) || [])) }
-      catch { setWatchlist([]) }
+      setWatchlist(dedup(readStorage(KEY, [], Array.isArray)))
     } else {
       setWatchlist([])
-      localStorage.removeItem(KEY)
+      removeStorage(KEY)
     }
   }, [canStore])
 
   const save = (next) => {
     setWatchlist(next)
-    if (canStore) localStorage.setItem(KEY, JSON.stringify(next))
+    if (canStore) writeStorage(KEY, next)
   }
 
   // Cherche une entrée directe OU la racine de franchise contenant cet id
@@ -126,7 +125,7 @@ export function WatchlistProvider({ children }) {
 
   const clearWatchlist = () => {
     setWatchlist([])
-    localStorage.removeItem(KEY)
+    removeStorage(KEY)
   }
 
   return (

@@ -34,3 +34,12 @@
   94%           { transform: translate(2px,  0);    opacity: 1; }
   96%           { transform: translate(0);           opacity: 0; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

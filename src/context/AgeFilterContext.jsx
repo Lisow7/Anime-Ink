@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useCookieConsent, hasConsent } from './CookieContext'
+import { readStorage, removeStorage, writeStorage } from '../utils/storage'
 
 const AgeFilterContext = createContext(null)
 
@@ -9,7 +10,7 @@ export function AgeFilterProvider({ children }) {
 
   const [blurHentai, setBlurHentai] = useState(() => {
     if (hasConsent('preferences')) {
-      return localStorage.getItem('anime-ink-age-filter') !== 'false'
+      return readStorage('anime-ink-age-filter', true, value => typeof value === 'boolean')
     }
     return true
   })
@@ -17,13 +18,13 @@ export function AgeFilterProvider({ children }) {
   const mounted = useRef(false)
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return }
-    if (!canStore) localStorage.removeItem('anime-ink-age-filter')
+    if (!canStore) removeStorage('anime-ink-age-filter')
   }, [canStore])
 
   const toggle = () => {
     const next = !blurHentai
     setBlurHentai(next)
-    if (canStore) localStorage.setItem('anime-ink-age-filter', String(next))
+    if (canStore) writeStorage('anime-ink-age-filter', next)
   }
 
   return (

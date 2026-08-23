@@ -9,6 +9,7 @@ import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
 import { safeYoutubeEmbed } from '../utils/urls'
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
 export default function AnimeModal() {
   const { animeId, openModal, closeModal } = useModal()
@@ -22,6 +23,7 @@ export default function AnimeModal() {
   const [loading, setLoading] = useState(false)
   const [synopsis, setSynopsis] = useState(null)
   const [translating, setTranslating] = useState(false)
+  const [error, setError] = useState(null)
   const [recommendations, setRecommendations] = useState([])
   const [seriesData, setSeriesData] = useState(null)
   const franchiseLoadedFor = useRef(null)
@@ -32,13 +34,7 @@ export default function AnimeModal() {
     setLocalAnimeId(null)
     setSeriesData(null)
   }, [closeModal])
-
-  // Fermer avec Échap
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') close() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [close])
+  const { dialogRef, titleId } = useAccessibleDialog({ open: Boolean(animeId), onClose: close })
 
   // Bloquer le scroll
   useEffect(() => {
@@ -57,26 +53,43 @@ export default function AnimeModal() {
   // Charger l'animé quand localAnimeId change (ouverture ou changement de saison)
   useEffect(() => {
     if (!localAnimeId) return
+    const controller = new AbortController()
     setLoading(true)
+    setError(null)
     setAnime(null)
     setSynopsis(null)
     setRecommendations([])
-    getAnimeById(localAnimeId).then(async (data) => {
-      setAnime(data)
-      setLoading(false)
-      if (data?.synopsis) {
-        setTranslating(true)
-        const fr = await translateSynopsis(data.mal_id, data.synopsis)
-        setSynopsis(fr)
-        setTranslating(false)
+    const load = async () => {
+      try {
+        const data = await getAnimeById(localAnimeId, controller.signal)
+        setAnime(data)
+        if (data?.synopsis) {
+          setTranslating(true)
+          translateSynopsis(data.mal_id, data.synopsis, controller.signal)
+            .then(setSynopsis)
+            .catch(translationError => {
+              if (translationError?.name !== 'AbortError') setSynopsis(data.synopsis)
+            })
+            .finally(() => { if (!controller.signal.aborted) setTranslating(false) })
+        }
+        getAnimeRecommendations(localAnimeId, controller.signal)
+          .then(setRecommendations)
+          .catch(recommendationError => {
+            if (recommendationError?.name !== 'AbortError') setRecommendations([])
+          })
+        if (data && (localAnimeId === animeId || data.type !== 'TV')) recordHistory({
+          mal_id: data.mal_id, title: data.title, images: data.images,
+          score: data.score, episodes: data.episodes, status: data.status,
+          type: data.type, aired: data.aired, genres: data.genres, synopsis: data.synopsis,
+        })
+      } catch (loadError) {
+        if (loadError?.name !== 'AbortError') setError('Impossible de charger cette fiche pour le moment.')
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
       }
-      getAnimeRecommendations(localAnimeId).then(setRecommendations)
-      if (data && (localAnimeId === animeId || data.type !== 'TV')) recordHistory({
-        mal_id: data.mal_id, title: data.title, images: data.images,
-        score: data.score, episodes: data.episodes, status: data.status,
-        type: data.type, aired: data.aired, genres: data.genres, synopsis: data.synopsis,
-      })
-    })
+    }
+    load()
+    return () => controller.abort()
   }, [localAnimeId, animeId])
 
   // Charger les données de la franchise une seule fois par ouverture de modal
@@ -84,7 +97,8 @@ export default function AnimeModal() {
     if (!anime || anime.mal_id !== animeId) return
     if (franchiseLoadedFor.current === animeId) return
     franchiseLoadedFor.current = animeId
-    getAnimeFranchise(anime.title).then(data => {
+    const controller = new AbortController()
+    getAnimeFranchise(anime.title, controller.signal).then(data => {
       let seasons = data.seasons
       let others = data.others
 
@@ -114,7 +128,10 @@ export default function AnimeModal() {
 
       const merged = { seasons, others }
       setSeriesData(merged.seasons.length > 1 || merged.others.length > 0 ? merged : null)
+    }).catch(franchiseError => {
+      if (franchiseError?.name !== 'AbortError') setSeriesData(null)
     })
+    return () => controller.abort()
   }, [anime, animeId])
 
   const switchAnime = useCallback((id) => {
@@ -132,13 +149,22 @@ export default function AnimeModal() {
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) close() }}
     >
-      <div className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl"
+      >
+        <h2 id={titleId} className="sr-only">{anime?.title ?? 'Fiche de l’animé'}</h2>
 
         {/* Bouton fermer */}
         <div className="sticky top-0 z-10 flex justify-end p-3 bg-[var(--bg-base)]/80 backdrop-blur-sm">
           <button
             onClick={close}
             className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-full w-8 h-8 flex items-center justify-center transition-colors shrink-0"
+            aria-label="Fermer la fiche"
           >
             ✕
           </button>
@@ -152,6 +178,11 @@ export default function AnimeModal() {
               <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
               <div className="h-4 bg-[var(--bg-surface)] rounded w-5/6" />
             </div>
+          </div>
+        ) : error ? (
+          <div className="px-6 sm:px-8 pb-10 text-center" role="alert">
+            <p className="text-[var(--text-primary)] font-semibold">Fiche temporairement indisponible</p>
+            <p className="text-[var(--text-muted)] text-sm mt-2">{error}</p>
           </div>
         ) : anime ? (
           <div className="px-4 sm:px-8 pb-6 sm:pb-8 flex flex-col gap-5 sm:gap-8">

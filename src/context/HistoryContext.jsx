@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useCookieConsent, hasConsent } from './CookieContext'
+import { readStorage, removeStorage, writeStorage } from '../utils/storage'
 
 const KEY = 'anime-ink-history'
 const MAX = 20
@@ -12,19 +13,17 @@ export function HistoryProvider({ children }) {
 
   const [history, setHistory] = useState(() => {
     if (!hasConsent('userdata')) return []
-    try { return dedup(JSON.parse(localStorage.getItem(KEY)) || []) }
-    catch { return [] }
+    return dedup(readStorage(KEY, [], Array.isArray))
   })
 
   const mounted = useRef(false)
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return }
     if (canStore) {
-      try { setHistory(dedup(JSON.parse(localStorage.getItem(KEY)) || [])) }
-      catch { setHistory([]) }
+      setHistory(dedup(readStorage(KEY, [], Array.isArray)))
     } else {
       setHistory([])
-      localStorage.removeItem(KEY)
+      removeStorage(KEY)
     }
   }, [canStore])
 
@@ -32,7 +31,7 @@ export function HistoryProvider({ children }) {
     if (!canStore) return
     setHistory(prev => {
       const next = [anime, ...prev.filter(a => a.mal_id !== anime.mal_id)].slice(0, MAX)
-      localStorage.setItem(KEY, JSON.stringify(next))
+      writeStorage(KEY, next)
       return next
     })
   }
@@ -40,14 +39,14 @@ export function HistoryProvider({ children }) {
   const removeFromHistory = (id) => {
     setHistory(prev => {
       const next = prev.filter(a => a.mal_id !== id)
-      if (canStore) localStorage.setItem(KEY, JSON.stringify(next))
+      if (canStore) writeStorage(KEY, next)
       return next
     })
   }
 
   const clearHistory = () => {
     setHistory([])
-    localStorage.removeItem(KEY)
+    removeStorage(KEY)
   }
 
   return (

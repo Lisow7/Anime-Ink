@@ -19,12 +19,24 @@ export default function AnimeListCard({ anime }) {
   return (
     <div
       onClick={() => openModal(mal_id)}
-      className="relative group cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex gap-4 p-3 hover:ring-1 hover:ring-[#22c55e] transition-all duration-200"
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          openModal(mal_id)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ouvrir la fiche de ${title}`}
+      className="relative group cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex gap-4 p-3 hover:ring-1 hover:ring-[#22c55e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] transition-all duration-200"
     >
       <div className="shrink-0 relative">
         <img
           src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
           alt={title}
+          loading="lazy"
+          width={64}
+          height={96}
           className="w-16 h-24 object-cover rounded-lg"
           style={blurred ? { filter: 'blur(8px)', transform: 'scale(1.05)' } : undefined}
         />
