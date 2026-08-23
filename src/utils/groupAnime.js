@@ -1,7 +1,7 @@
 export function normalizeTitle(title) {
   if (!title) return ''
   const result = title
-    .replace(/^([^\s:\.]{3,})\.\s+.+$/, '$1')                // "Gintama. Sous-titre" → "Gintama" (point séparateur sans espace avant)
+    .replace(/^([^\s:.]{3,})\.\s+.+$/, '$1')                 // "Gintama. Sous-titre" → "Gintama" (point séparateur sans espace avant)
     .replace(/:\s.*$/, '')                                    // ": Sous-titre" (espace après :) — préserve Re:Zero
     .replace(/\s+(The\s+)?Final\s+Season.*$/i, '')            // Final Season
     .replace(/\s+Season\s+\d+.*$/i, '')                       // Season N
@@ -24,7 +24,7 @@ export function normalizeTitle(title) {
 // si title est en japonais/non-ASCII et title_english existe, on utilise l'anglais
 function titleForKey(anime) {
   const t = anime.title || ''
-  if (/[^\x00-\x7F]/.test(t) && anime.title_english) return anime.title_english
+  if (![...t].every(char => char.charCodeAt(0) <= 127) && anime.title_english) return anime.title_english
   return t
 }
 
@@ -44,8 +44,8 @@ export function groupAnime(list, { keepNonTV = false } = {}) {
     if (candidateIsTV && !currentIsTV) { groupRep.set(key, anime); continue }
     if (!candidateIsTV && currentIsTV) continue
     // Préférer un titre ASCII (lisible) sur un titre japonais
-    const currentIsAscii = !/[^\x00-\x7F]/.test(current.title || '')
-    const candidateIsAscii = !/[^\x00-\x7F]/.test(anime.title || '')
+    const currentIsAscii = [...(current.title || '')].every(char => char.charCodeAt(0) <= 127)
+    const candidateIsAscii = [...(anime.title || '')].every(char => char.charCodeAt(0) <= 127)
     if (candidateIsAscii && !currentIsAscii) { groupRep.set(key, anime); continue }
     if (!candidateIsAscii && currentIsAscii) continue
     if (anime.mal_id < current.mal_id) groupRep.set(key, anime)

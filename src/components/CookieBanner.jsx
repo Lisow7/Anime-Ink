@@ -31,7 +31,7 @@ export default function CookieBanner() {
         userdata:    consent?.userdata    ?? true,
       })
     }
-  }, [settingsOpen])
+  }, [settingsOpen, consent?.preferences, consent?.userdata])
 
   const showBanner = consent === null && !settingsOpen
 

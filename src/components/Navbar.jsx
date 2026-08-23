@@ -4,25 +4,8 @@ import { useFavorites } from '../context/FavoritesContext'
 import { useTheme } from '../context/ThemeContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 
-export default function Navbar() {
-  const { pathname, search } = useLocation()
-  const { favorites } = useFavorites()
-  const { theme, toggle } = useTheme()
-  const { blurHentai, toggle: toggleAgeFilter } = useAgeFilter()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const isFavorisTab = pathname === '/catalogue' && search.includes('tab=favoris')
-
-  useEffect(() => { setMenuOpen(false) }, [pathname, search])
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') setMenuOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
-  const ThemeIcon = () => theme === 'dark' ? (
+function ThemeIcon({ theme }) {
+  return theme === 'dark' ? (
     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2">
       <circle cx="12" cy="12" r="5"/>
       <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round"/>
@@ -32,15 +15,34 @@ export default function Navbar() {
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
+}
 
-  const LockIcon = () => (
+function LockIcon({ locked }) {
+  return (
     <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current shrink-0" strokeWidth="2.5">
-      {blurHentai
+      {locked
         ? <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round"/></>
         : <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" strokeLinecap="round" strokeDasharray="2 2"/></>
       }
     </svg>
   )
+}
+
+export default function Navbar() {
+  const { pathname, search } = useLocation()
+  const { favorites } = useFavorites()
+  const { theme, toggle } = useTheme()
+  const { blurHentai, toggle: toggleAgeFilter } = useAgeFilter()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const isFavorisTab = pathname === '/catalogue' && search.includes('tab=favoris')
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const navLink = (to, label) => {
     const isActive = pathname === to && !isFavorisTab
@@ -92,7 +94,7 @@ export default function Navbar() {
                 : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[#e63946]/50 hover:text-[#e63946]/60'
             }`}
           >
-            <LockIcon />
+            <LockIcon locked={blurHentai} />
             {blurHentai ? 'Censuré' : 'Non censuré'}
           </button>
 
@@ -101,7 +103,7 @@ export default function Navbar() {
             className="text-[var(--text-muted)] hover:text-[#22c55e] transition-colors shrink-0"
             aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
           >
-            <ThemeIcon />
+            <ThemeIcon theme={theme} />
           </button>
         </div>
 
@@ -112,7 +114,7 @@ export default function Navbar() {
             className="text-[var(--text-muted)] hover:text-[#22c55e] transition-colors"
             aria-label={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
           >
-            <ThemeIcon />
+            <ThemeIcon theme={theme} />
           </button>
           <button
             onClick={() => setMenuOpen(v => !v)}
@@ -181,7 +183,7 @@ export default function Navbar() {
                 : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[#e63946]/50 hover:text-[#e63946]/60'
             }`}
           >
-            <LockIcon />
+            <LockIcon locked={blurHentai} />
             {blurHentai ? 'Censuré' : 'Non censuré'}
           </button>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useEffectEvent, useState, useCallback, useRef } from 'react'
 import { useModal } from '../context/ModalContext'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
@@ -8,11 +8,13 @@ import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
+import { safeYoutubeEmbed } from '../utils/urls'
 
 export default function AnimeModal() {
   const { animeId, openModal, closeModal } = useModal()
   const { isFavorite, toggle } = useFavorites()
   const { addToHistory } = useHistory()
+  const recordHistory = useEffectEvent(addToHistory)
   const { getStatus, setStatus, remove } = useWatchlist()
 
   const [localAnimeId, setLocalAnimeId] = useState(null)
@@ -21,7 +23,6 @@ export default function AnimeModal() {
   const [synopsis, setSynopsis] = useState(null)
   const [translating, setTranslating] = useState(false)
   const [recommendations, setRecommendations] = useState([])
-  const [deadLinks, setDeadLinks] = useState(new Set())
   const [seriesData, setSeriesData] = useState(null)
   const franchiseLoadedFor = useRef(null)
 
@@ -60,7 +61,6 @@ export default function AnimeModal() {
     setAnime(null)
     setSynopsis(null)
     setRecommendations([])
-    setDeadLinks(new Set())
     getAnimeById(localAnimeId).then(async (data) => {
       setAnime(data)
       setLoading(false)
@@ -71,13 +71,13 @@ export default function AnimeModal() {
         setTranslating(false)
       }
       getAnimeRecommendations(localAnimeId).then(setRecommendations)
-      if (data && (localAnimeId === animeId || data.type !== 'TV')) addToHistory({
+      if (data && (localAnimeId === animeId || data.type !== 'TV')) recordHistory({
         mal_id: data.mal_id, title: data.title, images: data.images,
         score: data.score, episodes: data.episodes, status: data.status,
         type: data.type, aired: data.aired, genres: data.genres, synopsis: data.synopsis,
       })
     })
-  }, [localAnimeId])
+  }, [localAnimeId, animeId])
 
   // Charger les données de la franchise une seule fois par ouverture de modal
   useEffect(() => {
@@ -115,29 +115,7 @@ export default function AnimeModal() {
       const merged = { seasons, others }
       setSeriesData(merged.seasons.length > 1 || merged.others.length > 0 ? merged : null)
     })
-  }, [anime?.mal_id, animeId])
-
-  // Vérifier les liens morts
-  useEffect(() => {
-    if (!anime) return
-    const urls = [
-      ...(anime.streaming || []).map(s => s.url),
-      anime.url,
-    ].filter(Boolean)
-
-    urls.forEach(async (url) => {
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
-        if (res.status === 404) setDeadLinks(prev => new Set([...prev, url]))
-      } catch {
-        try {
-          await fetch(url, { mode: 'no-cors', signal: AbortSignal.timeout(5000) })
-        } catch {
-          setDeadLinks(prev => new Set([...prev, url]))
-        }
-      }
-    })
-  }, [anime?.mal_id])
+  }, [anime, animeId])
 
   const switchAnime = useCallback((id) => {
     if (id === localAnimeId) return
@@ -341,7 +319,7 @@ export default function AnimeModal() {
               const malLink = anime.url
                 ? [{ label: 'MyAnimeList', color: '#2e51a2', href: anime.url }]
                 : []
-              const links = [...streaming, ...malLink].filter(l => !deadLinks.has(l.href))
+              const links = [...streaming, ...malLink]
               if (links.length === 0) return null
               return (
                 <div className="flex flex-col gap-3">
@@ -383,16 +361,20 @@ export default function AnimeModal() {
             {/* Trailer */}
             {anime.trailer?.embed_url && (() => {
               try {
-                const u = new URL(anime.trailer.embed_url)
-                u.searchParams.set('autoplay', '0')
+                const embedUrl = safeYoutubeEmbed(anime.trailer.embed_url)
+                if (!embedUrl) return null
                 return (
                   <div className="flex flex-col gap-3">
                     <h3 className="text-[var(--text-primary)] font-semibold">Bande-annonce</h3>
                     <div className="aspect-video rounded-xl overflow-hidden bg-[var(--bg-surface)]">
                       <iframe
-                        src={u.toString()}
+                        src={embedUrl}
                         title={`Trailer ${anime.title}`}
                         className="w-full h-full"
+                        loading="lazy"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        sandbox="allow-scripts allow-same-origin allow-presentation"
+                        allow="encrypted-media; picture-in-picture; fullscreen"
                         allowFullScreen
                       />
                     </div>
