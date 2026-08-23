@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getApiHealth, getTopAnime, JikanError, searchAnime } from './jikan'
+import { clearJikanMemoryCache, getApiHealth, getTopAnime, JikanError, searchAnime } from './jikan'
 
 function response(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -10,6 +10,7 @@ function response(body, status = 200, headers = {}) {
 
 describe('client Jikan', () => {
   beforeEach(() => {
+    clearJikanMemoryCache()
     vi.stubGlobal('fetch', vi.fn())
   })
 
@@ -33,6 +34,63 @@ describe('client Jikan', () => {
     expect(getApiHealth().status).toBe('unavailable')
   })
 
+  it('déduplique deux requêtes identiques simultanées', async () => {
+    fetch.mockResolvedValue(response({ data: [{ mal_id: 1 }] }))
+
+    const [first, second] = await Promise.all([getTopAnime(), getTopAnime()])
+
+    expect(first).toEqual(second)
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('réutilise une réponse fraîche en mémoire', async () => {
+    fetch.mockResolvedValue(response({ data: [{ mal_id: 1 }] }))
+
+    await getTopAnime()
+    await getTopAnime()
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('respecte les limites par seconde et par minute', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-23T00:00:00Z'))
+    fetch.mockImplementation(() => Promise.resolve(response({ data: [] })))
+
+    const requests = Promise.all(Array.from({ length: 61 }, (_, index) => getTopAnime(index + 1)))
+    await vi.advanceTimersByTimeAsync(999)
+    expect(fetch).toHaveBeenCalledTimes(3)
+
+    await vi.advanceTimersByTimeAsync(20_001)
+    expect(fetch).toHaveBeenCalledTimes(60)
+
+    await vi.advanceTimersByTimeAsync(40_000)
+    expect(fetch.mock.calls.length).toBeGreaterThanOrEqual(61)
+    await vi.runAllTimersAsync()
+    await requests
+  }, 10_000)
+
+  it('détecte une erreur Jikan présente dans un corps HTTP 200', async () => {
+    fetch.mockResolvedValue(response({ status: 500, error: 'UpstreamException', message: 'MAL indisponible' }))
+
+    await expect(getTopAnime()).rejects.toMatchObject({ name: 'JikanError', status: 500 })
+  })
+
+  it('sert la dernière réponse valide pendant une panne temporaire', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-23T00:00:00Z'))
+    fetch.mockResolvedValueOnce(response({ data: [{ mal_id: 1 }] }))
+    await getTopAnime()
+
+    vi.setSystemTime(new Date('2026-08-23T00:06:00Z'))
+    fetch.mockRejectedValue(new TypeError('Network error'))
+    const fallback = getTopAnime()
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    await expect(fallback).resolves.toEqual({ data: [{ mal_id: 1 }] })
+    expect(getApiHealth().status).toBe('degraded')
+  })
+
   it('respecte Retry-After puis réessaie après un 429', async () => {
     vi.useFakeTimers()
     fetch
@@ -40,7 +98,7 @@ describe('client Jikan', () => {
       .mockResolvedValueOnce(response({ data: [] }))
 
     const request = getTopAnime()
-    await vi.runAllTimersAsync()
+    await vi.advanceTimersByTimeAsync(5_000)
 
     await expect(request).resolves.toEqual({ data: [] })
     expect(fetch).toHaveBeenCalledTimes(2)

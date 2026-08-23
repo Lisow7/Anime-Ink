@@ -5,8 +5,22 @@ import { readStorage, writeStorage } from '../utils/storage'
 const BASE_URL = 'https://api.jikan.moe/v4'
 const REQUEST_TIMEOUT_MS = 8000
 const MIN_REQUEST_INTERVAL_MS = 350
+const MAX_REQUESTS_PER_MINUTE = 60
+const RATE_WINDOW_MS = 60 * 1000
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504])
+const MAX_MEMORY_CACHE_ENTRIES = 100
+const DEFAULT_STALE_TTL_MS = 24 * 60 * 60 * 1000
+const CACHE_TTL = {
+  list: 5 * 60 * 1000,
+  search: 10 * 60 * 1000,
+  detail: 30 * 60 * 1000,
+  related: 30 * 60 * 1000,
+  genres: 24 * 60 * 60 * 1000,
+}
 let nextRequestAt = 0
+let recentRequestSlots = []
+const responseCache = new Map()
+const inFlightRequests = new Map()
 
 let apiHealth = { status: 'unknown', checkedAt: null }
 const apiHealthListeners = new Set()
@@ -61,12 +75,19 @@ function retryDelay(response, attempt) {
 
 async function acquireRequestSlot(signal) {
   const now = Date.now()
-  const wait = Math.max(0, nextRequestAt - now)
-  nextRequestAt = Math.max(now, nextRequestAt) + MIN_REQUEST_INTERVAL_MS
+  let slotAt = Math.max(now, nextRequestAt)
+  recentRequestSlots = recentRequestSlots.filter(timestamp => timestamp > slotAt - RATE_WINDOW_MS)
+  if (recentRequestSlots.length >= MAX_REQUESTS_PER_MINUTE) {
+    slotAt = Math.max(slotAt, recentRequestSlots[recentRequestSlots.length - MAX_REQUESTS_PER_MINUTE] + RATE_WINDOW_MS)
+    recentRequestSlots = recentRequestSlots.filter(timestamp => timestamp > slotAt - RATE_WINDOW_MS)
+  }
+  recentRequestSlots.push(slotAt)
+  nextRequestAt = slotAt + MIN_REQUEST_INTERVAL_MS
+  const wait = Math.max(0, slotAt - now)
   if (wait > 0) await delay(wait, signal)
 }
 
-async function requestJson(path, { signal, retries = 2 } = {}) {
+async function fetchJsonWithRetry(path, { signal, retries = 2 } = {}) {
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     if (signal?.aborted) throw abortError()
     await acquireRequestSlot(signal)
@@ -95,6 +116,12 @@ async function requestJson(path, { signal, retries = 2 } = {}) {
       }
 
       const json = await response.json()
+      if (Number(json?.status) >= 400 || (json?.error && !('data' in json))) {
+        updateApiHealth('unavailable')
+        throw new JikanError(json.message || json.error || 'Jikan a renvoyé une erreur', {
+          status: Number(json.status) || response.status,
+        })
+      }
       updateApiHealth('available')
       return json
     } catch (error) {
@@ -115,6 +142,89 @@ async function requestJson(path, { signal, retries = 2 } = {}) {
   throw new JikanError('Impossible de joindre Jikan')
 }
 
+function touchCache(path, entry) {
+  responseCache.delete(path)
+  responseCache.set(path, entry)
+  while (responseCache.size > MAX_MEMORY_CACHE_ENTRIES) {
+    responseCache.delete(responseCache.keys().next().value)
+  }
+}
+
+function abortable(promise, signal, onAbort) {
+  if (!signal) return promise
+  if (signal.aborted) {
+    onAbort()
+    return Promise.reject(abortError())
+  }
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      onAbort()
+      reject(abortError())
+    }
+    signal.addEventListener('abort', abort, { once: true })
+    promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort))
+  })
+}
+
+async function requestJson(path, {
+  signal,
+  retries = 2,
+  cacheTtlMs = 0,
+  staleTtlMs = DEFAULT_STALE_TTL_MS,
+} = {}) {
+  const now = Date.now()
+  const cached = responseCache.get(path)
+  if (cached && cached.expiresAt > now) {
+    touchCache(path, cached)
+    return cached.data
+  }
+
+  let request = inFlightRequests.get(path)
+  if (!request) {
+    const controller = new AbortController()
+    request = { controller, consumers: 0, settled: false }
+    request.promise = fetchJsonWithRetry(path, { signal: controller.signal, retries })
+      .then(data => {
+        if (cacheTtlMs > 0) {
+          touchCache(path, {
+            data,
+            expiresAt: Date.now() + cacheTtlMs,
+            staleUntil: Date.now() + staleTtlMs,
+          })
+        }
+        return data
+      })
+      .finally(() => {
+        request.settled = true
+        inFlightRequests.delete(path)
+      })
+    inFlightRequests.set(path, request)
+  }
+
+  request.consumers += 1
+  let consumerAborted = false
+  try {
+    return await abortable(request.promise, signal, () => { consumerAborted = true })
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error
+    if (cached && cached.staleUntil > Date.now()) {
+      updateApiHealth('degraded')
+      touchCache(path, cached)
+      return cached.data
+    }
+    throw error
+  } finally {
+    request.consumers -= 1
+    if (consumerAborted && request.consumers === 0 && !request.settled) request.controller.abort()
+  }
+}
+
+export function clearJikanMemoryCache() {
+  responseCache.clear()
+  nextRequestAt = 0
+  recentRequestSlots = []
+}
+
 function generateAcronym(title) {
   if (!title) return ''
   return title
@@ -130,7 +240,10 @@ export async function searchAnime(query, signal) {
   const isAcronym = expandedQuery !== query.trim()
 
   try {
-    const data = await requestJson(`/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
+    const data = await requestJson(`/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, {
+      signal,
+      cacheTtlMs: CACHE_TTL.search,
+    })
     const lower = expandedQuery.toLowerCase()
     return (data.data ?? [])
       .filter((anime) =>
@@ -151,12 +264,12 @@ export async function searchAnime(query, signal) {
 }
 
 export async function getAnimeById(id, signal) {
-  const data = await requestJson(`/anime/${id}/full`, { signal })
+  const data = await requestJson(`/anime/${id}/full`, { signal, cacheTtlMs: CACHE_TTL.detail })
   return data.data
 }
 
 export function getTopAnime(page = 1, signal) {
-  return requestJson(`/top/anime?page=${page}&limit=24`, { signal })
+  return requestJson(`/top/anime?page=${page}&limit=24`, { signal, cacheTtlMs: CACHE_TTL.list })
 }
 
 export async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}, signal) {
@@ -168,7 +281,7 @@ export async function getAnimeByFilter({ genre, status, type, orderBy, letter, p
   if (letter) params.set('letter', letter)
   params.set('sort', orderBy === 'title' ? 'asc' : 'desc')
 
-  return requestJson(`/anime?${params}`, { signal })
+  return requestJson(`/anime?${params}`, { signal, cacheTtlMs: CACHE_TTL.list })
 }
 
 export async function getGenres() {
@@ -181,7 +294,7 @@ export async function getGenres() {
   if (cached && Date.now() - cached.ts < CACHE_TTL && cached.data.length > 0) return cached.data
 
   try {
-    const json = await requestJson('/genres/anime')
+    const json = await requestJson('/genres/anime', { cacheTtlMs: CACHE_TTL.genres })
     const data = Array.isArray(json.data) ? json.data : []
     if (data.length > 0) {
       writeStorage(CACHE_KEY, { data, ts: Date.now() })
@@ -198,7 +311,10 @@ export async function getRandomAnime() {
 }
 
 export async function getAnimeRecommendations(id, signal) {
-  const data = await requestJson(`/anime/${id}/recommendations`, { signal })
+  const data = await requestJson(`/anime/${id}/recommendations`, {
+    signal,
+    cacheTtlMs: CACHE_TTL.related,
+  })
   return (data.data ?? []).slice(0, 6).map(r => r.entry)
 }
 
@@ -215,7 +331,7 @@ export async function getAnimeFranchise(animeTitle, signal) {
   async function fetchRelated(norm) {
     const json = await requestJson(
       `/anime?q=${encodeURIComponent(norm)}&limit=25&order_by=start_date&sort=asc`,
-      { signal }
+      { signal, cacheTtlMs: CACHE_TTL.related }
     )
     return (json.data ?? []).filter(a => matchesBase(a, norm))
   }
