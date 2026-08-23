@@ -2,14 +2,16 @@
   "name": "Anime-Ink",
   "short_name": "Anime-Ink",
   "description": "Découvre l'univers des animés",
-  "start_url": "/",
+  "id": "/Anime-Ink/",
+  "start_url": "/Anime-Ink/",
+  "scope": "/Anime-Ink/",
   "display": "standalone",
   "background_color": "#0f0f0f",
   "theme_color": "#0f0f0f",
   "lang": "fr",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/Anime-Ink/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

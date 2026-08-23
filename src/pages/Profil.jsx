@@ -3,10 +3,8 @@ import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
 import { WATCH_STATUS } from '../constants/anime'
-import { scoreColor } from '../utils/score'
 import { Link } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
-import { groupAnime } from '../utils/groupAnime'
 
 function StatCard({ label, value, sub }) {
   return (

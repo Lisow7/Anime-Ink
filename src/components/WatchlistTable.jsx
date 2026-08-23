@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useEffectEvent, useRef } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useModal } from '../context/ModalContext'
@@ -85,8 +85,6 @@ function EpisodeTracker({ anime, setEpisode, setSeason }) {
 
 function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSeason, remove, openModal }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: anime.mal_id })
-  const current = WATCH_STATUS.find(w => w.value === anime.watchStatus)
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -338,18 +336,21 @@ export default function WatchlistTable({ list }) {
   const fetchedIds = useRef(new Set())
   const listIds = useMemo(() => list.map(a => a.mal_id).join(','), [list])
 
+  const loadMissingSeasons = useEffectEvent(async (isActive) => {
+    for (const anime of list) {
+      if (!isActive()) break
+      if (anime.seasonData !== undefined || fetchedIds.current.has(anime.mal_id)) continue
+      fetchedIds.current.add(anime.mal_id)
+      const data = await getAnimeSeasons(anime.mal_id, anime.episodes)
+      if (!isActive()) break
+      setSeasonData(anime.mal_id, data)
+      await new Promise(resolve => setTimeout(resolve, 400))
+    }
+  })
+
   useEffect(() => {
     let active = true
-    ;(async () => {
-      for (const anime of list) {
-        if (!active) break
-        if (anime.seasonData !== undefined || fetchedIds.current.has(anime.mal_id)) continue
-        fetchedIds.current.add(anime.mal_id)
-        const data = await getAnimeSeasons(anime.mal_id, anime.episodes)
-        setSeasonData(anime.mal_id, data)
-        if (active) await new Promise(r => setTimeout(r, 400))
-      }
-    })()
+    loadMissingSeasons(() => active)
     return () => { active = false }
   }, [listIds])
 

@@ -9,6 +9,10 @@ import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
+import { readStorage, writeStorage } from '../utils/storage'
+
+const RANDOM_CACHE_KEY = 'anime-ink-random'
+const RANDOM_CACHE_TTL = 60 * 60 * 1000
 
 export default function Home() {
   useSEO()
@@ -30,14 +34,17 @@ export default function Home() {
   const { blurHentai } = useAgeFilter()
 
   useEffect(() => {
-    getTopAnime(1).then((data) => {
-      setTopAnimes(data.data?.slice(0, 6) ?? [])
-      setTopLoading(false)
-    })
+    const controller = new AbortController()
+    getTopAnime(1, controller.signal)
+      .then((data) => setTopAnimes(data.data?.slice(0, 6) ?? []))
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setTopAnimes([])
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setTopLoading(false)
+      })
+    return () => controller.abort()
   }, [])
-
-  const CACHE_KEY = 'anime-ink-random'
-  const CACHE_TTL = 3600 * 1000
 
   const fetchRandom = useCallback((isRefresh = false) => {
     const apply = (data, setDone) => {
@@ -55,31 +62,35 @@ export default function Home() {
       getRandomAnime()
         .then((data) => {
           if (data) {
-            try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
+            writeStorage(RANDOM_CACHE_KEY, { data, ts: Date.now() })
           }
           apply(data, () => setIsRefreshing(false))
         })
         .catch(() => setIsRefreshing(false))
     } else {
       try {
-        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null')
-        if (cached && Date.now() - cached.ts < CACHE_TTL) {
+        const cached = readStorage(RANDOM_CACHE_KEY, null, value =>
+          value && Number.isFinite(value.ts) && value.data && typeof value.data === 'object'
+        )
+        if (cached && Date.now() - cached.ts < RANDOM_CACHE_TTL) {
           setRandom(cached.data)
           setRandomLoading(false)
           getRandomAnime().then(data => {
             if (data) {
-              try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
+              writeStorage(RANDOM_CACHE_KEY, { data, ts: Date.now() })
               setRandom(data)
             }
           }).catch(() => {})
           return
         }
-      } catch {}
+      } catch {
+        // Une entrée de cache corrompue est simplement ignorée.
+      }
       setRandomLoading(true)
       getRandomAnime()
         .then((data) => {
           if (data) {
-            try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })) } catch {}
+            writeStorage(RANDOM_CACHE_KEY, { data, ts: Date.now() })
           }
           apply(data, () => setRandomLoading(false))
         })
@@ -87,15 +98,24 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => { fetchRandom(false) }, [])
+  useEffect(() => { fetchRandom(false) }, [fetchRandom])
 
   useEffect(() => {
     const q = debouncedQuery.trim()
     if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
+    const controller = new AbortController()
     setSuggestionsLoading(true)
-    searchAnime(q)
-      .then(results => { setSuggestions(groupAnime(results ?? []).slice(0, 6)); setSuggestionsLoading(false) })
-      .catch(() => { setSuggestions([]); setSuggestionsLoading(false) })
+    searchAnime(q, controller.signal)
+      .then(results => {
+        if (!controller.signal.aborted) setSuggestions(groupAnime(results ?? []).slice(0, 6))
+      })
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setSuggestions([])
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSuggestionsLoading(false)
+      })
+    return () => controller.abort()
   }, [debouncedQuery])
 
   useEffect(() => {
@@ -291,7 +311,7 @@ export default function Home() {
                 <img
                   src={random.images?.jpg?.image_url ?? random.images?.jpg?.large_image_url}
                   alt={random.title}
-                  fetchpriority="high"
+                  fetchPriority="high"
                   width={176}
                   height={264}
                   className="h-44 rounded-xl shadow-2xl object-cover transition-transform duration-200 group-hover:scale-105"

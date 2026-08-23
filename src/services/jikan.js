@@ -1,12 +1,124 @@
 import { ANIME_ACRONYMS } from '../constants/acronyms'
 import { normalizeTitle } from '../utils/groupAnime'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const BASE_URL = 'https://api.jikan.moe/v4'
+const REQUEST_TIMEOUT_MS = 8000
+const MIN_REQUEST_INTERVAL_MS = 350
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504])
+let nextRequestAt = 0
+
+let apiHealth = { status: 'unknown', checkedAt: null }
+const apiHealthListeners = new Set()
+
+function updateApiHealth(status) {
+  apiHealth = { status, checkedAt: Date.now() }
+  apiHealthListeners.forEach((listener) => listener(apiHealth))
+}
+
+export function getApiHealth() {
+  return apiHealth
+}
+
+export function subscribeApiHealth(listener) {
+  apiHealthListeners.add(listener)
+  listener(apiHealth)
+  return () => apiHealthListeners.delete(listener)
+}
+
+export class JikanError extends Error {
+  constructor(message, { status = null, retryAfter = null, cause } = {}) {
+    super(message, { cause })
+    this.name = 'JikanError'
+    this.status = status
+    this.retryAfter = retryAfter
+  }
+}
+
+function abortError() {
+  return new DOMException('La requête a été annulée', 'AbortError')
+}
+
+function delay(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(abortError())
+    const timer = setTimeout(resolve, ms)
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer)
+      reject(abortError())
+    }, { once: true })
+  })
+}
+
+function retryDelay(response, attempt) {
+  const retryAfter = response.headers.get('Retry-After')
+  const seconds = retryAfter ? Number(retryAfter) : Number.NaN
+  if (Number.isFinite(seconds)) return Math.min(seconds * 1000, 10000)
+  const retryDate = retryAfter ? Date.parse(retryAfter) : Number.NaN
+  if (Number.isFinite(retryDate)) return Math.min(Math.max(0, retryDate - Date.now()), 10000)
+  return 500 * (2 ** attempt) + Math.floor(Math.random() * 250)
+}
+
+async function acquireRequestSlot(signal) {
+  const now = Date.now()
+  const wait = Math.max(0, nextRequestAt - now)
+  nextRequestAt = Math.max(now, nextRequestAt) + MIN_REQUEST_INTERVAL_MS
+  if (wait > 0) await delay(wait, signal)
+}
+
+async function requestJson(path, { signal, retries = 2 } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    if (signal?.aborted) throw abortError()
+    await acquireRequestSlot(signal)
+
+    const timeoutController = new AbortController()
+    const timeout = setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS)
+    const onAbort = () => timeoutController.abort()
+    signal?.addEventListener('abort', onAbort, { once: true })
+
+    try {
+      const response = await fetch(`${BASE_URL}${path}`, {
+        signal: timeoutController.signal,
+        headers: { Accept: 'application/json' },
+      })
+
+      if (!response.ok) {
+        if (RETRYABLE_STATUS.has(response.status) && attempt < retries) {
+          await delay(retryDelay(response, attempt), signal)
+          continue
+        }
+        updateApiHealth(response.status === 429 ? 'degraded' : 'unavailable')
+        throw new JikanError(`Jikan a répondu avec le statut ${response.status}`, {
+          status: response.status,
+          retryAfter: response.headers.get('Retry-After'),
+        })
+      }
+
+      const json = await response.json()
+      updateApiHealth('available')
+      return json
+    } catch (error) {
+      if (signal?.aborted) throw abortError()
+      if (error instanceof JikanError) throw error
+      if (attempt < retries) {
+        await delay(500 * (2 ** attempt) + Math.floor(Math.random() * 250), signal)
+        continue
+      }
+      updateApiHealth('unavailable')
+      throw new JikanError('Impossible de joindre Jikan', { cause: error })
+    } finally {
+      clearTimeout(timeout)
+      signal?.removeEventListener('abort', onAbort)
+    }
+  }
+
+  throw new JikanError('Impossible de joindre Jikan')
+}
 
 function generateAcronym(title) {
   if (!title) return ''
   return title
-    .split(/[\s\-:!?.,+×x\/]+/)
+    .split(/[\s\-:!?.,+×x/]+/)
     .filter(w => /[a-zA-Z\u00C0-\u024F]/.test(w))
     .map(w => w[0].toUpperCase())
     .join('')
@@ -18,9 +130,7 @@ export async function searchAnime(query, signal) {
   const isAcronym = expandedQuery !== query.trim()
 
   try {
-    const res = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
-    if (!res.ok) return []
-    const data = await res.json()
+    const data = await requestJson(`/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
     const lower = expandedQuery.toLowerCase()
     return (data.data ?? [])
       .filter((anime) =>
@@ -34,22 +144,19 @@ export async function searchAnime(query, signal) {
         const dateB = b.aired?.from ? new Date(b.aired.from) : new Date(0)
         return dateA - dateB
       })
-  } catch (e) {
-    if (e?.name === 'AbortError') throw e
-    return []
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error
+    throw error
   }
 }
 
-export async function getAnimeById(id) {
-  const res = await fetch(`${BASE_URL}/anime/${id}/full`)
-  const data = await res.json()
+export async function getAnimeById(id, signal) {
+  const data = await requestJson(`/anime/${id}/full`, { signal })
   return data.data
 }
 
-export async function getTopAnime(page = 1) {
-  const res = await fetch(`${BASE_URL}/top/anime?page=${page}&limit=24`)
-  const data = await res.json()
-  return data
+export function getTopAnime(page = 1, signal) {
+  return requestJson(`/top/anime?page=${page}&limit=24`, { signal })
 }
 
 export async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}, signal) {
@@ -61,60 +168,37 @@ export async function getAnimeByFilter({ genre, status, type, orderBy, letter, p
   if (letter) params.set('letter', letter)
   params.set('sort', orderBy === 'title' ? 'asc' : 'desc')
 
-  const res = await fetch(`${BASE_URL}/anime?${params}`, { signal })
-  const data = await res.json()
-  return data
+  return requestJson(`/anime?${params}`, { signal })
 }
 
 export async function getGenres() {
   const CACHE_KEY = 'anime-ink-genres'
   const CACHE_TTL = 24 * 60 * 60 * 1000
 
-  try {
-    const cached = localStorage.getItem(CACHE_KEY)
-    if (cached) {
-      const { data, ts } = JSON.parse(cached)
-      if (Date.now() - ts < CACHE_TTL && Array.isArray(data) && data.length > 0) return data
-    }
-  } catch {}
+  const cached = readStorage(CACHE_KEY, null, value =>
+    value && Number.isFinite(value.ts) && Array.isArray(value.data)
+  )
+  if (cached && Date.now() - cached.ts < CACHE_TTL && cached.data.length > 0) return cached.data
 
   try {
-    const res = await fetch(`${BASE_URL}/genres/anime`)
-    if (!res.ok) {
-      const cached = localStorage.getItem(CACHE_KEY)
-      if (cached) {
-        const { data } = JSON.parse(cached)
-        return Array.isArray(data) ? data : []
-      }
-      return []
-    }
-    const json = await res.json()
+    const json = await requestJson('/genres/anime')
     const data = Array.isArray(json.data) ? json.data : []
     if (data.length > 0) {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }))
+      writeStorage(CACHE_KEY, { data, ts: Date.now() })
     }
     return data
   } catch {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY)
-      if (cached) {
-        const { data } = JSON.parse(cached)
-        return Array.isArray(data) ? data : []
-      }
-    } catch {}
-    return []
+    return cached?.data ?? []
   }
 }
 
 export async function getRandomAnime() {
-  const res = await fetch(`${BASE_URL}/random/anime`)
-  const data = await res.json()
+  const data = await requestJson('/random/anime')
   return data.data
 }
 
 export async function getAnimeRecommendations(id) {
-  const res = await fetch(`${BASE_URL}/anime/${id}/recommendations`)
-  const data = await res.json()
+  const data = await requestJson(`/anime/${id}/recommendations`)
   return (data.data ?? []).slice(0, 6).map(r => r.entry)
 }
 
@@ -129,11 +213,9 @@ export async function getAnimeFranchise(animeTitle) {
   }
 
   async function fetchRelated(norm) {
-    const res = await fetch(
-      `${BASE_URL}/anime?q=${encodeURIComponent(norm)}&limit=25&order_by=start_date&sort=asc`
+    const json = await requestJson(
+      `/anime?q=${encodeURIComponent(norm)}&limit=25&order_by=start_date&sort=asc`
     )
-    if (!res.ok) return []
-    const json = await res.json()
     return (json.data ?? []).filter(a => matchesBase(a, norm))
   }
 
@@ -193,9 +275,7 @@ export async function getAnimeSeasons(animeId, ownEpisodes) {
     if (cache.has(id)) return cache.get(id)
     if (!immediate) await new Promise(r => setTimeout(r, 400))
     try {
-      const res = await fetch(`${BASE_URL}/anime/${id}/full`)
-      if (!res.ok) return null
-      const { data } = await res.json()
+      const { data } = await requestJson(`/anime/${id}/full`)
       cache.set(id, data)
       return data
     } catch { return null }

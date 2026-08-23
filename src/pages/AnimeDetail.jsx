@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import { getAnimeById } from '../services/jikan'
@@ -6,6 +6,7 @@ import { useHistory } from '../context/HistoryContext'
 import { STATUS_LABEL } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
+import { safeYoutubeEmbed } from '../utils/urls'
 
 export default function AnimeDetail() {
   const { id } = useParams()
@@ -13,6 +14,7 @@ export default function AnimeDetail() {
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(true)
   const { addToHistory } = useHistory()
+  const recordHistory = useEffectEvent(addToHistory)
   useSEO({
     title: anime?.title ?? undefined,
     description: anime?.synopsis
@@ -23,13 +25,15 @@ export default function AnimeDetail() {
   })
 
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
-    getAnimeById(id)
+    getAnimeById(id, controller.signal)
       .then((data) => {
+        if (controller.signal.aborted) return
         if (!data) { navigate('/404'); return }
         setAnime(data)
         setLoading(false)
-        addToHistory({
+        recordHistory({
         mal_id: data.mal_id,
         title: data.title,
         images: data.images,
@@ -41,8 +45,11 @@ export default function AnimeDetail() {
         synopsis: data.synopsis,
       })
     })
-    .catch(() => navigate('/404'))
-  }, [id])
+    .catch((error) => {
+      if (error?.name !== 'AbortError') navigate('/404')
+    })
+    return () => controller.abort()
+  }, [id, navigate])
 
   if (loading) {
     return (
@@ -80,7 +87,7 @@ export default function AnimeDetail() {
           alt={title}
           width={192}
           height={288}
-          fetchpriority="high"
+          fetchPriority="high"
           className="w-36 min-[500px]:w-44 sm:w-48 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
         />
         <div className="flex flex-col gap-4">
@@ -131,14 +138,18 @@ export default function AnimeDetail() {
         </div>
       )}
 
-      {trailer?.embed_url && (
+      {safeYoutubeEmbed(trailer?.embed_url) && (
         <div className="flex flex-col gap-3">
           <h2 className="text-[var(--text-primary)] font-semibold text-lg">Bande-annonce</h2>
           <div className="aspect-video rounded-xl overflow-hidden bg-[var(--bg-surface)]">
             <iframe
-              src={trailer.embed_url}
+              src={safeYoutubeEmbed(trailer.embed_url)}
               title={`Trailer ${title}`}
               className="w-full h-full"
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              allow="encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
             />
           </div>

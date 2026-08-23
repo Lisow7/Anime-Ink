@@ -1,27 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
 import { useCookieConsent } from '../context/CookieContext'
 import ChangelogModal from './ChangelogModal'
 import { CURRENT_VERSION } from '../data/changelog'
+import { getApiHealth, subscribeApiHealth } from '../services/jikan'
 
 export default function Footer() {
-  const [apiStatus, setApiStatus] = useState(null)
+  const apiHealth = useSyncExternalStore(subscribeApiHealth, getApiHealth, getApiHealth)
   const [showChangelog, setShowChangelog] = useState(false)
   const { openSettings } = useCookieConsent()
 
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch('https://api.jikan.moe/v4', { signal: AbortSignal.timeout(4000) })
-        setApiStatus(res.ok)
-      } catch {
-        setApiStatus(false)
-      }
-    }
-    check()
-    const interval = setInterval(check, 60000)
-    return () => clearInterval(interval)
-  }, [])
+  const statusLabel = {
+    unknown: 'En attente de données…',
+    available: 'API disponible',
+    degraded: 'API ralentie',
+    unavailable: 'API indisponible',
+  }[apiHealth.status]
 
   return (
     <>
@@ -30,11 +24,12 @@ export default function Footer() {
 
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full shrink-0 ${
-            apiStatus === null ? 'bg-[var(--text-muted)] animate-pulse' :
-            apiStatus ? 'bg-[#22c55e]' : 'bg-[#e63946]'
+            apiHealth.status === 'unknown' ? 'bg-[var(--text-muted)] animate-pulse' :
+            apiHealth.status === 'available' ? 'bg-[#22c55e]' :
+            apiHealth.status === 'degraded' ? 'bg-[#f59e0b]' : 'bg-[#e63946]'
           }`} />
-          <span className="text-[var(--text-muted)] text-xs">
-            {apiStatus === null ? 'Vérification…' : apiStatus ? 'API disponible' : 'API indisponible'}
+          <span className="text-[var(--text-muted)] text-xs" role="status" aria-live="polite">
+            {statusLabel}
           </span>
         </div>
 

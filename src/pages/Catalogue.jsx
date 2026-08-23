@@ -38,11 +38,7 @@ export default function Catalogue() {
   const [pagination, setPagination] = useState({ current: 1, last: 1, total: null })
   const [inputValue, setInputValue] = useState(() => searchParams.get('q') || '')
   const debouncedInput = useDebounce(inputValue)
-  const [tab, setTab] = useState(() => searchParams.get('tab') || 'catalogue')
-
-  useEffect(() => {
-    setTab(searchParams.get('tab') || 'catalogue')
-  }, [searchParams.toString()])
+  const tab = searchParams.get('tab') || 'catalogue'
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('anime-ink-view') || 'grid')
 
   const { favorites, clearFavorites } = useFavorites()
@@ -60,7 +56,6 @@ export default function Catalogue() {
     clearFavorites()
     clearHistoryBase()
     clearWatchlist()
-    setTab('catalogue')
     setInputValue('')
     setSearchParams(new URLSearchParams())
   }
@@ -85,7 +80,11 @@ export default function Catalogue() {
   const letter = searchParams.get('letter') || ''
   const page = parseInt(searchParams.get('page') || '1')
 
-  useEffect(() => { setInputValue(query) }, [query])
+  const [previousQuery, setPreviousQuery] = useState(query)
+  if (query !== previousQuery) {
+    setPreviousQuery(query)
+    setInputValue(query)
+  }
 
   useEffect(() => {
     if (debouncedInput === (searchParams.get('q') || '')) return
@@ -94,7 +93,7 @@ export default function Catalogue() {
     else next.delete('q')
     next.delete('page')
     setSearchParams(next)
-  }, [debouncedInput])
+  }, [debouncedInput, searchParams, setSearchParams])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -130,7 +129,7 @@ export default function Catalogue() {
             total: result.pagination?.items?.total ?? null,
           })
         }
-      } catch (e) {
+      } catch {
         if (!controller.signal.aborted) setError(true)
       } finally {
         if (!controller.signal.aborted) setLoading(false)
