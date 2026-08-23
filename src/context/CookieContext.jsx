@@ -1,10 +1,13 @@
 import { createContext, useContext, useState, useCallback } from 'react'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const CONSENT_KEY = 'anime-ink-cookie-consent'
 
 export function getCookieConsent() {
-  try { return JSON.parse(localStorage.getItem(CONSENT_KEY)) || null }
-  catch { return null }
+  return readStorage(CONSENT_KEY, null, value =>
+    value && typeof value === 'object' &&
+    typeof value.preferences === 'boolean' && typeof value.userdata === 'boolean'
+  )
 }
 
 export function hasConsent(category) {
@@ -21,7 +24,7 @@ export function CookieProvider({ children }) {
 
   const saveConsent = useCallback((choices) => {
     const next = { ...choices, decidedAt: Date.now() }
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(next))
+    writeStorage(CONSENT_KEY, next)
     setConsent(next)
     setSettingsOpen(false)
   }, [])

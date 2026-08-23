@@ -1,12 +1,10 @@
 import { useState } from 'react'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const KEY = 'anime-ink-favorites'
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(KEY)) || [] }
-    catch { return [] }
-  })
+  const [favorites, setFavorites] = useState(() => readStorage(KEY, [], Array.isArray))
 
   const toggle = (anime) => {
     setFavorites(prev => {
@@ -24,7 +22,7 @@ export function useFavorites() {
             genres: anime.genres,
             synopsis: anime.synopsis,
           }]
-      localStorage.setItem(KEY, JSON.stringify(next))
+      writeStorage(KEY, next)
       return next
     })
   }

@@ -1,4 +1,5 @@
 import { CHANGELOG } from '../data/changelog'
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
 const TYPE_STYLE = {
   feat:   { label: 'Nouveauté',   color: '#22c55e', bg: 'rgba(34,197,94,0.12)' },
@@ -9,16 +10,25 @@ const TYPE_STYLE = {
 }
 
 export default function ChangelogModal({ onClose }) {
+  const { dialogRef, titleId } = useAccessibleDialog({ onClose })
+
   return (
     <div
       className="fixed inset-0 z-[102] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh]">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh]"
+      >
 
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] shrink-0">
           <div>
-            <h2 className="text-[var(--text-primary)] font-semibold text-base">Notes de version</h2>
+            <h2 id={titleId} className="text-[var(--text-primary)] font-semibold text-base">Notes de version</h2>
             <p className="text-[var(--text-muted)] text-xs mt-0.5">Historique des mises à jour d'Anime-Ink</p>
           </div>
           <button

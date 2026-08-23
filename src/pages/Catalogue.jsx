@@ -12,6 +12,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
 import { groupAnime } from '../utils/groupAnime'
+import { readStorage, writeStorage } from '../utils/storage'
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
@@ -39,7 +40,9 @@ export default function Catalogue() {
   const [inputValue, setInputValue] = useState(() => searchParams.get('q') || '')
   const debouncedInput = useDebounce(inputValue)
   const tab = searchParams.get('tab') || 'catalogue'
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem('anime-ink-view') || 'grid')
+  const [viewMode, setViewMode] = useState(() =>
+    readStorage('anime-ink-view', 'grid', value => value === 'grid' || value === 'list')
+  )
 
   const { favorites, clearFavorites } = useFavorites()
   const { history, clearHistory: clearHistoryBase } = useHistory()
@@ -172,7 +175,7 @@ export default function Catalogue() {
 
   const switchView = (mode) => {
     setViewMode(mode)
-    localStorage.setItem('anime-ink-view', mode)
+    writeStorage('anime-ink-view', mode)
   }
 
   const displayList = tab === 'favoris' ? favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)

@@ -28,7 +28,16 @@ function AnimeCard({ anime }) {
     <div className="relative group h-full">
       <div
         onClick={() => openModal(mal_id)}
-        className="cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] transition-all duration-200 h-full"
+        onKeyDown={(event) => {
+          if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault()
+            openModal(mal_id)
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={`Ouvrir la fiche de ${title}`}
+        className="cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] transition-all duration-200 h-full"
       >
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
@@ -63,7 +72,7 @@ function AnimeCard({ anime }) {
 
           {thumbUrl && (
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <img src={thumbUrl} alt={`Trailer ${title}`} className="w-full h-full object-cover" />
+              <img src={thumbUrl} alt="" loading="lazy" width={480} height={360} className="w-full h-full object-cover" />
               <a
                 href={`https://www.youtube.com/watch?v=${youtubeId}`}
                 target="_blank"
