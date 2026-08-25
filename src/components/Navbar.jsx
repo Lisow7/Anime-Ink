@@ -49,7 +49,7 @@ export default function Navbar() {
     return (
       <Link
         to={to}
-        className={`text-sm font-medium transition-colors hover:text-[#22c55e] ${isActive ? 'text-[#22c55e]' : 'text-[var(--text-muted)]'}`}
+        className={`text-sm font-medium transition-colors hover:text-[var(--color-accent)] ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}
       >
         {label}
       </Link>
@@ -72,7 +72,7 @@ export default function Navbar() {
 
           <Link
             to="/catalogue?tab=favoris"
-            className={`relative transition-colors hover:text-[#22c55e] ${isFavorisTab ? 'text-[#22c55e]' : 'text-[var(--text-muted)]'}`}
+            className={`relative transition-colors hover:text-[var(--color-accent)] ${isFavorisTab ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}
             aria-label="Mes favoris"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -90,8 +90,8 @@ export default function Navbar() {
             title={blurHentai ? 'Désactiver la censure' : 'Activer la censure'}
             className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold tracking-widest uppercase transition-all duration-200 ${
               blurHentai
-                ? 'border-[#e63946] text-[#e63946] bg-[#e63946]/10 shadow-[0_0_8px_rgba(230,57,70,0.3)]'
-                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[#e63946]/50 hover:text-[#e63946]/60'
+                ? 'border-[#e63946] text-[var(--color-danger-text)] bg-[#e63946]/10 shadow-[0_0_8px_rgba(230,57,70,0.3)]'
+                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[#e63946]/50 hover:text-[var(--color-danger-text)]'
             }`}
           >
             <LockIcon locked={blurHentai} />
@@ -100,7 +100,7 @@ export default function Navbar() {
 
           <button
             onClick={toggle}
-            className="text-[var(--text-muted)] hover:text-[#22c55e] transition-colors shrink-0"
+            className="text-[var(--text-muted)] hover:text-[var(--color-accent)] transition-colors shrink-0"
             aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
           >
             <ThemeIcon theme={theme} />
@@ -111,14 +111,14 @@ export default function Navbar() {
         <div className="lg:hidden flex items-center gap-3">
           <button
             onClick={toggle}
-            className="text-[var(--text-muted)] hover:text-[#22c55e] transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--color-accent)] transition-colors"
             aria-label={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
           >
             <ThemeIcon theme={theme} />
           </button>
           <button
             onClick={() => setMenuOpen(v => !v)}
-            className="text-[var(--text-muted)] hover:text-[#22c55e] transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--color-accent)] transition-colors"
             aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           >
             {menuOpen ? (
@@ -151,7 +151,7 @@ export default function Navbar() {
                   to={to}
                   onClick={() => setMenuOpen(false)}
                   className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? 'text-[#22c55e] bg-[#22c55e]/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+                    isActive ? 'text-[var(--color-accent)] bg-[#22c55e]/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
                   }`}
                 >
                   {label}
@@ -162,7 +162,7 @@ export default function Navbar() {
               to="/catalogue?tab=favoris"
               onClick={() => setMenuOpen(false)}
               className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
-                isFavorisTab ? 'text-[#22c55e] bg-[#22c55e]/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+                isFavorisTab ? 'text-[var(--color-accent)] bg-[#22c55e]/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               Favoris
@@ -179,8 +179,8 @@ export default function Navbar() {
             onClick={toggleAgeFilter}
             className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all ${
               blurHentai
-                ? 'border-[#e63946] text-[#e63946] bg-[#e63946]/10'
-                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[#e63946]/50 hover:text-[#e63946]/60'
+                ? 'border-[#e63946] text-[var(--color-danger-text)] bg-[#e63946]/10'
+                : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[#e63946]/50 hover:text-[var(--color-danger-text)]'
             }`}
           >
             <LockIcon locked={blurHentai} />

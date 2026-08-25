@@ -5,7 +5,7 @@ import { useHistory } from '../context/HistoryContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
-import { scoreColor } from '../utils/score'
+import { scoreColorOnOverlay } from '../utils/score'
 
 function AnimeCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
@@ -91,7 +91,7 @@ function AnimeCard({ anime }) {
           )}
 
           {score && (
-            <span className="absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md" style={{ color: scoreColor(score) }}>
+            <span className="absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md" style={{ color: scoreColorOnOverlay(score) }}>
               ★ {score}
             </span>
           )}
@@ -126,9 +126,11 @@ function AnimeCard({ anime }) {
         </div>
       </div>
 
+      {/* p-1.5 porte la cible à 26 px : en dessous de 24, WCAG 2.2 (2.5.8) la
+          juge trop petite pour un usage tactile fiable. */}
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
-        className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
+        className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1.5 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
         aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">

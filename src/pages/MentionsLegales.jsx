@@ -22,7 +22,7 @@ export default function MentionsLegales() {
         <p>
           Le site <strong>Anime-Ink</strong> est un projet personnel à but non commercial, développé et maintenu par un développeur indépendant.
         </p>
-        <p>Contact : <a href="mailto:lisow33@gmail.com" className="text-[#22c55e] hover:underline">lisow33@gmail.com</a></p>
+        <p>Contact : <a href="mailto:lisow33@gmail.com" className="text-[var(--color-accent)] underline">lisow33@gmail.com</a></p>
       </Section>
 
       <Section title="Hébergement">
@@ -38,8 +38,8 @@ export default function MentionsLegales() {
         </p>
         <p>
           Toutes les données affichées (titres, synopsis, images, scores…) proviennent de l'API publique{' '}
-          <a href="https://jikan.moe" target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline">Jikan v4</a>,
-          un wrapper non officiel de <a href="https://myanimelist.net" target="_blank" rel="noopener noreferrer" className="text-[#22c55e] hover:underline">MyAnimeList</a>.
+          <a href="https://jikan.moe" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] underline">Jikan v4</a>,
+          un wrapper non officiel de <a href="https://myanimelist.net" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] underline">MyAnimeList</a>.
           Anime-Ink n'est affilié ni à Jikan ni à MyAnimeList.
         </p>
       </Section>

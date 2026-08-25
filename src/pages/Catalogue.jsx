@@ -285,7 +285,7 @@ export default function Catalogue() {
             <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => updateParam('letter', '')}
-                className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                className={`min-w-6 min-h-6 inline-flex items-center justify-center px-2 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 Tous
               </button>
@@ -293,7 +293,7 @@ export default function Catalogue() {
                 <button
                   key={l}
                   onClick={() => updateParam('letter', letter === l ? '' : l)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  className={`min-w-6 min-h-6 inline-flex items-center justify-center px-2 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {l}
                 </button>
