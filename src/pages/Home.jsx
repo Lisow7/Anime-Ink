@@ -9,6 +9,7 @@ import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
+import { posterUrl } from '../utils/images'
 import { readStorage, writeStorage } from '../utils/storage'
 
 const RANDOM_CACHE_KEY = 'anime-ink-random'
@@ -21,12 +22,19 @@ export default function Home() {
   const [topLoading, setTopLoading] = useState(true)
   const [random, setRandom] = useState(null)
   const [randomLoading, setRandomLoading] = useState(true)
+  // Sans ce drapeau, un échec laissait la section réduite à son titre : un
+  // en-tête décoratif qui n'annonçait rien et n'offrait aucune reprise.
+  const [randomError, setRandomError] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshCount, setRefreshCount] = useState(1)
   const [showPopover, setShowPopover] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  // Une liste vide ne dit pas pourquoi elle est vide : sans ce drapeau, une
+  // panne de l'API s'annonçait « Aucun animé trouvé ».
+  const [suggestionsError, setSuggestionsError] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeOption, setActiveOption] = useState(-1)
   const debouncedQuery = useDebounce(query, 400)
   const searchContainerRef = useRef(null)
   const navigate = useNavigate()
@@ -49,8 +57,16 @@ export default function Home() {
   const fetchRandom = useCallback((isRefresh = false) => {
     const apply = (data, setDone) => {
       if (!data) { setDone(); return }
+
+      // Le poster n'est affiché qu'à partir du palier « sm ». En dessous,
+      // attendre son chargement retenait le squelette derrière une image que
+      // personne ne verra.
+      const posterAffiche = typeof window !== 'undefined'
+        && window.matchMedia('(min-width: 640px)').matches
+      if (!posterAffiche) { setRandom(data); setDone(); return }
+
       const img = new Image()
-      img.src = data.images?.jpg?.image_url ?? data.images?.jpg?.large_image_url
+      img.src = posterUrl(data.images)
       const done = () => { setRandom(data); setDone() }
       img.onload = done
       img.onerror = done
@@ -59,6 +75,7 @@ export default function Home() {
     if (isRefresh) {
       setIsRefreshing(true)
       setRefreshCount(c => c + 1)
+      setRandomError(false)
       getRandomAnime()
         .then((data) => {
           if (data) {
@@ -66,7 +83,7 @@ export default function Home() {
           }
           apply(data, () => setIsRefreshing(false))
         })
-        .catch(() => setIsRefreshing(false))
+        .catch(() => { setRandomError(true); setIsRefreshing(false) })
     } else {
       try {
         const cached = readStorage(RANDOM_CACHE_KEY, null, value =>
@@ -87,6 +104,7 @@ export default function Home() {
         // Une entrée de cache corrompue est simplement ignorée.
       }
       setRandomLoading(true)
+      setRandomError(false)
       getRandomAnime()
         .then((data) => {
           if (data) {
@@ -94,7 +112,7 @@ export default function Home() {
           }
           apply(data, () => setRandomLoading(false))
         })
-        .catch(() => setRandomLoading(false))
+        .catch(() => { setRandomError(true); setRandomLoading(false) })
     }
   }, [])
 
@@ -102,15 +120,16 @@ export default function Home() {
 
   useEffect(() => {
     const q = debouncedQuery.trim()
-    if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
+    if (!q) { setSuggestions([]); setSuggestionsError(false); setSuggestionsLoading(false); return }
     const controller = new AbortController()
     setSuggestionsLoading(true)
+    setSuggestionsError(false)
     searchAnime(q, controller.signal)
       .then(results => {
         if (!controller.signal.aborted) setSuggestions(groupAnime(results ?? []).slice(0, 6))
       })
       .catch((error) => {
-        if (error?.name !== 'AbortError') setSuggestions([])
+        if (error?.name !== 'AbortError') { setSuggestions([]); setSuggestionsError(true) }
       })
       .finally(() => {
         if (!controller.signal.aborted) setSuggestionsLoading(false)
@@ -140,6 +159,48 @@ export default function Home() {
     openModal(anime.mal_id)
   }
 
+  const seeAllResults = () => {
+    setShowSuggestions(false)
+    navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`)
+  }
+
+  // Modèle « combobox with list autocomplete » de l'ARIA Authoring Practices :
+  // le focus ne quitte jamais le champ, l'option courante est désignée par
+  // aria-activedescendant. Les options ne sont donc plus des boutons
+  // focalisables — c'est le champ qui porte le clavier.
+  const listboxOpen = showSuggestions && Boolean(query.trim())
+  const options = suggestionsLoading
+    ? []
+    : [...suggestions.map(a => ({ type: 'anime', anime: a })), ...(suggestions.length ? [{ type: 'all' }] : [])]
+  const optionId = index => `suggestion-${index}`
+
+  const chooseOption = (index) => {
+    const option = options[index]
+    if (!option) return
+    if (option.type === 'all') seeAllResults()
+    else pickSuggestion(option.anime)
+  }
+
+  const onSearchKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      setShowSuggestions(false)
+      setActiveOption(-1)
+      return
+    }
+    if (!listboxOpen || options.length === 0) return
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveOption(i => (i + 1) % options.length)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveOption(i => (i <= 0 ? options.length : i) - 1)
+    } else if (event.key === 'Enter' && activeOption >= 0) {
+      event.preventDefault()
+      chooseOption(activeOption)
+    }
+  }
+
   const randomIsHentai = random?.genres?.some(g => HENTAI_GENRES.includes(g.name))
   const randomIsEcchi = random?.genres?.some(g => ECCHI_GENRES.includes(g.name))
   const randomBlurred = blurHentai && (randomIsHentai || randomIsEcchi)
@@ -165,10 +226,17 @@ export default function Home() {
             <input
               type="text"
               value={query}
-              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true) }}
+              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); setActiveOption(-1) }}
               onFocus={() => { if (query.trim()) setShowSuggestions(true) }}
+              onKeyDown={onSearchKeyDown}
               placeholder="Rechercher un animé..."
-              className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
+              role="combobox"
+              aria-expanded={listboxOpen}
+              aria-controls={listboxOpen ? 'suggestions-recherche' : undefined}
+              aria-autocomplete="list"
+              aria-label="Rechercher un animé"
+              aria-activedescendant={activeOption >= 0 ? optionId(activeOption) : undefined}
+              className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-input)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] transition-colors"
             />
             <button
               type="submit"
@@ -178,48 +246,67 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Dropdown suggestions */}
-          {showSuggestions && query.trim() && (
+          {/* L'état de la recherche est annoncé aux lecteurs d'écran : sans cela,
+              la liste apparaissait en silence. */}
+          <p role="status" aria-live="polite" className="sr-only">
+            {!listboxOpen ? ''
+              : suggestionsLoading ? 'Recherche en cours…'
+              : suggestionsError ? 'Recherche indisponible : l’API Jikan ne répond pas.'
+              : suggestions.length === 0 ? 'Aucun animé trouvé.'
+              : `${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''} disponible${suggestions.length > 1 ? 's' : ''}.`}
+          </p>
+
+          {listboxOpen && (
             <div className="absolute top-full left-0 right-0 mt-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden z-50">
               {suggestionsLoading ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-[var(--text-muted)] text-sm">
-                  <div className="w-3.5 h-3.5 border border-[var(--text-muted)] border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="w-3.5 h-3.5 border border-[var(--text-muted)] border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true" />
                   Recherche en cours…
                 </div>
+              ) : suggestionsError ? (
+                <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
+                  L&apos;API Jikan est momentanément indisponible. Réessaie dans quelques instants.
+                </p>
               ) : suggestions.length === 0 ? (
                 <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
                   Aucun animé trouvé pour «&nbsp;{debouncedQuery}&nbsp;».
                 </p>
               ) : (
-                <>
-                  {suggestions.map(anime => (
-                    <button
-                      key={anime.mal_id}
-                      type="button"
-                      onClick={() => pickSuggestion(anime)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--bg-base)] transition-colors text-left border-b border-[var(--border-subtle)] last:border-0"
+                <ul id="suggestions-recherche" role="listbox" aria-label="Suggestions d'animés">
+                  {options.map((option, index) => (
+                    <li
+                      key={option.type === 'all' ? 'tous' : option.anime.mal_id}
+                      id={optionId(index)}
+                      role="option"
+                      aria-selected={activeOption === index}
+                      onClick={() => chooseOption(index)}
+                      onMouseEnter={() => setActiveOption(index)}
+                      className={
+                        option.type === 'all'
+                          ? `px-4 py-2.5 text-[var(--color-accent)] text-xs font-medium text-center cursor-pointer transition-colors ${activeOption === index ? 'bg-[var(--bg-base)]' : ''}`
+                          : `flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors border-b border-[var(--border-subtle)] last:border-0 ${activeOption === index ? 'bg-[var(--bg-base)]' : ''}`
+                      }
                     >
-                      <img
-                        src={anime.images?.jpg?.image_url}
-                        alt={anime.title}
-                        className="w-8 h-11 object-cover rounded shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[var(--text-primary)] text-sm font-medium truncate">{anime.title}</p>
-                        <p className="text-[var(--text-muted)] text-[11px]">
-                          {anime.year ?? '—'}{anime.score ? ` · ★ ${anime.score}` : ''}
-                        </p>
-                      </div>
-                    </button>
+                      {option.type === 'all' ? (
+                        <>Voir tous les résultats pour «&nbsp;{query}&nbsp;» →</>
+                      ) : (
+                        <>
+                          <img
+                            src={posterUrl(option.anime.images)}
+                            alt=""
+                            className="w-8 h-11 object-cover rounded shrink-0"
+                          />
+                          <span className="min-w-0 flex-1 block">
+                            <span className="text-[var(--text-primary)] text-sm font-medium truncate block">{option.anime.title}</span>
+                            <span className="text-[var(--text-muted)] text-[11px] block">
+                              {option.anime.year ?? '—'}{option.anime.score ? ` · ★ ${option.anime.score}` : ''}
+                            </span>
+                          </span>
+                        </>
+                      )}
+                    </li>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => { setShowSuggestions(false); navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`) }}
-                    className="w-full px-4 py-2.5 text-[#22c55e] text-xs font-medium hover:bg-[var(--bg-base)] transition-colors text-center"
-                  >
-                    Voir tous les résultats pour «&nbsp;{query}&nbsp;» →
-                  </button>
-                </>
+                </ul>
               )}
             </div>
           )}
@@ -230,7 +317,7 @@ export default function Home() {
       <section className="w-full flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#16a34a] fill-none stroke-current shrink-0" strokeWidth="2">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
               <rect x="2" y="2" width="20" height="20" rx="4"/>
               <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
               <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
@@ -238,7 +325,7 @@ export default function Home() {
               <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
               <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
             </svg>
-            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Animé surprise</span>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Animé surprise</h2>
           </div>
           <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
         </div>
@@ -253,7 +340,7 @@ export default function Home() {
               aria-hidden
               className="absolute inset-0 w-full h-full scale-110 blur-lg opacity-20 hidden sm:block"
               style={{
-                backgroundImage: `url(${random.images?.jpg?.image_url})`,
+                backgroundImage: `url(${posterUrl(random.images)})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}
@@ -287,12 +374,12 @@ export default function Home() {
                     Chaque suggestion appelle l'API Jikan (MyAnimeList). Limitée à 3 requêtes / seconde.
                   </p>
                   <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-[var(--border-subtle)]">
-                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-[#22c55e] fill-none stroke-current shrink-0" strokeWidth="2">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
                       <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <span className="text-[11px] text-[var(--text-muted)]">
-                      <span className="text-[#22c55e] font-semibold">{refreshCount}</span> requête{refreshCount > 1 ? 's' : ''} effectuée{refreshCount > 1 ? 's' : ''}
+                      <span className="text-[var(--color-accent)] font-semibold">{refreshCount}</span> requête{refreshCount > 1 ? 's' : ''} effectuée{refreshCount > 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
@@ -309,9 +396,9 @@ export default function Home() {
                 aria-label={`Ouvrir ${random.title}`}
               >
                 <img
-                  src={random.images?.jpg?.image_url ?? random.images?.jpg?.large_image_url}
+                  src={posterUrl(random.images)}
                   alt={random.title}
-                  fetchPriority="high"
+                  fetchPriority="auto"
                   width={176}
                   height={264}
                   className="h-44 rounded-xl shadow-2xl object-cover transition-transform duration-200 group-hover:scale-105"
@@ -378,6 +465,23 @@ export default function Home() {
               </div>
             </div>
           </div>
+        ) : randomError ? (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 py-8 px-4 text-center rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-color)]"
+          >
+            <p className="text-[var(--text-muted)] text-sm">
+              L&apos;animé surprise n&apos;a pas pu être chargé : l&apos;API Jikan ne répond pas.
+            </p>
+            {/* `false` et non `true` : seul ce chemin rallume le squelette.
+                Le rafraîchissement laisserait la section vide pendant l'appel. */}
+            <button
+              onClick={() => fetchRandom(false)}
+              className="px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
         ) : null}
       </section>
 
@@ -385,13 +489,13 @@ export default function Home() {
       <section className="w-full flex flex-col gap-6">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 shrink-0">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#16a34a] fill-none stroke-current shrink-0" strokeWidth="2">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</span>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</h2>
           </div>
           <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
-          <Link to="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[#16a34a] transition-colors">
+          <Link to="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[var(--color-accent)] transition-colors">
             Voir tout →
           </Link>
         </div>

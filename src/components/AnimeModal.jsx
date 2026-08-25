@@ -8,6 +8,7 @@ import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
+import { posterUrl } from '../utils/images'
 import { safeYoutubeEmbed } from '../utils/urls'
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
@@ -24,6 +25,10 @@ export default function AnimeModal() {
   const [synopsis, setSynopsis] = useState(null)
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
+  // Le contournement ne vaut que pour la requête déclenchée par le clic : un
+  // drapeau persistant désactiverait le cache pour tout le reste de la session.
+  const contournerAuProchainAppel = useRef(false)
   const [recommendations, setRecommendations] = useState([])
   const [seriesData, setSeriesData] = useState(null)
   const franchiseLoadedFor = useRef(null)
@@ -48,6 +53,9 @@ export default function AnimeModal() {
     setLocalAnimeId(animeId)
     setSeriesData(null)
     franchiseLoadedFor.current = null
+    // Une nouvelle fiche repart d'une reprise vierge : sans cela, bypassCache
+    // resterait armé et court-circuiterait le cache pour toutes les suivantes.
+    setRetryKey(0)
   }, [animeId])
 
   // Charger l'animé quand localAnimeId change (ouverture ou changement de saison)
@@ -59,9 +67,11 @@ export default function AnimeModal() {
     setAnime(null)
     setSynopsis(null)
     setRecommendations([])
+    const bypassCache = contournerAuProchainAppel.current
+    contournerAuProchainAppel.current = false
     const load = async () => {
       try {
-        const data = await getAnimeById(localAnimeId, controller.signal)
+        const data = await getAnimeById(localAnimeId, controller.signal, { bypassCache })
         setAnime(data)
         if (data?.synopsis) {
           setTranslating(true)
@@ -90,7 +100,7 @@ export default function AnimeModal() {
     }
     load()
     return () => controller.abort()
-  }, [localAnimeId, animeId])
+  }, [localAnimeId, animeId, retryKey])
 
   // Charger les données de la franchise une seule fois par ouverture de modal
   useEffect(() => {
@@ -157,7 +167,7 @@ export default function AnimeModal() {
         tabIndex={-1}
         className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl"
       >
-        <h2 id={titleId} className="sr-only">{anime?.title ?? 'Fiche de l’animé'}</h2>
+        {!anime && <h2 id={titleId} className="sr-only">Fiche de l’animé</h2>}
 
         {/* Bouton fermer */}
         <div className="sticky top-0 z-10 flex justify-end p-3 bg-[var(--bg-base)]/80 backdrop-blur-sm">
@@ -183,6 +193,15 @@ export default function AnimeModal() {
           <div className="px-6 sm:px-8 pb-10 text-center" role="alert">
             <p className="text-[var(--text-primary)] font-semibold">Fiche temporairement indisponible</p>
             <p className="text-[var(--text-muted)] text-sm mt-2">{error}</p>
+            {/* Sans ce bouton, la seule reprise possible serait de fermer et
+                rouvrir la modale — que le cache négatif bloquerait 30 secondes. */}
+            <button
+              type="button"
+              onClick={() => { contournerAuProchainAppel.current = true; setRetryKey(k => k + 1) }}
+              className="mt-4 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              Réessayer
+            </button>
           </div>
         ) : anime ? (
           <div className="px-4 sm:px-8 pb-6 sm:pb-8 flex flex-col gap-5 sm:gap-8">
@@ -190,14 +209,14 @@ export default function AnimeModal() {
             {/* Hero */}
             <div className="flex flex-col min-[500px]:flex-row gap-4 min-[500px]:gap-6">
               <img
-                src={anime.images?.jpg?.large_image_url}
+                src={posterUrl(anime.images, { large: true })}
                 alt={anime.title}
                 className="w-28 min-[500px]:w-36 sm:w-40 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
               />
               <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
                 {/* Titre */}
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
+                  <h2 id={titleId} className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
                   {anime.title_japanese && (
                     <p className="text-[var(--text-muted)] text-sm mt-1 truncate">{anime.title_japanese}</p>
                   )}
@@ -209,8 +228,8 @@ export default function AnimeModal() {
                     onClick={() => watchStatus ? remove(anime.mal_id) : setStatus(anime, 'to_watch')}
                     className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
                       watchStatus
-                        ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[#22c55e]'
-                        : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[#22c55e]'
+                        ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[var(--color-accent)]'
+                        : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[var(--color-accent)]'
                     }`}
                     aria-label={watchStatus ? 'Retirer de ma liste' : 'Ajouter à ma liste'}
                   >
@@ -221,7 +240,7 @@ export default function AnimeModal() {
                   </button>
                   <button
                     onClick={() => toggle(anime)}
-                    className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
+                    className={`shrink-0 transition-colors ${fav ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--color-accent)]'}`}
                     aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                   >
                     <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
@@ -279,7 +298,7 @@ export default function AnimeModal() {
                       onClick={() => switchAnime(seriesData.seasons[0].mal_id)}
                       className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                         localAnimeId === seriesData.seasons[0].mal_id
-                          ? 'border-[#22c55e] text-[#22c55e] bg-[#22c55e]/10'
+                          ? 'border-[#22c55e] text-[var(--color-accent)] bg-[#22c55e]/10'
                           : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[var(--text-primary)]'
                       }`}
                     >
@@ -292,7 +311,7 @@ export default function AnimeModal() {
                     <select
                       value={seriesData.seasons.some(s => s.mal_id === localAnimeId) ? localAnimeId : ''}
                       onChange={(e) => e.target.value && switchAnime(Number(e.target.value))}
-                      className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#22c55e] cursor-pointer font-medium"
+                      className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer font-medium"
                     >
                       {!seriesData.seasons.some(s => s.mal_id === localAnimeId) && (
                         <option value="" disabled>— Choisir une saison —</option>
@@ -427,7 +446,7 @@ export default function AnimeModal() {
                     >
                       <div className="w-24 h-36 rounded-lg overflow-hidden bg-[var(--bg-surface)]">
                         <img
-                          src={rec.images?.jpg?.image_url ?? rec.images?.jpg?.large_image_url}
+                          src={posterUrl(rec.images)}
                           alt={rec.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />

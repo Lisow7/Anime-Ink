@@ -1,0 +1,89 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createCache } from './cache'
+
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
+
+function fakeSessionStorage({ failOnWrite = false } = {}) {
+  const data = new Map()
+  return {
+    get length() { return data.size },
+    key: index => [...data.keys()][index] ?? null,
+    getItem: key => (data.has(key) ? data.get(key) : null),
+    setItem: (key, value) => {
+      if (failOnWrite) {
+        const error = new Error('quota dépassé')
+        error.name = 'QuotaExceededError'
+        throw error
+      }
+      data.set(key, value)
+    },
+    removeItem: key => { data.delete(key) },
+  }
+}
+
+describe('cache de réponses', () => {
+  it('rend la valeur avant expiration et plus rien après', () => {
+    vi.useFakeTimers()
+    const cache = createCache()
+
+    cache.set('/anime/1/full', { title: 'Cowboy Bebop' }, 1000)
+    expect(cache.get('/anime/1/full')).toEqual({ title: 'Cowboy Bebop' })
+
+    vi.advanceTimersByTime(1001)
+    expect(cache.get('/anime/1/full')).toBeUndefined()
+  })
+
+  it('évince la moins récemment utilisée au-delà de sa capacité', () => {
+    const cache = createCache({ maxEntries: 2 })
+
+    cache.set('a', 1, 10_000)
+    cache.set('b', 2, 10_000)
+    cache.get('a') // « a » redevient la plus récemment utilisée, « b » la plus ancienne
+    cache.set('c', 3, 10_000)
+
+    expect(cache.get('b')).toBeUndefined()
+    expect(cache.get('a')).toBe(1)
+    expect(cache.get('c')).toBe(3)
+  })
+
+  it('survit à un rechargement en relisant sessionStorage', () => {
+    vi.stubGlobal('sessionStorage', fakeSessionStorage())
+
+    createCache().set('/anime/1/full', { title: 'Cowboy Bebop' }, 10_000)
+
+    const afterReload = createCache()
+    expect(afterReload.get('/anime/1/full')).toEqual({ title: 'Cowboy Bebop' })
+  })
+
+  it('ne propage pas une saturation de quota et garde la mémoire opérante', () => {
+    vi.stubGlobal('sessionStorage', fakeSessionStorage({ failOnWrite: true }))
+    const cache = createCache()
+
+    expect(() => cache.set('/anime/1/full', { title: 'X' }, 10_000)).not.toThrow()
+    expect(cache.get('/anime/1/full')).toEqual({ title: 'X' })
+  })
+
+  it('se vide entièrement sur demande, miroir compris', () => {
+    const storage = fakeSessionStorage()
+    vi.stubGlobal('sessionStorage', storage)
+    storage.setItem('un-autre-usage', 'à préserver')
+
+    const cache = createCache()
+    cache.set('/anime/1/full', { title: 'X' }, 10_000)
+    cache.clear()
+
+    expect(cache.get('/anime/1/full')).toBeUndefined()
+    expect(createCache().get('/anime/1/full')).toBeUndefined()
+    expect(storage.getItem('un-autre-usage')).toBe('à préserver')
+  })
+
+  it('fonctionne quand sessionStorage est absent', () => {
+    const cache = createCache()
+
+    cache.set('/anime/1/full', { title: 'X' }, 10_000)
+    expect(cache.get('/anime/1/full')).toEqual({ title: 'X' })
+  })
+})

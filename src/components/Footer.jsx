@@ -39,7 +39,7 @@ export default function Footer() {
             href="https://jikan.moe"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#22c55e] transition-colors underline underline-offset-2"
+            className="hover:text-[var(--color-accent)] transition-colors underline underline-offset-2"
           >
             Jikan API
           </a>

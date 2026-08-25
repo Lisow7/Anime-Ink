@@ -1,8 +1,11 @@
 name: Qualité et sécurité
 
 on:
+  # Les branches de travail visent `dev` : ne déclencher que sur `main` laissait
+  # chaque PR de fonctionnalité passer sans aucun contrôle, et ne vérifiait le
+  # lot qu'une fois déjà fusionné. Un garde-fou ne protège que ce qu'il visite.
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -28,3 +31,8 @@ jobs:
       - run: npm test
       - run: npm audit --audit-level=high
       - run: npm run build
+      # Le garde-fou d'accessibilité a besoin d'un vrai navigateur : sous jsdom,
+      # axe ne calcule aucune mise en page et serait aveugle aux contrastes comme
+      # aux tailles de cible, c'est-à-dire à ce qu'il doit justement surveiller.
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/a11y.mjs

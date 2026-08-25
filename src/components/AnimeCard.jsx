@@ -5,9 +5,13 @@ import { useHistory } from '../context/HistoryContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
-import { scoreColor } from '../utils/score'
+import { scoreColorOnOverlay } from '../utils/score'
+import { posterUrl } from '../utils/images'
 
-function AnimeCard({ anime }) {
+// `prioritaire` sert aux cartes de la première rangée du catalogue, qui sont
+// au-dessus de la ligne de flottaison : Chrome ne lance une image `lazy` qu'une
+// fois la mise en page calculée, ce qui retarde mécaniquement le LCP.
+function AnimeCard({ anime, prioritaire = false }) {
   const { isFavorite, toggle } = useFavorites()
   const { openModal } = useModal()
   const { history } = useHistory()
@@ -28,22 +32,15 @@ function AnimeCard({ anime }) {
     <div className="relative group h-full">
       <div
         onClick={() => openModal(mal_id)}
-        onKeyDown={(event) => {
-          if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault()
-            openModal(mal_id)
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={`Ouvrir la fiche de ${title}`}
         className="cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] transition-all duration-200 h-full"
       >
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
-            src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
+            src={posterUrl(images)}
             alt={title}
-            loading="lazy"
+            loading={prioritaire ? 'eager' : 'lazy'}
+            fetchPriority={prioritaire ? 'high' : 'auto'}
+            decoding="async"
             width={225}
             height={338}
             className={`w-full h-full object-cover transition-all duration-300 ${
@@ -91,7 +88,7 @@ function AnimeCard({ anime }) {
           )}
 
           {score && (
-            <span className="absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md" style={{ color: scoreColor(score) }}>
+            <span className="absolute top-2 left-2 bg-black/70 text-xs font-semibold px-2 py-1 rounded-md" style={{ color: scoreColorOnOverlay(score) }}>
               ★ {score}
             </span>
           )}
@@ -108,7 +105,18 @@ function AnimeCard({ anime }) {
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <p title={title} className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</p>
+          {/* Le titre porte l'action d'ouverture. Le conteneur ne peut plus être
+              un role="button" : il englobe le lien vers la bande-annonce, et un
+              contrôle imbriqué dans un autre masque l'enfant au lecteur d'écran. */}
+          <p title={title} className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); openModal(mal_id) }}
+              className="text-left w-full rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]"
+            >
+              {title}
+            </button>
+          </p>
           <div className="mt-auto flex items-center justify-between pt-2">
             <span className="text-[var(--text-muted)] text-xs">
               {episodes ? `${episodes} ép.` : airing ? 'En cours' : '? ép.'}
@@ -126,9 +134,11 @@ function AnimeCard({ anime }) {
         </div>
       </div>
 
+      {/* p-1.5 porte la cible à 26 px : en dessous de 24, WCAG 2.2 (2.5.8) la
+          juge trop petite pour un usage tactile fiable. */}
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
-        className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
+        className={`absolute top-2 right-2 transition-colors bg-black/50 rounded-full p-1.5 ${fav ? 'text-[#22c55e]' : 'text-[#6b7280] hover:text-[#22c55e]'}`}
         aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">

@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
 import { useSEO } from '../hooks/useSEO'
 import { useSearchParams } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import AnimeListCard from '../components/AnimeListCard'
 import EmptyState from '../components/EmptyState'
-import WatchlistTable from '../components/WatchlistTable'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
@@ -13,6 +12,15 @@ import { WATCH_STATUS } from '../constants/anime'
 import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
 import { groupAnime } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
+
+// WatchlistTable est le seul consommateur de @dnd-kit (3 paquets) et n'apparaît
+// que sur l'onglet « Ma liste ». Importé statiquement, il pesait sur tous ceux
+// qui ne l'ouvrent jamais : les trois quarts du poids du chunk Catalogue.
+const WatchlistTable = lazy(() => import('../components/WatchlistTable'))
+// Le survol de l'onglet amorce le téléchargement : sans cela, ouvrir sa liste
+// enchaînerait deux chunks l'un après l'autre, soit un aller-retour de plus
+// pour exactement les gens qui y tiennent.
+const prechargerWatchlist = () => { import('../components/WatchlistTable') }
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
@@ -36,6 +44,9 @@ export default function Catalogue() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  // Le contournement ne vaut que pour la requête déclenchée par le clic : un
+  // drapeau persistant désactiverait le cache pour tout le reste de la session.
+  const contournerAuProchainAppel = useRef(false)
   const [pagination, setPagination] = useState({ current: 1, last: 1, total: null })
   const [inputValue, setInputValue] = useState(() => searchParams.get('q') || '')
   const debouncedInput = useDebounce(inputValue)
@@ -102,6 +113,8 @@ export default function Catalogue() {
     const controller = new AbortController()
     setLoading(true)
     setError(false)
+    const bypassCache = contournerAuProchainAppel.current
+    contournerAuProchainAppel.current = false
     const run = async () => {
       try {
         const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
@@ -112,7 +125,13 @@ export default function Catalogue() {
           setAnimes(data)
           setPagination({ current: 1, last: 1, total: data.length })
         } else {
-          const result = await getAnimeByFilter({ genre, status, type, orderBy, letter, page }, controller.signal)
+          // Une reprise demandée par l'utilisateur contourne l'échec mémorisé,
+          // sinon le bouton « Réessayer » paraîtrait mort pendant 30 secondes.
+          const result = await getAnimeByFilter(
+            { genre, status, type, orderBy, letter, page },
+            controller.signal,
+            { bypassCache },
+          )
           if (controller.signal.aborted) return
           const norm = (t) => t.replace(/^[^a-zA-Z0-9\u00C0-\u024F]+/, '')
           const data = dedup(result.data ?? [])
@@ -178,10 +197,12 @@ export default function Catalogue() {
     writeStorage('anime-ink-view', mode)
   }
 
-  const displayList = tab === 'favoris' ? favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
-    : tab === 'recents' ? groupAnime(history, { keepNonTV: true })
-    : tab === 'liste' ? watchlist
-    : groupAnime(animes)
+  const displayList = useMemo(() => (
+    tab === 'favoris' ? favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
+      : tab === 'recents' ? groupAnime(history, { keepNonTV: true })
+      : tab === 'liste' ? watchlist
+      : groupAnime(animes)
+  ), [tab, favorites, history, watchlist, animes])
   const isGrid = viewMode === 'grid'
   const total = tab === 'favoris' ? displayList.length
     : tab === 'recents' ? displayList.length
@@ -217,6 +238,8 @@ export default function Catalogue() {
               {watchlist.length > 0 && (
                 <button
                   onClick={() => switchTab(tab === 'liste' ? 'catalogue' : 'liste')}
+                  onMouseEnter={prechargerWatchlist}
+                  onFocus={prechargerWatchlist}
                   className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'liste' ? 'bg-[#15803d] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   Ma liste
@@ -248,21 +271,24 @@ export default function Catalogue() {
             type="text"
             value={inputValue}
             placeholder="Rechercher un animé..."
-            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 sm:max-w-sm"
+            aria-label="Rechercher un animé dans le catalogue"
+            className="bg-[var(--bg-surface)] border border-[var(--border-input)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] transition-colors flex-1 sm:max-w-sm"
             onChange={(e) => setInputValue(e.target.value)}
           />
           {/* Toggle grille / liste */}
           <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
             <button
               onClick={() => switchView('grid')}
-              className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              aria-pressed={isGrid}
+              className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               aria-label="Vue grille"
             >
               <IconGrid />
             </button>
             <button
               onClick={() => switchView('list')}
-              className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              aria-pressed={!isGrid}
+              className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               aria-label="Vue liste"
             >
               <IconList />
@@ -279,7 +305,8 @@ export default function Catalogue() {
             <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => updateParam('letter', '')}
-                className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                aria-pressed={!letter}
+                className={`min-w-6 min-h-6 inline-flex items-center justify-center px-2 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 Tous
               </button>
@@ -287,7 +314,8 @@ export default function Catalogue() {
                 <button
                   key={l}
                   onClick={() => updateParam('letter', letter === l ? '' : l)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  aria-pressed={letter === l}
+                  className={`min-w-6 min-h-6 inline-flex items-center justify-center px-2 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {l}
                 </button>
@@ -299,14 +327,14 @@ export default function Catalogue() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <select value={genre} onChange={(e) => updateParam('genre', e.target.value)}
               aria-label="Filtrer par genre"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les genres</option>
               {genres.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
             </select>
 
             <select value={type} onChange={(e) => updateParam('type', e.target.value)}
               aria-label="Filtrer par type"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les types</option>
               <option value="tv">Série TV</option>
               <option value="movie">Film</option>
@@ -317,7 +345,7 @@ export default function Catalogue() {
 
             <select value={status} onChange={(e) => updateParam('status', e.target.value)}
               aria-label="Filtrer par statut"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les statuts</option>
               <option value="airing">En cours</option>
               <option value="complete">Terminé</option>
@@ -326,7 +354,7 @@ export default function Catalogue() {
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}
               aria-label="Trier par"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="score">Meilleure note</option>
               <option value="title">Alphabétique</option>
               <option value="start_date">Date de sortie</option>
@@ -375,12 +403,12 @@ export default function Catalogue() {
 
       {/* Erreur API */}
       {tab === 'catalogue' && error && !loading && (
-        <div className="flex flex-col items-center gap-4 py-20 text-center">
-          <span className="text-5xl">⚠️</span>
+        <div role="alert" className="flex flex-col items-center gap-4 py-20 text-center">
+          <span className="text-5xl" aria-hidden="true">⚠️</span>
           <p className="text-[var(--text-primary)] font-semibold text-lg">Impossible de charger les animés</p>
           <p className="text-[var(--text-muted)] text-sm">L'API Jikan est momentanément indisponible. Réessaie dans quelques instants.</p>
           <button
-            onClick={() => { setError(false); setRetryKey(k => k + 1) }}
+            onClick={() => { contournerAuProchainAppel.current = true; setError(false); setRetryKey(k => k + 1) }}
             className="mt-2 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Réessayer
@@ -434,11 +462,13 @@ export default function Catalogue() {
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyListe />
           : <EmptyState query={query} onReset={query ? clearSearch : resetFilters} />
       ) : !error && tab === 'liste' ? (
-        <WatchlistTable list={displayList} />
+        <Suspense fallback={<div className="py-20 text-center text-[var(--text-muted)] text-sm">Chargement de ta liste…</div>}>
+          <WatchlistTable list={displayList} />
+        </Suspense>
       ) : !error && isGrid ? (
         <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-          {displayList.map((anime) => (
-            <AnimeCard key={anime.mal_id} anime={anime} />
+          {displayList.map((anime, index) => (
+            <AnimeCard key={anime.mal_id} anime={anime} prioritaire={index < 5} />
           ))}
         </div>
       ) : !error ? (
