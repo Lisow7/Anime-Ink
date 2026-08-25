@@ -295,7 +295,7 @@ export default function Home() {
       <section className="w-full flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#16a34a] fill-none stroke-current shrink-0" strokeWidth="2">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
               <rect x="2" y="2" width="20" height="20" rx="4"/>
               <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
               <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
@@ -352,12 +352,12 @@ export default function Home() {
                     Chaque suggestion appelle l'API Jikan (MyAnimeList). Limitée à 3 requêtes / seconde.
                   </p>
                   <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-[var(--border-subtle)]">
-                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-[#22c55e] fill-none stroke-current shrink-0" strokeWidth="2">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
                       <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <span className="text-[11px] text-[var(--text-muted)]">
-                      <span className="text-[#22c55e] font-semibold">{refreshCount}</span> requête{refreshCount > 1 ? 's' : ''} effectuée{refreshCount > 1 ? 's' : ''}
+                      <span className="text-[var(--color-accent)] font-semibold">{refreshCount}</span> requête{refreshCount > 1 ? 's' : ''} effectuée{refreshCount > 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
@@ -450,13 +450,13 @@ export default function Home() {
       <section className="w-full flex flex-col gap-6">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 shrink-0">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#16a34a] fill-none stroke-current shrink-0" strokeWidth="2">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</span>
           </div>
           <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
-          <Link to="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[#16a34a] transition-colors">
+          <Link to="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[var(--color-accent)] transition-colors">
             Voir tout →
           </Link>
         </div>

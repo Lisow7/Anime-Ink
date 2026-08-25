@@ -129,7 +129,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 cursor-pointer" onClick={() => openModal(anime.mal_id)}>
-              <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[#22c55e] transition-colors">
+              <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[var(--color-accent)] transition-colors">
                 {anime.title}
               </p>
               <p className="text-[var(--text-muted)] text-[10px] mt-0.5 line-clamp-1">
@@ -193,7 +193,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
         </button>
         <div className="min-w-0 flex flex-col gap-1.5">
           <div onClick={() => openModal(anime.mal_id)} className="cursor-pointer min-w-0">
-            <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[#22c55e] transition-colors">{anime.title}</p>
+            <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[var(--color-accent)] transition-colors">{anime.title}</p>
             <p className="text-[var(--text-muted)] text-[11px] mt-0.5 line-clamp-1">
               {anime.genres?.slice(0, 3).map(g => g.name).join(' · ') || '—'}
             </p>
@@ -485,7 +485,7 @@ export default function WatchlistTable({ list }) {
               <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest text-right">#</span>
               <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">Affiche</span>
               <div className="flex items-center gap-1.5">
-                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current text-[#22c55e]/60 shrink-0" strokeWidth="2">
+                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current text-[var(--color-accent)]/60 shrink-0" strokeWidth="2">
                   <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round"/>
                 </svg>
                 <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">Titre · Progression</span>

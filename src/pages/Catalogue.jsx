@@ -276,14 +276,14 @@ export default function Catalogue() {
           <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
             <button
               onClick={() => switchView('grid')}
-              className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               aria-label="Vue grille"
             >
               <IconGrid />
             </button>
             <button
               onClick={() => switchView('list')}
-              className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               aria-label="Vue liste"
             >
               <IconList />

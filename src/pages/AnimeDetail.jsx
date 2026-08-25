@@ -117,7 +117,7 @@ export default function AnimeDetail() {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
-      <Link to="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors w-fit">
+      <Link to="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[var(--color-accent)] transition-colors w-fit">
         ← Retour au catalogue
       </Link>
 

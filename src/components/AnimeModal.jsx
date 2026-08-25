@@ -228,8 +228,8 @@ export default function AnimeModal() {
                     onClick={() => watchStatus ? remove(anime.mal_id) : setStatus(anime, 'to_watch')}
                     className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
                       watchStatus
-                        ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[#22c55e]'
-                        : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[#22c55e]'
+                        ? 'bg-[var(--bg-surface)] border-[#22c55e] text-[var(--color-accent)]'
+                        : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[var(--color-accent)]'
                     }`}
                     aria-label={watchStatus ? 'Retirer de ma liste' : 'Ajouter à ma liste'}
                   >
@@ -240,7 +240,7 @@ export default function AnimeModal() {
                   </button>
                   <button
                     onClick={() => toggle(anime)}
-                    className={`shrink-0 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
+                    className={`shrink-0 transition-colors ${fav ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--color-accent)]'}`}
                     aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                   >
                     <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
@@ -298,7 +298,7 @@ export default function AnimeModal() {
                       onClick={() => switchAnime(seriesData.seasons[0].mal_id)}
                       className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
                         localAnimeId === seriesData.seasons[0].mal_id
-                          ? 'border-[#22c55e] text-[#22c55e] bg-[#22c55e]/10'
+                          ? 'border-[#22c55e] text-[var(--color-accent)] bg-[#22c55e]/10'
                           : 'border-[var(--border-color)] text-[var(--text-muted)] hover:border-[#22c55e] hover:text-[var(--text-primary)]'
                       }`}
                     >

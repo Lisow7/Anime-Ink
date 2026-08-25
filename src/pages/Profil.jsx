@@ -43,7 +43,7 @@ export default function Profil() {
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-full bg-[#22c55e]/20 border border-[#22c55e]/40 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" className="w-7 h-7 text-[#22c55e] fill-none stroke-current" strokeWidth="1.5">
+          <svg viewBox="0 0 24 24" className="w-7 h-7 text-[var(--color-accent)] fill-none stroke-current" strokeWidth="1.5">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
             <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -160,7 +160,7 @@ export default function Profil() {
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-[var(--text-primary)] font-semibold text-lg">Ma liste</h2>
-                <Link to="/catalogue?tab=liste" className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors">
+                <Link to="/catalogue?tab=liste" className="text-[var(--text-muted)] text-sm hover:text-[var(--color-accent)] transition-colors">
                   Voir tout →
                 </Link>
               </div>
@@ -187,7 +187,7 @@ export default function Profil() {
             <section className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-[var(--text-primary)] font-semibold text-lg">Derniers favoris</h2>
-                <Link to="/catalogue?tab=favoris" className="text-[var(--text-muted)] text-sm hover:text-[#22c55e] transition-colors">
+                <Link to="/catalogue?tab=favoris" className="text-[var(--text-muted)] text-sm hover:text-[var(--color-accent)] transition-colors">
                   Voir tous →
                 </Link>
               </div>

@@ -66,7 +66,7 @@ export default function AnimeListCard({ anime }) {
           <span className="text-[var(--text-muted)] text-xs">{episodes ? `${episodes} ép.` : '? ép.'}</span>
           {status && (
             <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-              status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
+              status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[var(--color-accent)]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
             }`}>
               {STATUS_LABEL[status] ?? status}
             </span>
@@ -90,7 +90,7 @@ export default function AnimeListCard({ anime }) {
 
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
-        className={`absolute top-3 right-3 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
+        className={`absolute top-3 right-3 transition-colors ${fav ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--color-accent)]'}`}
         aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <svg viewBox="0 0 24 24" className="w-4 h-4" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
