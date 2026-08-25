@@ -49,9 +49,10 @@ src/
 ├── hooks/                # Hooks personnalisés (useSEO, useDebounce)
 ├── pages/                # Pages (Home, Catalogue, AnimeDetail, Profil…)
 ├── services/
+│   └── jikan/            # Seau à jetons, cache, TTL, client (testés séparément)
 │   └── jikan.js          # Couche d'appel à l'API Jikan
 ├── styles/               # Variables CSS, animations, composants
-├── utils/                # Fonctions utilitaires (score, groupAnime…)
+├── utils/                # Fonctions utilitaires (score, groupAnime, posterUrl…)
 └── constants/            # Constantes (genres, status, acronymes)
 ```
 
@@ -84,7 +85,22 @@ npm run preview
 
 # Linting
 npm run lint
+
+# Tests unitaires
+npm run test
+
+# Lint + tests + build
+npm run check
+
+# Garde-fou d'accessibilité (axe-core dans un vrai navigateur)
+# Nécessite une première fois : npx playwright install chromium
+npm run a11y
 ```
+
+> `a11y` est volontairement absent de `check` : sur un dépôt fraîchement cloné,
+> l'absence de Chromium ferait échouer la commande d'entrée sur une erreur qui
+> se lit comme un dépôt cassé plutôt que comme une étape d'installation
+> manquante. La CI, elle, l'exécute à chaque pull request.
 
 ---
 
@@ -119,7 +135,7 @@ Types : `feat`, `fix`, `perf`, `ui`, `docs`, `ci`, `refactor`
 
 ### Avant chaque déploiement
 
-- [ ] Mettre à jour la version dans `src/components/Footer.jsx`
+- [ ] Mettre à jour `CURRENT_VERSION` dans `src/data/changelog.js` (le footer la lit de là, il n'y a rien à changer dans `Footer.jsx`)
 - [ ] Ajouter l'entrée dans `src/data/changelog.js`
 - [ ] Mettre à jour `CHANGELOG.md`
 
