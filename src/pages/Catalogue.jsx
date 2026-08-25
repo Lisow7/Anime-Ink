@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
 import { useSEO } from '../hooks/useSEO'
 import { useSearchParams } from 'react-router-dom'
@@ -36,6 +36,9 @@ export default function Catalogue() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  // Le contournement ne vaut que pour la requête déclenchée par le clic : un
+  // drapeau persistant désactiverait le cache pour tout le reste de la session.
+  const contournerAuProchainAppel = useRef(false)
   const [pagination, setPagination] = useState({ current: 1, last: 1, total: null })
   const [inputValue, setInputValue] = useState(() => searchParams.get('q') || '')
   const debouncedInput = useDebounce(inputValue)
@@ -102,6 +105,8 @@ export default function Catalogue() {
     const controller = new AbortController()
     setLoading(true)
     setError(false)
+    const bypassCache = contournerAuProchainAppel.current
+    contournerAuProchainAppel.current = false
     const run = async () => {
       try {
         const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
@@ -117,7 +122,7 @@ export default function Catalogue() {
           const result = await getAnimeByFilter(
             { genre, status, type, orderBy, letter, page },
             controller.signal,
-            { bypassCache: retryKey > 0 },
+            { bypassCache },
           )
           if (controller.signal.aborted) return
           const norm = (t) => t.replace(/^[^a-zA-Z0-9\u00C0-\u024F]+/, '')
@@ -386,7 +391,7 @@ export default function Catalogue() {
           <p className="text-[var(--text-primary)] font-semibold text-lg">Impossible de charger les animés</p>
           <p className="text-[var(--text-muted)] text-sm">L'API Jikan est momentanément indisponible. Réessaie dans quelques instants.</p>
           <button
-            onClick={() => { setError(false); setRetryKey(k => k + 1) }}
+            onClick={() => { contournerAuProchainAppel.current = true; setError(false); setRetryKey(k => k + 1) }}
             className="mt-2 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Réessayer

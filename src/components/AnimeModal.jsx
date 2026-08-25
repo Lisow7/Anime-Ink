@@ -24,6 +24,10 @@ export default function AnimeModal() {
   const [synopsis, setSynopsis] = useState(null)
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
+  // Le contournement ne vaut que pour la requête déclenchée par le clic : un
+  // drapeau persistant désactiverait le cache pour tout le reste de la session.
+  const contournerAuProchainAppel = useRef(false)
   const [recommendations, setRecommendations] = useState([])
   const [seriesData, setSeriesData] = useState(null)
   const franchiseLoadedFor = useRef(null)
@@ -48,6 +52,9 @@ export default function AnimeModal() {
     setLocalAnimeId(animeId)
     setSeriesData(null)
     franchiseLoadedFor.current = null
+    // Une nouvelle fiche repart d'une reprise vierge : sans cela, bypassCache
+    // resterait armé et court-circuiterait le cache pour toutes les suivantes.
+    setRetryKey(0)
   }, [animeId])
 
   // Charger l'animé quand localAnimeId change (ouverture ou changement de saison)
@@ -59,9 +66,11 @@ export default function AnimeModal() {
     setAnime(null)
     setSynopsis(null)
     setRecommendations([])
+    const bypassCache = contournerAuProchainAppel.current
+    contournerAuProchainAppel.current = false
     const load = async () => {
       try {
-        const data = await getAnimeById(localAnimeId, controller.signal)
+        const data = await getAnimeById(localAnimeId, controller.signal, { bypassCache })
         setAnime(data)
         if (data?.synopsis) {
           setTranslating(true)
@@ -90,7 +99,7 @@ export default function AnimeModal() {
     }
     load()
     return () => controller.abort()
-  }, [localAnimeId, animeId])
+  }, [localAnimeId, animeId, retryKey])
 
   // Charger les données de la franchise une seule fois par ouverture de modal
   useEffect(() => {
@@ -183,6 +192,15 @@ export default function AnimeModal() {
           <div className="px-6 sm:px-8 pb-10 text-center" role="alert">
             <p className="text-[var(--text-primary)] font-semibold">Fiche temporairement indisponible</p>
             <p className="text-[var(--text-muted)] text-sm mt-2">{error}</p>
+            {/* Sans ce bouton, la seule reprise possible serait de fermer et
+                rouvrir la modale — que le cache négatif bloquerait 30 secondes. */}
+            <button
+              type="button"
+              onClick={() => { contournerAuProchainAppel.current = true; setRetryKey(k => k + 1) }}
+              className="mt-4 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              Réessayer
+            </button>
           </div>
         ) : anime ? (
           <div className="px-4 sm:px-8 pb-6 sm:pb-8 flex flex-col gap-5 sm:gap-8">

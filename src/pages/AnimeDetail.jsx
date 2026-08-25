@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import { getAnimeById } from '../services/jikan'
@@ -15,6 +15,8 @@ export default function AnimeDetail() {
   const [loading, setLoading] = useState(true)
   const [unavailable, setUnavailable] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  // Le contournement ne vaut que pour la requête déclenchée par le clic.
+  const contournerAuProchainAppel = useRef(false)
   const { addToHistory } = useHistory()
   const recordHistory = useEffectEvent(addToHistory)
   useSEO({
@@ -30,9 +32,11 @@ export default function AnimeDetail() {
     const controller = new AbortController()
     setLoading(true)
     setUnavailable(false)
+    const bypassCache = contournerAuProchainAppel.current
+    contournerAuProchainAppel.current = false
     // Une reprise demandée par l'utilisateur doit repartir au réseau : sans
     // contournement, l'échec mémorisé lui répondrait aussitôt.
-    getAnimeById(id, controller.signal, { bypassCache: retryKey > 0 })
+    getAnimeById(id, controller.signal, { bypassCache })
       .then((data) => {
         if (controller.signal.aborted) return
         if (!data) { navigate('/404'); return }
@@ -76,7 +80,7 @@ export default function AnimeDetail() {
             L&apos;API Jikan est momentanément indisponible. Réessaie dans quelques instants.
           </p>
           <button
-            onClick={() => { setUnavailable(false); setRetryKey(k => k + 1) }}
+            onClick={() => { contournerAuProchainAppel.current = true; setUnavailable(false); setRetryKey(k => k + 1) }}
             className="mt-2 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Réessayer
