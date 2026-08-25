@@ -477,7 +477,7 @@ export default function Home() {
                 Le rafraîchissement laisserait la section vide pendant l'appel. */}
             <button
               onClick={() => fetchRandom(false)}
-              className="text-sm font-medium text-[var(--color-accent)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)] rounded"
+              className="px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
             >
               Réessayer
             </button>
