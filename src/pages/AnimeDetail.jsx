@@ -13,6 +13,8 @@ export default function AnimeDetail() {
   const navigate = useNavigate()
   const [anime, setAnime] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [unavailable, setUnavailable] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
   const { addToHistory } = useHistory()
   const recordHistory = useEffectEvent(addToHistory)
   useSEO({
@@ -27,7 +29,10 @@ export default function AnimeDetail() {
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
-    getAnimeById(id, controller.signal)
+    setUnavailable(false)
+    // Une reprise demandée par l'utilisateur doit repartir au réseau : sans
+    // contournement, l'échec mémorisé lui répondrait aussitôt.
+    getAnimeById(id, controller.signal, { bypassCache: retryKey > 0 })
       .then((data) => {
         if (controller.signal.aborted) return
         if (!data) { navigate('/404'); return }
@@ -46,10 +51,40 @@ export default function AnimeDetail() {
       })
     })
     .catch((error) => {
-      if (error?.name !== 'AbortError') navigate('/404')
+      if (error?.name === 'AbortError') return
+
+      // Un 404 dit que l'animé n'existe pas ; un 429, un 5xx ou une panne
+      // réseau disent que l'API tousse. Les confondre revenait à annoncer
+      // « animé introuvable » à chaque hoquet de MyAnimeList.
+      if (error?.status === 404) { navigate('/404'); return }
+
+      setUnavailable(true)
+      setLoading(false)
     })
     return () => controller.abort()
-  }, [id, navigate])
+  }, [id, navigate, retryKey])
+
+  if (unavailable) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div role="alert" className="flex flex-col items-center gap-4 py-20 text-center">
+          <span className="text-5xl" aria-hidden="true">⚠️</span>
+          <p className="text-[var(--text-primary)] font-semibold text-lg">
+            Impossible de charger cette fiche
+          </p>
+          <p className="text-[var(--text-muted)] text-sm">
+            L&apos;API Jikan est momentanément indisponible. Réessaie dans quelques instants.
+          </p>
+          <button
+            onClick={() => { setUnavailable(false); setRetryKey(k => k + 1) }}
+            className="mt-2 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            Réessayer
+          </button>
+        </div>
+      </main>
+    )
+  }
 
   if (loading) {
     return (

@@ -341,10 +341,18 @@ export default function WatchlistTable({ list }) {
       if (!isActive()) break
       if (anime.seasonData !== undefined || fetchedIds.current.has(anime.mal_id)) continue
       fetchedIds.current.add(anime.mal_id)
-      const data = await getAnimeSeasons(anime.mal_id, anime.episodes)
-      if (!isActive()) break
-      setSeasonData(anime.mal_id, data)
-      await new Promise(resolve => setTimeout(resolve, 400))
+
+      // L'espacement des requêtes est assuré par le limiteur de la couche
+      // client ; en rajouter un ici ne ferait que doubler l'attente.
+      // Un animé dont la franchise échoue ne doit pas interrompre les suivants.
+      try {
+        const data = await getAnimeSeasons(anime.mal_id, anime.episodes)
+        if (!isActive()) break
+        setSeasonData(anime.mal_id, data)
+      } catch {
+        if (!isActive()) break
+        fetchedIds.current.delete(anime.mal_id)
+      }
     }
   })
 

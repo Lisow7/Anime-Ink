@@ -112,7 +112,13 @@ export default function Catalogue() {
           setAnimes(data)
           setPagination({ current: 1, last: 1, total: data.length })
         } else {
-          const result = await getAnimeByFilter({ genre, status, type, orderBy, letter, page }, controller.signal)
+          // Une reprise demandée par l'utilisateur contourne l'échec mémorisé,
+          // sinon le bouton « Réessayer » paraîtrait mort pendant 30 secondes.
+          const result = await getAnimeByFilter(
+            { genre, status, type, orderBy, letter, page },
+            controller.signal,
+            { bypassCache: retryKey > 0 },
+          )
           if (controller.signal.aborted) return
           const norm = (t) => t.replace(/^[^a-zA-Z0-9\u00C0-\u024F]+/, '')
           const data = dedup(result.data ?? [])
