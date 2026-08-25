@@ -32,3 +32,6 @@ CLAUDE.md
 .env.production
 .env.development
 .env.test
+# Playwright
+test-results
+playwright-report

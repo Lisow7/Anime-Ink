@@ -8,8 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "check": "npm run lint && npm run test && npm run build",
-    "preview": "vite preview"
+    "check": "npm run lint && npm run test && npm run build && node scripts/a11y.mjs",
+    "preview": "vite preview",
+    "a11y": "npm run build && node scripts/a11y.mjs"
   },
   "engines": {
     "node": ">=20.19.0"
@@ -28,10 +29,12 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "axe-core": "^4.13.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4.2.2",
     "vite": "^8.0.4",
     "vitest": "^4.1.11"
