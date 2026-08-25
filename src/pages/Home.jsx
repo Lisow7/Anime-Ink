@@ -22,11 +22,17 @@ export default function Home() {
   const [topLoading, setTopLoading] = useState(true)
   const [random, setRandom] = useState(null)
   const [randomLoading, setRandomLoading] = useState(true)
+  // Sans ce drapeau, un échec laissait la section réduite à son titre : un
+  // en-tête décoratif qui n'annonçait rien et n'offrait aucune reprise.
+  const [randomError, setRandomError] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshCount, setRefreshCount] = useState(1)
   const [showPopover, setShowPopover] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  // Une liste vide ne dit pas pourquoi elle est vide : sans ce drapeau, une
+  // panne de l'API s'annonçait « Aucun animé trouvé ».
+  const [suggestionsError, setSuggestionsError] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeOption, setActiveOption] = useState(-1)
   const debouncedQuery = useDebounce(query, 400)
@@ -69,6 +75,7 @@ export default function Home() {
     if (isRefresh) {
       setIsRefreshing(true)
       setRefreshCount(c => c + 1)
+      setRandomError(false)
       getRandomAnime()
         .then((data) => {
           if (data) {
@@ -76,7 +83,7 @@ export default function Home() {
           }
           apply(data, () => setIsRefreshing(false))
         })
-        .catch(() => setIsRefreshing(false))
+        .catch(() => { setRandomError(true); setIsRefreshing(false) })
     } else {
       try {
         const cached = readStorage(RANDOM_CACHE_KEY, null, value =>
@@ -97,6 +104,7 @@ export default function Home() {
         // Une entrée de cache corrompue est simplement ignorée.
       }
       setRandomLoading(true)
+      setRandomError(false)
       getRandomAnime()
         .then((data) => {
           if (data) {
@@ -104,7 +112,7 @@ export default function Home() {
           }
           apply(data, () => setRandomLoading(false))
         })
-        .catch(() => setRandomLoading(false))
+        .catch(() => { setRandomError(true); setRandomLoading(false) })
     }
   }, [])
 
@@ -112,15 +120,16 @@ export default function Home() {
 
   useEffect(() => {
     const q = debouncedQuery.trim()
-    if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
+    if (!q) { setSuggestions([]); setSuggestionsError(false); setSuggestionsLoading(false); return }
     const controller = new AbortController()
     setSuggestionsLoading(true)
+    setSuggestionsError(false)
     searchAnime(q, controller.signal)
       .then(results => {
         if (!controller.signal.aborted) setSuggestions(groupAnime(results ?? []).slice(0, 6))
       })
       .catch((error) => {
-        if (error?.name !== 'AbortError') setSuggestions([])
+        if (error?.name !== 'AbortError') { setSuggestions([]); setSuggestionsError(true) }
       })
       .finally(() => {
         if (!controller.signal.aborted) setSuggestionsLoading(false)
@@ -242,6 +251,7 @@ export default function Home() {
           <p role="status" aria-live="polite" className="sr-only">
             {!listboxOpen ? ''
               : suggestionsLoading ? 'Recherche en cours…'
+              : suggestionsError ? 'Recherche indisponible : l’API Jikan ne répond pas.'
               : suggestions.length === 0 ? 'Aucun animé trouvé.'
               : `${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''} disponible${suggestions.length > 1 ? 's' : ''}.`}
           </p>
@@ -253,6 +263,10 @@ export default function Home() {
                   <div className="w-3.5 h-3.5 border border-[var(--text-muted)] border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true" />
                   Recherche en cours…
                 </div>
+              ) : suggestionsError ? (
+                <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
+                  L&apos;API Jikan est momentanément indisponible. Réessaie dans quelques instants.
+                </p>
               ) : suggestions.length === 0 ? (
                 <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
                   Aucun animé trouvé pour «&nbsp;{debouncedQuery}&nbsp;».
@@ -450,6 +464,23 @@ export default function Home() {
                 </button>
               </div>
             </div>
+          </div>
+        ) : randomError ? (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 py-8 px-4 text-center rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-color)]"
+          >
+            <p className="text-[var(--text-muted)] text-sm">
+              L&apos;animé surprise n&apos;a pas pu être chargé : l&apos;API Jikan ne répond pas.
+            </p>
+            {/* `false` et non `true` : seul ce chemin rallume le squelette.
+                Le rafraîchissement laisserait la section vide pendant l'appel. */}
+            <button
+              onClick={() => fetchRandom(false)}
+              className="text-sm font-medium text-[var(--color-accent)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)] rounded"
+            >
+              Réessayer
+            </button>
           </div>
         ) : null}
       </section>
