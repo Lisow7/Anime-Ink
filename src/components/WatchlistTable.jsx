@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useEffectEvent, useRef } from 'react'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useModal } from '../context/ModalContext'
@@ -9,6 +9,27 @@ import { getAnimeSeasons } from '../services/jikan'
 import { posterUrl } from '../utils/images'
 
 const TYPE_TAG_LABELS = { Movie: 'Film', OVA: 'OVA', ONA: 'ONA', Special: 'Spécial', 'TV Special': 'Spécial TV' }
+
+// dnd-kit injecte par défaut des instructions et des annonces EN ANGLAIS dans
+// la zone destinée aux lecteurs d'écran. Dans une interface déclarée `lang="fr"`,
+// c'est un manquement au critère WCAG 3.1.2 en plus d'être incompréhensible.
+const INSTRUCTIONS_CLAVIER = {
+  draggable:
+    'Pour saisir un élément, appuyez sur la barre d’espace. ' +
+    'Utilisez ensuite les flèches haut et bas pour le déplacer. ' +
+    'Appuyez de nouveau sur la barre d’espace pour le déposer, ou sur Échap pour annuler.',
+}
+
+const ANNONCES = {
+  onDragStart: ({ active }) => `Élément ${active.id} saisi.`,
+  onDragOver: ({ active, over }) => (over
+    ? `Élément ${active.id} déplacé au-dessus de ${over.id}.`
+    : `Élément ${active.id} sorti de la liste.`),
+  onDragEnd: ({ active, over }) => (over
+    ? `Élément ${active.id} déposé à la place de ${over.id}.`
+    : `Élément ${active.id} reposé à sa position d’origine.`),
+  onDragCancel: ({ active }) => `Déplacement annulé, l’élément ${active.id} retrouve sa place.`,
+}
 
 function TypeTag({ type }) {
   const label = TYPE_TAG_LABELS[type] ?? type ?? 'Autre'
@@ -370,7 +391,12 @@ export default function WatchlistTable({ list }) {
   }, [filterStatus])
 
   const isDragEnabled = sort === 'added' && filterStatus === 'all'
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  // Sans KeyboardSensor, la poignée annonçait « draggable » et répondait aux
+  // touches par un silence : réordonner sa liste était impossible sans souris.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const filtered = useMemo(() => {
     let items = filterStatus === 'all' ? list : list.filter(a => a.watchStatus === filterStatus)
@@ -467,7 +493,12 @@ export default function WatchlistTable({ list }) {
               <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">Statut</span>
             </div>
 
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              accessibility={{ screenReaderInstructions: INSTRUCTIONS_CLAVIER, announcements: ANNONCES }}
+            >
               <SortableContext items={filtered.map(a => a.mal_id)} strategy={verticalListSortingStrategy}>
                 {filtered.map((anime, index) => (
                   <SortableRow

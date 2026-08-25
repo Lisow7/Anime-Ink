@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useCookieConsent } from '../context/CookieContext'
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
-function Toggle({ checked, onChange, disabled }) {
+// Un interrupteur sans nom s'annonce « interrupteur, coché, bouton » : trois
+// fois de suite sur l'écran de consentement, sans dire lequel on modifie.
+function Toggle({ checked, onChange, disabled, labelId }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-labelledby={labelId}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
       className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${
@@ -110,18 +113,19 @@ export default function CookieBanner() {
             <div className="flex flex-col gap-3">
               <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[var(--text-primary)] text-sm font-medium">Fonctionnement essentiel</span>
+                  <span id="consentement-essentiel" className="text-[var(--text-primary)] text-sm font-medium">Fonctionnement essentiel</span>
                   <span className="text-[var(--text-muted)] text-xs leading-relaxed">Enregistrement de votre choix de consentement. Toujours actif, ne peut pas être refusé.</span>
                 </div>
-                <Toggle checked disabled onChange={() => {}} />
+                <Toggle checked disabled labelId="consentement-essentiel" onChange={() => {}} />
               </div>
 
               <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[var(--text-primary)] text-sm font-medium">Préférences d'affichage</span>
+                  <span id="consentement-preferences" className="text-[var(--text-primary)] text-sm font-medium">Préférences d'affichage</span>
                   <span className="text-[var(--text-muted)] text-xs leading-relaxed">Thème clair / sombre, filtre de contenu adulte (censure).</span>
                 </div>
                 <Toggle
+                  labelId="consentement-preferences"
                   checked={prefs.preferences}
                   onChange={(v) => setPrefs(p => ({ ...p, preferences: v }))}
                 />
@@ -129,10 +133,11 @@ export default function CookieBanner() {
 
               <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[var(--text-primary)] text-sm font-medium">Données personnelles</span>
+                  <span id="consentement-donnees" className="text-[var(--text-primary)] text-sm font-medium">Données personnelles</span>
                   <span className="text-[var(--text-muted)] text-xs leading-relaxed">Favoris, liste de suivi, historique de consultation récente.</span>
                 </div>
                 <Toggle
+                  labelId="consentement-donnees"
                   checked={prefs.userdata}
                   onChange={(v) => setPrefs(p => ({ ...p, userdata: v }))}
                 />

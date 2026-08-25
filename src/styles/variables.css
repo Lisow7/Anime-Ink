@@ -20,6 +20,12 @@
   --score-good: #22c55e;
   --score-mid: #f59e0b;
   --score-bad: #e63946;
+  /* Palette du changelog. Sur son voile à 12 % en thème sombre : 6,00 à 8,16. */
+  --tag-feat: #22c55e;
+  --tag-fix: #60a5fa;
+  --tag-perf: #f59e0b;
+  --tag-ui: #a78bfa;
+  --tag-deploy: #34d399;
 }
 
 :root.light {
@@ -46,4 +52,12 @@
   --score-good: #15803d;
   --score-mid: #b45309;
   --score-bad: #c1121f;
+  /* Les cinq teintes du changelog étaient pensées pour le seul thème sombre et
+     tombaient entre 1,64 et 2,26 en clair. Ces variantes tiennent 5,41 à 6,73
+     sur leur propre voile à 12 %. */
+  --tag-feat: #166534;
+  --tag-fix: #1e40af;
+  --tag-perf: #92400e;
+  --tag-ui: #5b21b6;
+  --tag-deploy: #065f46;
 }
