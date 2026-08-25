@@ -83,10 +83,10 @@ export default function MentionsLegales() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-[var(--bg-surface)]">
-                  <th className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Catégorie</th>
-                  <th className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Données</th>
-                  <th className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Finalité</th>
-                  <th className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Durée</th>
+                  <th scope="col" className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Catégorie</th>
+                  <th scope="col" className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Données</th>
+                  <th scope="col" className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Finalité</th>
+                  <th scope="col" className="text-left px-3 py-2 text-[var(--text-primary)] font-semibold">Durée</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">

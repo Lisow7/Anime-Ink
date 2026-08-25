@@ -197,10 +197,12 @@ export default function Catalogue() {
     writeStorage('anime-ink-view', mode)
   }
 
-  const displayList = tab === 'favoris' ? favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
-    : tab === 'recents' ? groupAnime(history, { keepNonTV: true })
-    : tab === 'liste' ? watchlist
-    : groupAnime(animes)
+  const displayList = useMemo(() => (
+    tab === 'favoris' ? favorites.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
+      : tab === 'recents' ? groupAnime(history, { keepNonTV: true })
+      : tab === 'liste' ? watchlist
+      : groupAnime(animes)
+  ), [tab, favorites, history, watchlist, animes])
   const isGrid = viewMode === 'grid'
   const total = tab === 'favoris' ? displayList.length
     : tab === 'recents' ? displayList.length
@@ -269,13 +271,15 @@ export default function Catalogue() {
             type="text"
             value={inputValue}
             placeholder="Rechercher un animé..."
-            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#22c55e] transition-colors flex-1 sm:max-w-sm"
+            aria-label="Rechercher un animé dans le catalogue"
+            className="bg-[var(--bg-surface)] border border-[var(--border-input)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] transition-colors flex-1 sm:max-w-sm"
             onChange={(e) => setInputValue(e.target.value)}
           />
           {/* Toggle grille / liste */}
           <div className="flex items-center gap-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 ml-auto">
             <button
               onClick={() => switchView('grid')}
+              aria-pressed={isGrid}
               className={`p-1.5 rounded-md transition-colors ${isGrid ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               aria-label="Vue grille"
             >
@@ -283,6 +287,7 @@ export default function Catalogue() {
             </button>
             <button
               onClick={() => switchView('list')}
+              aria-pressed={!isGrid}
               className={`p-1.5 rounded-md transition-colors ${!isGrid ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               aria-label="Vue liste"
             >
@@ -300,6 +305,7 @@ export default function Catalogue() {
             <div className="flex flex-wrap gap-1">
               <button
                 onClick={() => updateParam('letter', '')}
+                aria-pressed={!letter}
                 className={`min-w-6 min-h-6 inline-flex items-center justify-center px-2 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${!letter ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 Tous
@@ -308,6 +314,7 @@ export default function Catalogue() {
                 <button
                   key={l}
                   onClick={() => updateParam('letter', letter === l ? '' : l)}
+                  aria-pressed={letter === l}
                   className={`min-w-6 min-h-6 inline-flex items-center justify-center px-2 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${letter === l ? 'bg-[#15803d] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {l}
@@ -320,14 +327,14 @@ export default function Catalogue() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <select value={genre} onChange={(e) => updateParam('genre', e.target.value)}
               aria-label="Filtrer par genre"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les genres</option>
               {genres.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
             </select>
 
             <select value={type} onChange={(e) => updateParam('type', e.target.value)}
               aria-label="Filtrer par type"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les types</option>
               <option value="tv">Série TV</option>
               <option value="movie">Film</option>
@@ -338,7 +345,7 @@ export default function Catalogue() {
 
             <select value={status} onChange={(e) => updateParam('status', e.target.value)}
               aria-label="Filtrer par statut"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les statuts</option>
               <option value="airing">En cours</option>
               <option value="complete">Terminé</option>
@@ -347,7 +354,7 @@ export default function Catalogue() {
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}
               aria-label="Trier par"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="score">Meilleure note</option>
               <option value="title">Alphabétique</option>
               <option value="start_date">Date de sortie</option>
@@ -396,8 +403,8 @@ export default function Catalogue() {
 
       {/* Erreur API */}
       {tab === 'catalogue' && error && !loading && (
-        <div className="flex flex-col items-center gap-4 py-20 text-center">
-          <span className="text-5xl">⚠️</span>
+        <div role="alert" className="flex flex-col items-center gap-4 py-20 text-center">
+          <span className="text-5xl" aria-hidden="true">⚠️</span>
           <p className="text-[var(--text-primary)] font-semibold text-lg">Impossible de charger les animés</p>
           <p className="text-[var(--text-muted)] text-sm">L'API Jikan est momentanément indisponible. Réessaie dans quelques instants.</p>
           <button
@@ -460,8 +467,8 @@ export default function Catalogue() {
         </Suspense>
       ) : !error && isGrid ? (
         <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-          {displayList.map((anime) => (
-            <AnimeCard key={anime.mal_id} anime={anime} />
+          {displayList.map((anime, index) => (
+            <AnimeCard key={anime.mal_id} anime={anime} prioritaire={index < 5} />
           ))}
         </div>
       ) : !error ? (

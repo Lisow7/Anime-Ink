@@ -58,7 +58,7 @@ function EpisodeTracker({ anime, setEpisode, setSeason }) {
   const canNavigate = isRoot && maxSeasons !== undefined && maxSeasons > 1
 
   const pill = 'flex items-center gap-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg px-2 py-1'
-  const sel  = 'bg-[var(--bg-surface)] text-[11px] font-semibold text-[var(--text-primary)] focus:outline-none cursor-pointer tabular-nums'
+  const sel  = 'bg-[var(--bg-surface)] text-[11px] font-semibold text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] cursor-pointer tabular-nums'
   const tag  = 'text-[11px] font-semibold text-[var(--text-primary)] tabular-nums whitespace-nowrap'
 
   return (
@@ -452,7 +452,7 @@ export default function WatchlistTable({ list }) {
             value={sort}
             onChange={e => setSort(e.target.value)}
             aria-label="Trier la liste"
-            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#22c55e] cursor-pointer"
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer"
           >
             {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>

@@ -51,6 +51,14 @@ export default function Home() {
   const fetchRandom = useCallback((isRefresh = false) => {
     const apply = (data, setDone) => {
       if (!data) { setDone(); return }
+
+      // Le poster n'est affiché qu'à partir du palier « sm ». En dessous,
+      // attendre son chargement retenait le squelette derrière une image que
+      // personne ne verra.
+      const posterAffiche = typeof window !== 'undefined'
+        && window.matchMedia('(min-width: 640px)').matches
+      if (!posterAffiche) { setRandom(data); setDone(); return }
+
       const img = new Image()
       img.src = posterUrl(data.images)
       const done = () => { setRandom(data); setDone() }
@@ -219,7 +227,7 @@ export default function Home() {
               aria-autocomplete="list"
               aria-label="Rechercher un animé"
               aria-activedescendant={activeOption >= 0 ? optionId(activeOption) : undefined}
-              className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
+              className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-input)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] transition-colors"
             />
             <button
               type="submit"
@@ -303,7 +311,7 @@ export default function Home() {
               <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
               <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
             </svg>
-            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Animé surprise</span>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Animé surprise</h2>
           </div>
           <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
         </div>
@@ -376,7 +384,7 @@ export default function Home() {
                 <img
                   src={posterUrl(random.images)}
                   alt={random.title}
-                  fetchPriority="high"
+                  fetchPriority="auto"
                   width={176}
                   height={264}
                   className="h-44 rounded-xl shadow-2xl object-cover transition-transform duration-200 group-hover:scale-105"
@@ -453,7 +461,7 @@ export default function Home() {
             <svg viewBox="0 0 24 24" className="w-4 h-4 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</span>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] tracking-wide">Top animés du moment</h2>
           </div>
           <div className="flex-1 h-px bg-gradient-to-r from-[#16a34a]/30 to-transparent" />
           <Link to="/catalogue" className="shrink-0 text-[var(--text-muted)] text-xs hover:text-[var(--color-accent)] transition-colors">

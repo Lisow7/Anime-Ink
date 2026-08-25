@@ -26,6 +26,11 @@
   --tag-perf: #f59e0b;
   --tag-ui: #a78bfa;
   --tag-deploy: #34d399;
+  /* Bordure des CHAMPS de saisie. --border-color tient 1,34:1, sous le seuil de
+     3:1 que WCAG 1.4.11 exige des contours nécessaires pour identifier un
+     composant. Les séparateurs et contours de cartes, eux, restent hors de ce
+     périmètre et gardent --border-color. */
+  --border-input: rgba(255, 255, 255, 0.4);
 }
 
 :root.light {
@@ -60,4 +65,6 @@
   --tag-perf: #92400e;
   --tag-ui: #5b21b6;
   --tag-deploy: #065f46;
+  /* 3,95:1 sur blanc, contre 1,25 pour --border-color. */
+  --border-input: rgba(0, 0, 0, 0.5);
 }

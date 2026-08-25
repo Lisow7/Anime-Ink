@@ -167,7 +167,7 @@ export default function AnimeModal() {
         tabIndex={-1}
         className="modal-box relative bg-[var(--bg-base)] border border-[var(--border-color)] rounded-xl sm:rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto shadow-2xl"
       >
-        <h2 id={titleId} className="sr-only">{anime?.title ?? 'Fiche de l’animé'}</h2>
+        {!anime && <h2 id={titleId} className="sr-only">Fiche de l’animé</h2>}
 
         {/* Bouton fermer */}
         <div className="sticky top-0 z-10 flex justify-end p-3 bg-[var(--bg-base)]/80 backdrop-blur-sm">
@@ -216,7 +216,7 @@ export default function AnimeModal() {
               <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
                 {/* Titre */}
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
+                  <h2 id={titleId} className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight">{anime.title}</h2>
                   {anime.title_japanese && (
                     <p className="text-[var(--text-muted)] text-sm mt-1 truncate">{anime.title_japanese}</p>
                   )}
@@ -311,7 +311,7 @@ export default function AnimeModal() {
                     <select
                       value={seriesData.seasons.some(s => s.mal_id === localAnimeId) ? localAnimeId : ''}
                       onChange={(e) => e.target.value && switchAnime(Number(e.target.value))}
-                      className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#22c55e] cursor-pointer font-medium"
+                      className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer font-medium"
                     >
                       {!seriesData.seasons.some(s => s.mal_id === localAnimeId) && (
                         <option value="" disabled>— Choisir une saison —</option>

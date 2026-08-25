@@ -49,6 +49,7 @@ export default function Navbar() {
     return (
       <Link
         to={to}
+        aria-current={isActive ? 'page' : undefined}
         className={`text-sm font-medium transition-colors hover:text-[var(--color-accent)] ${isActive ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}
       >
         {label}
@@ -72,6 +73,7 @@ export default function Navbar() {
 
           <Link
             to="/catalogue?tab=favoris"
+            aria-current={isFavorisTab ? 'page' : undefined}
             className={`relative transition-colors hover:text-[var(--color-accent)] ${isFavorisTab ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}
             aria-label="Mes favoris"
           >

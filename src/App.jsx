@@ -64,7 +64,19 @@ export default function App() {
     <ModalProvider>
       <BrowserRouter basename="/Anime-Ink">
         <div className="min-h-screen flex flex-col overflow-x-hidden">
+          {/* La barre de navigation précède le contenu sur toutes les pages et
+              compte six à huit contrôles tabulables. Sans ce lien, un utilisateur
+              au clavier les retraverse à chaque page (WCAG 2.4.1). Visible au
+              focus seulement. Le conteneur reçoit l'ancre plutôt que chaque
+              <main>, qui existe en neuf exemplaires. */}
+          <a
+            href="#contenu"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[200] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-[var(--bg-surface)] focus:text-[var(--text-primary)] focus:ring-2 focus:ring-[#22c55e]"
+          >
+            Aller au contenu
+          </a>
           <Navbar />
+          <div id="contenu" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none">
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -75,6 +87,7 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          </div>
           <ModaleAnimeALaDemande />
           <Footer />
           <CookieBanner />

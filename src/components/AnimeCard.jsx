@@ -8,7 +8,10 @@ import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColorOnOverlay } from '../utils/score'
 import { posterUrl } from '../utils/images'
 
-function AnimeCard({ anime }) {
+// `prioritaire` sert aux cartes de la première rangée du catalogue, qui sont
+// au-dessus de la ligne de flottaison : Chrome ne lance une image `lazy` qu'une
+// fois la mise en page calculée, ce qui retarde mécaniquement le LCP.
+function AnimeCard({ anime, prioritaire = false }) {
   const { isFavorite, toggle } = useFavorites()
   const { openModal } = useModal()
   const { history } = useHistory()
@@ -35,7 +38,9 @@ function AnimeCard({ anime }) {
           <img
             src={posterUrl(images)}
             alt={title}
-            loading="lazy"
+            loading={prioritaire ? 'eager' : 'lazy'}
+            fetchPriority={prioritaire ? 'high' : 'auto'}
+            decoding="async"
             width={225}
             height={338}
             className={`w-full h-full object-cover transition-all duration-300 ${
