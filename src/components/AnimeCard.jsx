@@ -4,7 +4,7 @@ import { useModal } from '../context/ModalContext'
 import { useHistory } from '../context/HistoryContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
-import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { scoreColorOnOverlay } from '../utils/score'
 import { posterUrl } from '../utils/images'
 
@@ -17,10 +17,8 @@ function AnimeCard({ anime, prioritaire = false }) {
   const { history } = useHistory()
   const { blurHentai } = useAgeFilter()
   const { mal_id, title, images, score, episodes, airing, status, trailer, genres } = anime
-  const isHentai = genres?.some(g => HENTAI_GENRES.includes(g.name))
-  const isEcchi = genres?.some(g => ECCHI_GENRES.includes(g.name))
-  const blurred = blurHentai && (isHentai || isEcchi)
-  const ageBadge = isHentai ? '-18' : '-16'
+  const { adult, hentai: isHentai, badge: ageBadge } = classifyAdultContent(genres)
+  const blurred = blurHentai && adult
   const fav = isFavorite(mal_id)
   const seen = history.some(a => a.mal_id === mal_id)
   const youtubeId = trailer?.youtube_id

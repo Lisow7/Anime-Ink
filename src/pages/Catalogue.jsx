@@ -8,7 +8,9 @@ import EmptyState from '../components/EmptyState'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
 import { WATCH_STATUS } from '../constants/anime'
+import { ADULT_GENRES } from '../constants/ageFilter'
 import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
 import { groupAnime } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
@@ -39,6 +41,7 @@ const IconList = () => (
 
 export default function Catalogue() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { blurHentai } = useAgeFilter()
   const [animes, setAnimes] = useState([])
   const [genres, setGenres] = useState([])
   const [loading, setLoading] = useState(true)
@@ -164,6 +167,31 @@ export default function Catalogue() {
   useEffect(() => {
     getGenres().then(data => { if (Array.isArray(data)) setGenres([...data].sort((a, b) => a.name.localeCompare(b.name))) })
   }, [])
+
+  /**
+   * Le menu ne propose pas ce que la censure masque. L'API sert bien ses trois
+   * genres explicites, mais `/genres/anime?filter=genres` — la voie prévue pour
+   * les écarter — répond 504 : le tri se fait donc ici, sans dépendre d'elle.
+   */
+  const genresProposes = useMemo(
+    () => (blurHentai ? genres.filter(g => !ADULT_GENRES.includes(g.name)) : genres),
+    [genres, blurHentai],
+  )
+
+  // Un filtre explicite déjà posé survivrait à l'activation de la censure :
+  // l'option disparaîtrait du menu pendant que le catalogue continuerait de la
+  // servir, en silence.
+  useEffect(() => {
+    if (!blurHentai || !genre) return
+    const courant = genres.find(g => String(g.mal_id) === genre)
+    if (!courant || !ADULT_GENRES.includes(courant.name)) return
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('genre')
+      next.delete('page')
+      return next
+    })
+  }, [blurHentai, genre, genres, setSearchParams])
 
   const updateParam = (key, value) => {
     const next = new URLSearchParams(searchParams)
@@ -329,7 +357,7 @@ export default function Catalogue() {
               aria-label="Filtrer par genre"
               className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Tous les genres</option>
-              {genres.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
+              {genresProposes.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
             </select>
 
             <select value={type} onChange={(e) => updateParam('type', e.target.value)}

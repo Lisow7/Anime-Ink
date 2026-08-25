@@ -10,6 +10,8 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ### Corrections
 - Une panne de l’API n’affiche plus « animé introuvable » : le message distingue une fiche inexistante d’un service momentanément indisponible, et propose de réessayer
 - Le voyant d’état de l’API restait rouge en permanence — il interrogeait une adresse qui n’est pas un point d’entrée ; il dérive désormais des appels réels, sans requête supplémentaire
+- La censure couvre enfin le genre « Erotica » : 95 animés s’affichaient en clair alors qu’elle était active, seuls « Hentai » et « Ecchi » étant reconnus
+- Le filtre par genre ne propose plus les genres explicites quand la censure est active, et un filtre de ce type déjà posé est levé quand on la réactive
 - La recherche de l’accueil n’annonce plus « aucun animé trouvé » quand l’API est en panne : une recherche sans résultat et un service indisponible ont désormais deux messages distincts
 - L’« animé surprise » ne se réduit plus à son titre lorsque son chargement échoue : la section explique la panne et propose de réessayer
 - La liste de suivi ne s’interrompt plus au premier animé dont la franchise échoue
