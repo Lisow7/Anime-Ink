@@ -258,6 +258,16 @@ Mesure faite alors que **l'API renvoyait encore des 504** sur `/random/anime` et
 | Une panne n'affiche plus « animé introuvable » | 503 forcé sur `/anime/1/full` : l'URL reste sur la fiche, `role="alert"`, bouton de reprise |
 | Le bouton de reprise repart au réseau | 3 appels réseau comptés après le clic, l'échec mémorisé n'a pas répondu |
 | Le voyant de santé dit vrai | « API indisponible » affiché pendant que l'API renvoyait réellement des 504 |
+| La modale se répare aussi | 503 forcé, cache de session purgé : trois tentatives, puis message et bouton ; le clic déclenche exactement un appel de plus et la fiche s'affiche |
+
+Deux défauts introduits par ce lot ont été trouvés en relecture et corrigés
+avant livraison. Le contournement du cache valait `retryKey > 0` : une fois la
+première reprise faite, il restait vrai et désactivait le cache pour tout le
+reste de la session — l'optimisation s'annulait elle-même. Et `AnimeModal`,
+qui est le chemin le plus emprunté puisque les cartes ouvrent la modale et non
+la route de détail, n'avait aucun bouton de reprise : sa seule reprise possible
+était de fermer et rouvrir la fiche, que le cache négatif bloque trente
+secondes.
 
 **Non vérifié :** le critère n° 1 — 6 appels logiques pour 4 requêtes, API en
 bonne santé. Aucune fenêtre de bonne santé ne s'est présentée. Le total observé

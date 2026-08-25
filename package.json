@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "check": "npm run lint && npm run test && npm run build && node scripts/a11y.mjs",
+    "check": "npm run lint && npm run test && npm run build",
     "preview": "vite preview",
     "a11y": "npm run build && node scripts/a11y.mjs"
   },

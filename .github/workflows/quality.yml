@@ -1,8 +1,11 @@
 name: Qualité et sécurité
 
 on:
+  # Les branches de travail visent `dev` : ne déclencher que sur `main` laissait
+  # chaque PR de fonctionnalité passer sans aucun contrôle, et ne vérifiait le
+  # lot qu'une fois déjà fusionné. Un garde-fou ne protège que ce qu'il visite.
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
