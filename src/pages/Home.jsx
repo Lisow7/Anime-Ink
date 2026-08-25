@@ -27,6 +27,7 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeOption, setActiveOption] = useState(-1)
   const debouncedQuery = useDebounce(query, 400)
   const searchContainerRef = useRef(null)
   const navigate = useNavigate()
@@ -140,6 +141,48 @@ export default function Home() {
     openModal(anime.mal_id)
   }
 
+  const seeAllResults = () => {
+    setShowSuggestions(false)
+    navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`)
+  }
+
+  // Modèle « combobox with list autocomplete » de l'ARIA Authoring Practices :
+  // le focus ne quitte jamais le champ, l'option courante est désignée par
+  // aria-activedescendant. Les options ne sont donc plus des boutons
+  // focalisables — c'est le champ qui porte le clavier.
+  const listboxOpen = showSuggestions && Boolean(query.trim())
+  const options = suggestionsLoading
+    ? []
+    : [...suggestions.map(a => ({ type: 'anime', anime: a })), ...(suggestions.length ? [{ type: 'all' }] : [])]
+  const optionId = index => `suggestion-${index}`
+
+  const chooseOption = (index) => {
+    const option = options[index]
+    if (!option) return
+    if (option.type === 'all') seeAllResults()
+    else pickSuggestion(option.anime)
+  }
+
+  const onSearchKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      setShowSuggestions(false)
+      setActiveOption(-1)
+      return
+    }
+    if (!listboxOpen || options.length === 0) return
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveOption(i => (i + 1) % options.length)
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveOption(i => (i <= 0 ? options.length : i) - 1)
+    } else if (event.key === 'Enter' && activeOption >= 0) {
+      event.preventDefault()
+      chooseOption(activeOption)
+    }
+  }
+
   const randomIsHentai = random?.genres?.some(g => HENTAI_GENRES.includes(g.name))
   const randomIsEcchi = random?.genres?.some(g => ECCHI_GENRES.includes(g.name))
   const randomBlurred = blurHentai && (randomIsHentai || randomIsEcchi)
@@ -165,9 +208,16 @@ export default function Home() {
             <input
               type="text"
               value={query}
-              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true) }}
+              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); setActiveOption(-1) }}
               onFocus={() => { if (query.trim()) setShowSuggestions(true) }}
+              onKeyDown={onSearchKeyDown}
               placeholder="Rechercher un animé..."
+              role="combobox"
+              aria-expanded={listboxOpen}
+              aria-controls={listboxOpen ? 'suggestions-recherche' : undefined}
+              aria-autocomplete="list"
+              aria-label="Rechercher un animé"
+              aria-activedescendant={activeOption >= 0 ? optionId(activeOption) : undefined}
               className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#22c55e] transition-colors"
             />
             <button
@@ -178,12 +228,20 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Dropdown suggestions */}
-          {showSuggestions && query.trim() && (
+          {/* L'état de la recherche est annoncé aux lecteurs d'écran : sans cela,
+              la liste apparaissait en silence. */}
+          <p role="status" aria-live="polite" className="sr-only">
+            {!listboxOpen ? ''
+              : suggestionsLoading ? 'Recherche en cours…'
+              : suggestions.length === 0 ? 'Aucun animé trouvé.'
+              : `${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''} disponible${suggestions.length > 1 ? 's' : ''}.`}
+          </p>
+
+          {listboxOpen && (
             <div className="absolute top-full left-0 right-0 mt-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden z-50">
               {suggestionsLoading ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-[var(--text-muted)] text-sm">
-                  <div className="w-3.5 h-3.5 border border-[var(--text-muted)] border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="w-3.5 h-3.5 border border-[var(--text-muted)] border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true" />
                   Recherche en cours…
                 </div>
               ) : suggestions.length === 0 ? (
@@ -191,35 +249,41 @@ export default function Home() {
                   Aucun animé trouvé pour «&nbsp;{debouncedQuery}&nbsp;».
                 </p>
               ) : (
-                <>
-                  {suggestions.map(anime => (
-                    <button
-                      key={anime.mal_id}
-                      type="button"
-                      onClick={() => pickSuggestion(anime)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--bg-base)] transition-colors text-left border-b border-[var(--border-subtle)] last:border-0"
+                <ul id="suggestions-recherche" role="listbox" aria-label="Suggestions d'animés">
+                  {options.map((option, index) => (
+                    <li
+                      key={option.type === 'all' ? 'tous' : option.anime.mal_id}
+                      id={optionId(index)}
+                      role="option"
+                      aria-selected={activeOption === index}
+                      onClick={() => chooseOption(index)}
+                      onMouseEnter={() => setActiveOption(index)}
+                      className={
+                        option.type === 'all'
+                          ? `px-4 py-2.5 text-[var(--color-accent)] text-xs font-medium text-center cursor-pointer transition-colors ${activeOption === index ? 'bg-[var(--bg-base)]' : ''}`
+                          : `flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors border-b border-[var(--border-subtle)] last:border-0 ${activeOption === index ? 'bg-[var(--bg-base)]' : ''}`
+                      }
                     >
-                      <img
-                        src={anime.images?.jpg?.image_url}
-                        alt={anime.title}
-                        className="w-8 h-11 object-cover rounded shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[var(--text-primary)] text-sm font-medium truncate">{anime.title}</p>
-                        <p className="text-[var(--text-muted)] text-[11px]">
-                          {anime.year ?? '—'}{anime.score ? ` · ★ ${anime.score}` : ''}
-                        </p>
-                      </div>
-                    </button>
+                      {option.type === 'all' ? (
+                        <>Voir tous les résultats pour «&nbsp;{query}&nbsp;» →</>
+                      ) : (
+                        <>
+                          <img
+                            src={option.anime.images?.jpg?.image_url}
+                            alt=""
+                            className="w-8 h-11 object-cover rounded shrink-0"
+                          />
+                          <span className="min-w-0 flex-1 block">
+                            <span className="text-[var(--text-primary)] text-sm font-medium truncate block">{option.anime.title}</span>
+                            <span className="text-[var(--text-muted)] text-[11px] block">
+                              {option.anime.year ?? '—'}{option.anime.score ? ` · ★ ${option.anime.score}` : ''}
+                            </span>
+                          </span>
+                        </>
+                      )}
+                    </li>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => { setShowSuggestions(false); navigate(`/catalogue?q=${encodeURIComponent(query.trim())}`) }}
-                    className="w-full px-4 py-2.5 text-[#22c55e] text-xs font-medium hover:bg-[var(--bg-base)] transition-colors text-center"
-                  >
-                    Voir tous les résultats pour «&nbsp;{query}&nbsp;» →
-                  </button>
-                </>
+                </ul>
               )}
             </div>
           )}
