@@ -29,15 +29,6 @@ function AnimeCard({ anime }) {
     <div className="relative group h-full">
       <div
         onClick={() => openModal(mal_id)}
-        onKeyDown={(event) => {
-          if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault()
-            openModal(mal_id)
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={`Ouvrir la fiche de ${title}`}
         className="cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex flex-col hover:ring-1 hover:ring-[#22c55e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] transition-all duration-200 h-full"
       >
         <div className="relative aspect-[2/3] overflow-hidden">
@@ -109,7 +100,18 @@ function AnimeCard({ anime }) {
         </div>
 
         <div className="p-3 flex flex-col gap-1 flex-1">
-          <p title={title} className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">{title}</p>
+          {/* Le titre porte l'action d'ouverture. Le conteneur ne peut plus être
+              un role="button" : il englobe le lien vers la bande-annonce, et un
+              contrôle imbriqué dans un autre masque l'enfant au lecteur d'écran. */}
+          <p title={title} className="text-[var(--text-primary)] text-sm font-medium line-clamp-1 leading-snug">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); openModal(mal_id) }}
+              className="text-left w-full rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]"
+            >
+              {title}
+            </button>
+          </p>
           <div className="mt-auto flex items-center justify-between pt-2">
             <span className="text-[var(--text-muted)] text-xs">
               {episodes ? `${episodes} ép.` : airing ? 'En cours' : '? ép.'}

@@ -24,6 +24,7 @@
 import { createRequire } from 'node:module'
 import { preview } from 'vite'
 import { chromium } from 'playwright'
+import { repondre } from './a11y-fixtures.mjs'
 
 const require = createRequire(import.meta.url)
 const AXE = require.resolve('axe-core/axe.min.js')
@@ -44,11 +45,11 @@ const clic = selecteur => async (page) => {
  * `prepare` : interaction menant à cet état.
  */
 const SCENARIOS = [
-  { nom: 'accueil', route: '' },
-  { nom: 'catalogue', route: 'catalogue' },
+  { nom: 'accueil', route: '', temoin: 'main article, main .group' },
+  { nom: 'catalogue', route: 'catalogue', temoin: 'main article, main .group' },
   { nom: 'profil', route: 'profil' },
   { nom: 'mentions légales', route: 'mentions-legales' },
-  { nom: 'fiche animé', route: 'anime/16498' },
+  { nom: 'fiche animé', route: 'anime/1', temoin: 'main h1' },
   { nom: 'page inconnue', route: 'cette-route-nexiste-pas' },
   { nom: 'favoris vides', route: 'catalogue?tab=favoris' },
   { nom: 'accueil, menu mobile ouvert', route: '', mobile: true, temoin: 'nav a[href$="/profil"]' },
@@ -87,6 +88,14 @@ const SCENARIOS = [
 ]
 
 async function analyser(page, base, scenario) {
+  // L'API réelle n'est jamais appelée : la CI ne doit pas dépendre d'un tiers,
+  // et un catalogue vide ne testerait presque rien.
+  await page.route('**/api.jikan.moe/**', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify(repondre(route.request().url())),
+  }))
+
   await page.setViewportSize(scenario.mobile ? MOBILE : BUREAU)
   await page.goto(`${base}${scenario.route}`, { waitUntil: 'load' })
   await page.waitForTimeout(STABILISATION_MS)
