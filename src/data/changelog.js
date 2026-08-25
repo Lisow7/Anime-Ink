@@ -7,6 +7,8 @@ export const CHANGELOG = [
     changes: [
       { type: 'fix',    label: 'Une panne de l’API n’annonce plus « animé introuvable » — le message distingue une fiche inexistante d’un service momentanément indisponible, avec un bouton pour réessayer' },
       { type: 'fix',    label: 'Le voyant d’état de l’API restait rouge en permanence : il reflète désormais les appels réels' },
+      { type: 'fix',    label: 'La censure couvre enfin « Erotica » — 95 animés passaient à travers alors qu’elle était active' },
+      { type: 'ui',     label: 'Le filtre par genre masque les genres explicites tant que la censure est active' },
       { type: 'fix',    label: 'La recherche de l’accueil ne dit plus « aucun animé trouvé » quand c’est l’API qui est en panne' },
       { type: 'fix',    label: 'L’« animé surprise » explique la panne et propose de réessayer, au lieu de laisser un titre seul' },
       { type: 'fix',    label: 'La liste de suivi ne s’arrête plus de charger au premier animé en échec' },

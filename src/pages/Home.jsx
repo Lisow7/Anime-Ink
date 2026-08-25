@@ -7,7 +7,7 @@ import { getTopAnime, getRandomAnime, searchAnime } from '../services/jikan'
 import { groupAnime } from '../utils/groupAnime'
 import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
-import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
 import { posterUrl } from '../utils/images'
 import { readStorage, writeStorage } from '../utils/storage'
@@ -201,10 +201,9 @@ export default function Home() {
     }
   }
 
-  const randomIsHentai = random?.genres?.some(g => HENTAI_GENRES.includes(g.name))
-  const randomIsEcchi = random?.genres?.some(g => ECCHI_GENRES.includes(g.name))
-  const randomBlurred = blurHentai && (randomIsHentai || randomIsEcchi)
-  const randomAgeBadge = randomIsHentai ? '-18' : '-16'
+  const { adult: randomIsAdult, hentai: randomIsHentai, badge: randomAgeBadge } =
+    classifyAdultContent(random?.genres)
+  const randomBlurred = blurHentai && randomIsAdult
 
   return (
     <main className="flex flex-col items-center px-4 sm:px-6 py-10 sm:py-16 gap-10 sm:gap-16 max-w-6xl mx-auto w-full">

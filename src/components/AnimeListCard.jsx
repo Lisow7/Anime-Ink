@@ -2,7 +2,7 @@ import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
-import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
 import { posterUrl } from '../utils/images'
 
@@ -12,10 +12,8 @@ export default function AnimeListCard({ anime }) {
   const { blurHentai } = useAgeFilter()
   const { mal_id, title, images, score, episodes, status, genres, synopsis } = anime
   const fav = isFavorite(mal_id)
-  const isHentai = genres?.some(g => HENTAI_GENRES.includes(g.name))
-  const isEcchi = genres?.some(g => ECCHI_GENRES.includes(g.name))
-  const blurred = blurHentai && (isHentai || isEcchi)
-  const ageBadge = isHentai ? '-18' : '-16'
+  const { adult, hentai: isHentai, badge: ageBadge } = classifyAdultContent(genres)
+  const blurred = blurHentai && adult
 
   // Le conteneur n'est plus un role="button" : il englobait le bouton favori.
   // Un contrôle interactif imbriqué dans un autre masque l'enfant au lecteur
