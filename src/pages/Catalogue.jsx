@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
 import { useSEO } from '../hooks/useSEO'
 import { useSearchParams } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import AnimeListCard from '../components/AnimeListCard'
 import EmptyState from '../components/EmptyState'
-import WatchlistTable from '../components/WatchlistTable'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
@@ -13,6 +12,15 @@ import { WATCH_STATUS } from '../constants/anime'
 import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
 import { groupAnime } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
+
+// WatchlistTable est le seul consommateur de @dnd-kit (3 paquets) et n'apparaît
+// que sur l'onglet « Ma liste ». Importé statiquement, il pesait sur tous ceux
+// qui ne l'ouvrent jamais : les trois quarts du poids du chunk Catalogue.
+const WatchlistTable = lazy(() => import('../components/WatchlistTable'))
+// Le survol de l'onglet amorce le téléchargement : sans cela, ouvrir sa liste
+// enchaînerait deux chunks l'un après l'autre, soit un aller-retour de plus
+// pour exactement les gens qui y tiennent.
+const prechargerWatchlist = () => { import('../components/WatchlistTable') }
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
@@ -228,6 +236,8 @@ export default function Catalogue() {
               {watchlist.length > 0 && (
                 <button
                   onClick={() => switchTab(tab === 'liste' ? 'catalogue' : 'liste')}
+                  onMouseEnter={prechargerWatchlist}
+                  onFocus={prechargerWatchlist}
                   className={`flex-1 sm:flex-none sm:px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap ${tab === 'liste' ? 'bg-[#15803d] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   Ma liste
@@ -445,7 +455,9 @@ export default function Catalogue() {
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyListe />
           : <EmptyState query={query} onReset={query ? clearSearch : resetFilters} />
       ) : !error && tab === 'liste' ? (
-        <WatchlistTable list={displayList} />
+        <Suspense fallback={<div className="py-20 text-center text-[var(--text-muted)] text-sm">Chargement de ta liste…</div>}>
+          <WatchlistTable list={displayList} />
+        </Suspense>
       ) : !error && isGrid ? (
         <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {displayList.map((anime) => (
