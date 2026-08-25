@@ -4,6 +4,7 @@ import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
+import { posterUrl } from '../utils/images'
 
 export default function AnimeListCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
@@ -32,7 +33,7 @@ export default function AnimeListCard({ anime }) {
     >
       <div className="shrink-0 relative">
         <img
-          src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
+          src={posterUrl(images)}
           alt={title}
           loading="lazy"
           width={64}

@@ -6,6 +6,7 @@ import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColorOnOverlay } from '../utils/score'
+import { posterUrl } from '../utils/images'
 
 function AnimeCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
@@ -41,7 +42,7 @@ function AnimeCard({ anime }) {
       >
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
-            src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
+            src={posterUrl(images)}
             alt={title}
             loading="lazy"
             width={225}

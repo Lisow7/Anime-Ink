@@ -9,6 +9,7 @@ import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
+import { posterUrl } from '../utils/images'
 import { readStorage, writeStorage } from '../utils/storage'
 
 const RANDOM_CACHE_KEY = 'anime-ink-random'
@@ -51,7 +52,7 @@ export default function Home() {
     const apply = (data, setDone) => {
       if (!data) { setDone(); return }
       const img = new Image()
-      img.src = data.images?.jpg?.image_url ?? data.images?.jpg?.large_image_url
+      img.src = posterUrl(data.images)
       const done = () => { setRandom(data); setDone() }
       img.onload = done
       img.onerror = done
@@ -269,7 +270,7 @@ export default function Home() {
                       ) : (
                         <>
                           <img
-                            src={option.anime.images?.jpg?.image_url}
+                            src={posterUrl(option.anime.images)}
                             alt=""
                             className="w-8 h-11 object-cover rounded shrink-0"
                           />
@@ -317,7 +318,7 @@ export default function Home() {
               aria-hidden
               className="absolute inset-0 w-full h-full scale-110 blur-lg opacity-20 hidden sm:block"
               style={{
-                backgroundImage: `url(${random.images?.jpg?.image_url})`,
+                backgroundImage: `url(${posterUrl(random.images)})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}
@@ -373,7 +374,7 @@ export default function Home() {
                 aria-label={`Ouvrir ${random.title}`}
               >
                 <img
-                  src={random.images?.jpg?.image_url ?? random.images?.jpg?.large_image_url}
+                  src={posterUrl(random.images)}
                   alt={random.title}
                   fetchPriority="high"
                   width={176}

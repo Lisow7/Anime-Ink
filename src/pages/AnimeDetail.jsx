@@ -6,6 +6,7 @@ import { useHistory } from '../context/HistoryContext'
 import { STATUS_LABEL } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
+import { posterUrl } from '../utils/images'
 import { safeYoutubeEmbed } from '../utils/urls'
 
 export default function AnimeDetail() {
@@ -122,7 +123,7 @@ export default function AnimeDetail() {
 
       <div className="flex flex-col min-[500px]:flex-row gap-6 min-[500px]:gap-8">
         <img
-          src={images?.jpg?.large_image_url}
+          src={posterUrl(images, { large: true })}
           alt={title}
           width={192}
           height={288}

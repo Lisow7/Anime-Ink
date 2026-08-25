@@ -6,6 +6,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { useModal } from '../context/ModalContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { getAnimeSeasons } from '../services/jikan'
+import { posterUrl } from '../utils/images'
 
 const TYPE_TAG_LABELS = { Movie: 'Film', OVA: 'OVA', ONA: 'ONA', Special: 'Spécial', 'TV Special': 'Spécial TV' }
 
@@ -99,7 +100,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
       <div className="flex min-[825px]:hidden items-start gap-3 px-4 py-3">
         <button onClick={() => openModal(anime.mal_id)} className="shrink-0">
           <img
-            src={anime.images?.jpg?.image_url ?? anime.images?.jpg?.large_image_url}
+            src={posterUrl(anime.images)}
             alt={anime.title}
             className="w-12 h-[72px] object-cover rounded-lg"
           />
@@ -164,7 +165,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
         <span className="text-[var(--text-muted)] text-xs text-right tabular-nums">{index + 1}</span>
         <button onClick={() => openModal(anime.mal_id)} className="group">
           <img
-            src={anime.images?.jpg?.image_url ?? anime.images?.jpg?.large_image_url}
+            src={posterUrl(anime.images)}
             alt={anime.title}
             className="w-14 h-20 object-cover rounded-lg group-hover:ring-1 group-hover:ring-[#22c55e] transition-all"
           />

@@ -8,6 +8,7 @@ import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
+import { posterUrl } from '../utils/images'
 import { safeYoutubeEmbed } from '../utils/urls'
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
@@ -208,7 +209,7 @@ export default function AnimeModal() {
             {/* Hero */}
             <div className="flex flex-col min-[500px]:flex-row gap-4 min-[500px]:gap-6">
               <img
-                src={anime.images?.jpg?.large_image_url}
+                src={posterUrl(anime.images, { large: true })}
                 alt={anime.title}
                 className="w-28 min-[500px]:w-36 sm:w-40 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
               />
@@ -445,7 +446,7 @@ export default function AnimeModal() {
                     >
                       <div className="w-24 h-36 rounded-lg overflow-hidden bg-[var(--bg-surface)]">
                         <img
-                          src={rec.images?.jpg?.image_url ?? rec.images?.jpg?.large_image_url}
+                          src={posterUrl(rec.images)}
                           alt={rec.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
