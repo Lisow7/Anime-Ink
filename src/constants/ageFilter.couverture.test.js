@@ -25,7 +25,6 @@ const RACINE_SRC = join(fileURLToPath(new URL('.', import.meta.url)), '..')
  */
 const EXEMPTIONS = {
   'components/AnimeModal.jsx': 'ouverte par un clic délibéré sur une carte déjà floutée',
-  'pages/AnimeDetail.jsx': 'route atteinte depuis une carte déjà floutée, ou volontairement par URL',
 }
 
 function fichiersJsx(dossier) {

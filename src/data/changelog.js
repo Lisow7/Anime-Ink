@@ -6,6 +6,7 @@ export const CHANGELOG = [
     date: '26 août 2026',
     changes: [
       { type: 'fix', label: 'La liste de suivi respecte la censure — ses jaquettes s’affichaient en clair' },
+      { type: 'ui',  label: 'Une fiche pour public averti ouverte depuis un lien partagé prévient avant d’afficher sa jaquette' },
     ],
   },
   {
