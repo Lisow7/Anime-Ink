@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.2'
+export const CURRENT_VERSION = '1.3'
 
 export const CHANGELOG = [
+  {
+    version: '1.3',
+    date: '26 août 2026',
+    changes: [
+      { type: 'fix', label: 'La liste de suivi respecte la censure — ses jaquettes s’affichaient en clair' },
+    ],
+  },
   {
     version: '1.2',
     date: '25 août 2026',
