@@ -135,7 +135,7 @@ export default function AnimeDetail() {
         <div className="flex flex-col gap-2 shrink-0 self-start mx-auto min-[500px]:mx-0">
           <div className="relative">
             <img
-              id="jaquette-animé"
+              id="jaquette-anime"
               src={posterUrl(images, { large: true })}
               alt={title}
               width={192}
@@ -170,7 +170,7 @@ export default function AnimeDetail() {
               type="button"
               onClick={() => setJaquetteRevelee(v => !v)}
               aria-expanded={jaquetteRevelee}
-              aria-controls="jaquette-animé"
+              aria-controls="jaquette-anime"
               className="px-3 py-2 text-sm font-semibold rounded-lg bg-[#15803d] hover:bg-[#166534] text-white transition-colors"
             >
               {jaquetteRevelee ? 'Masquer la jaquette' : 'Afficher quand même'}

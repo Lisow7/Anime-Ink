@@ -16,16 +16,16 @@ import { fileURLToPath } from 'node:url'
 const RACINE_SRC = join(fileURLToPath(new URL('.', import.meta.url)), '..')
 
 /**
- * Surfaces atteintes uniquement par une action délibérée : on n'y arrive
- * qu'après avoir cliqué une carte déjà floutée et badgée, et l'accueil libelle
- * ce clic « Voir quand même ». Le floutage avertit avant, il ne verrouille pas
- * après.
+ * Plus aucune surface n'est exemptée : chacune classe ce qu'elle affiche.
+ *
+ * Une exemption disait « on n'arrive ici que par un clic délibéré ». C'est un
+ * raisonnement, pas un mécanisme — et il s'est révélé trop large deux fois :
+ * la fiche détail s'atteint aussi par un lien partagé, et la modale affiche des
+ * recommandations que personne n'a choisies.
  *
  * Toute nouvelle entrée ici doit être un choix argumenté, pas un oubli constaté.
  */
-const EXEMPTIONS = {
-  'components/AnimeModal.jsx': 'ouverte par un clic délibéré sur une carte déjà floutée',
-}
+const EXEMPTIONS = {}
 
 function fichiersJsx(dossier) {
   return readdirSync(dossier, { withFileTypes: true }).flatMap(entree => {
