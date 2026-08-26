@@ -5,6 +5,19 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.3] — 26 août 2026
+
+### Corrections
+- La liste de suivi respecte la censure : ses jaquettes s’affichaient en clair alors que l’onglet « Favoris », juste à côté, les floutait
+- Les suggestions « Vous aimerez aussi » suivent la censure : personne ne les a choisies, et elles s’affichaient en clair sous une œuvre pour public averti
+- La fiche d’un animé pour public averti annonce son contenu avant de le montrer : ouverte depuis un lien partagé, elle affichait sa jaquette sans que rien n’ait prévenu. Un bouton « Afficher quand même » la révèle, et permet de la remasquer ; le titre et le synopsis restent lisibles
+
+### Maintenance
+- Un test vérifie que toute surface affichant une jaquette classe son contenu adulte, ou figure parmi des exemptions justifiées — c’est lui qui a signalé la liste de suivi
+- Le garde-fou d’accessibilité visite désormais les états d’échec et l’avertissement de contenu : 30 scénarios au lieu de 24. Ces écrans n’existent que lorsque l’API tombe, et échappaient donc entièrement à l’analyse
+
+---
+
 ## [1.2] — 25 août 2026
 
 ### Corrections

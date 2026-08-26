@@ -3,6 +3,8 @@ import { useModal } from '../context/ModalContext'
 import { useFavorites } from '../context/FavoritesContext'
 import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { getAnimeById, getAnimeRecommendations, getAnimeFranchise } from '../services/jikan'
 import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
@@ -18,6 +20,7 @@ export default function AnimeModal() {
   const { addToHistory } = useHistory()
   const recordHistory = useEffectEvent(addToHistory)
   const { getStatus, setStatus, remove } = useWatchlist()
+  const { blurHentai } = useAgeFilter()
 
   const [localAnimeId, setLocalAnimeId] = useState(null)
   const [anime, setAnime] = useState(null)
@@ -433,7 +436,16 @@ export default function AnimeModal() {
               } catch { return null }
             })()}
 
-            {/* Recommandations */}
+            {/* Recommandations.
+                La jaquette de l'animé ouvert, elle, reste nette : on n'arrive
+                ici qu'en cliquant une carte déjà floutée et badgée. Ces
+                suggestions-ci, personne ne les a choisies — c'est de la
+                découverte, comme la grille.
+
+                Jikan ne joint pas les genres à une recommandation : on classe
+                ce qui est fourni, et à défaut on retient le registre de la
+                fiche ouverte. Le jour où l'API enrichit sa réponse, la première
+                branche prend le relais sans rien changer ici. */}
             {recommendations.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h3 className="text-[var(--text-primary)] font-semibold">Vous aimerez aussi</h3>
@@ -449,6 +461,12 @@ export default function AnimeModal() {
                           src={posterUrl(rec.images)}
                           alt={rec.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          style={
+                            blurHentai
+                              && (classifyAdultContent(rec.genres).adult || classifyAdultContent(anime.genres).adult)
+                              ? { filter: 'blur(10px)' }
+                              : undefined
+                          }
                         />
                       </div>
                       <span className="text-[var(--text-muted)] text-[11px] leading-snug line-clamp-2 group-hover:text-[var(--text-primary)] transition-colors">

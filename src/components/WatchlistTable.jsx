@@ -4,7 +4,9 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { CSS } from '@dnd-kit/utilities'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useModal } from '../context/ModalContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
 import { WATCH_STATUS } from '../constants/anime'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { getAnimeSeasons } from '../services/jikan'
 import { posterUrl } from '../utils/images'
 
@@ -107,6 +109,12 @@ function EpisodeTracker({ anime, setEpisode, setSeason }) {
 
 function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSeason, remove, openModal }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: anime.mal_id })
+  // L'onglet « Favoris » du même écran floutait déjà, pas celui-ci : deux vues
+  // voisines traitaient la censure différemment. Une liste que l'on a soi-même
+  // constituée reste une liste que l'on affiche.
+  const { blurHentai } = useAgeFilter()
+  const jaquetteFloutee = blurHentai && classifyAdultContent(anime.genres).adult
+  const styleJaquette = jaquetteFloutee ? { filter: 'blur(12px)' } : undefined
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -124,6 +132,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
             src={posterUrl(anime.images)}
             alt={anime.title}
             className="w-12 h-[72px] object-cover rounded-lg"
+            style={styleJaquette}
           />
         </button>
         <div className="flex-1 min-w-0 flex flex-col gap-2">
@@ -189,6 +198,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
             src={posterUrl(anime.images)}
             alt={anime.title}
             className="w-14 h-20 object-cover rounded-lg group-hover:ring-1 group-hover:ring-[#22c55e] transition-all"
+            style={styleJaquette}
           />
         </button>
         <div className="min-w-0 flex flex-col gap-1.5">

@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import { getAnimeById } from '../services/jikan'
 import { useHistory } from '../context/HistoryContext'
+import { useAgeFilter } from '../context/AgeFilterContext'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { STATUS_LABEL } from '../constants/anime'
 import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
@@ -16,6 +18,11 @@ export default function AnimeDetail() {
   const [loading, setLoading] = useState(true)
   const [unavailable, setUnavailable] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  const { blurHentai } = useAgeFilter()
+  // Cette page s'atteint aussi par une URL partagée, sans passer par la carte
+  // floutée qui sert d'avertissement partout ailleurs. La jaquette arrivait
+  // donc en clair, sans que rien n'ait prévenu.
+  const [jaquetteRevelee, setJaquetteRevelee] = useState(false)
   // Le contournement ne vaut que pour la requête déclenchée par le clic.
   const contournerAuProchainAppel = useRef(false)
   const { addToHistory } = useHistory()
@@ -115,6 +122,9 @@ export default function AnimeDetail() {
     studios, trailer, rank, popularity
   } = anime
 
+  const classementAge = classifyAdultContent(genres)
+  const jaquetteMasquee = blurHentai && classementAge.adult && !jaquetteRevelee
+
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
       <Link to="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[var(--color-accent)] transition-colors w-fit">
@@ -122,14 +132,51 @@ export default function AnimeDetail() {
       </Link>
 
       <div className="flex flex-col min-[500px]:flex-row gap-6 min-[500px]:gap-8">
-        <img
-          src={posterUrl(images, { large: true })}
-          alt={title}
-          width={192}
-          height={288}
-          fetchPriority="high"
-          className="w-36 min-[500px]:w-44 sm:w-48 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
-        />
+        <div className="flex flex-col gap-2 shrink-0 self-start mx-auto min-[500px]:mx-0">
+          <div className="relative">
+            <img
+              id="jaquette-anime"
+              src={posterUrl(images, { large: true })}
+              alt={title}
+              width={192}
+              height={288}
+              fetchPriority="high"
+              className="w-36 min-[500px]:w-44 sm:w-48 rounded-xl object-cover"
+              style={jaquetteMasquee ? { filter: 'blur(16px)' } : undefined}
+            />
+            {/* Voile OPAQUE, et non teinté : sur un voile translucide, le
+                contraste du texte dépendrait de la jaquette en dessous —
+                invérifiable. Sur `--bg-surface`, ce sont les ratios déjà
+                éprouvés du dépôt qui s'appliquent. Le flou de l'image reste
+                en défense de second rideau. */}
+            {jaquetteMasquee && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-3 text-center rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)]">
+                <span className="text-lg font-black" style={{ color: 'var(--color-danger-text)' }}>
+                  {classementAge.badge}
+                </span>
+                <p className="text-[var(--text-primary)] text-xs font-semibold leading-snug">
+                  Contenu réservé à un public averti
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Le bouton ne disparaît pas une fois la jaquette révélée : il
+              bascule. Le retirer perdrait le focus du clavier, et priverait
+              d'un moyen de remasquer. L'affichage vient d'un clic, jamais du
+              focus seul — WCAG 3.2.1. */}
+          {classementAge.adult && blurHentai && (
+            <button
+              type="button"
+              onClick={() => setJaquetteRevelee(v => !v)}
+              aria-expanded={jaquetteRevelee}
+              aria-controls="jaquette-anime"
+              className="px-3 py-2 text-sm font-semibold rounded-lg bg-[#15803d] hover:bg-[#166534] text-white transition-colors"
+            >
+              {jaquetteRevelee ? 'Masquer la jaquette' : 'Afficher quand même'}
+            </button>
+          )}
+        </div>
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-3xl font-bold text-[var(--text-primary)] leading-tight">{title}</h1>
