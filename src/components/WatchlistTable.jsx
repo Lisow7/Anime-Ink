@@ -1,13 +1,35 @@
 import { useState, useMemo, useEffect, useEffectEvent, useRef } from 'react'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useModal } from '../context/ModalContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { getAnimeSeasons } from '../services/jikan'
+import { posterUrl } from '../utils/images'
 
 const TYPE_TAG_LABELS = { Movie: 'Film', OVA: 'OVA', ONA: 'ONA', Special: 'Spécial', 'TV Special': 'Spécial TV' }
+
+// dnd-kit injecte par défaut des instructions et des annonces EN ANGLAIS dans
+// la zone destinée aux lecteurs d'écran. Dans une interface déclarée `lang="fr"`,
+// c'est un manquement au critère WCAG 3.1.2 en plus d'être incompréhensible.
+const INSTRUCTIONS_CLAVIER = {
+  draggable:
+    'Pour saisir un élément, appuyez sur la barre d’espace. ' +
+    'Utilisez ensuite les flèches haut et bas pour le déplacer. ' +
+    'Appuyez de nouveau sur la barre d’espace pour le déposer, ou sur Échap pour annuler.',
+}
+
+const ANNONCES = {
+  onDragStart: ({ active }) => `Élément ${active.id} saisi.`,
+  onDragOver: ({ active, over }) => (over
+    ? `Élément ${active.id} déplacé au-dessus de ${over.id}.`
+    : `Élément ${active.id} sorti de la liste.`),
+  onDragEnd: ({ active, over }) => (over
+    ? `Élément ${active.id} déposé à la place de ${over.id}.`
+    : `Élément ${active.id} reposé à sa position d’origine.`),
+  onDragCancel: ({ active }) => `Déplacement annulé, l’élément ${active.id} retrouve sa place.`,
+}
 
 function TypeTag({ type }) {
   const label = TYPE_TAG_LABELS[type] ?? type ?? 'Autre'
@@ -36,7 +58,7 @@ function EpisodeTracker({ anime, setEpisode, setSeason }) {
   const canNavigate = isRoot && maxSeasons !== undefined && maxSeasons > 1
 
   const pill = 'flex items-center gap-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg px-2 py-1'
-  const sel  = 'bg-[var(--bg-surface)] text-[11px] font-semibold text-[var(--text-primary)] focus:outline-none cursor-pointer tabular-nums'
+  const sel  = 'bg-[var(--bg-surface)] text-[11px] font-semibold text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] cursor-pointer tabular-nums'
   const tag  = 'text-[11px] font-semibold text-[var(--text-primary)] tabular-nums whitespace-nowrap'
 
   return (
@@ -99,7 +121,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
       <div className="flex min-[825px]:hidden items-start gap-3 px-4 py-3">
         <button onClick={() => openModal(anime.mal_id)} className="shrink-0">
           <img
-            src={anime.images?.jpg?.image_url ?? anime.images?.jpg?.large_image_url}
+            src={posterUrl(anime.images)}
             alt={anime.title}
             className="w-12 h-[72px] object-cover rounded-lg"
           />
@@ -107,7 +129,7 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 cursor-pointer" onClick={() => openModal(anime.mal_id)}>
-              <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[#22c55e] transition-colors">
+              <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[var(--color-accent)] transition-colors">
                 {anime.title}
               </p>
               <p className="text-[var(--text-muted)] text-[10px] mt-0.5 line-clamp-1">
@@ -164,14 +186,14 @@ function SortableRow({ anime, index, isDragEnabled, setStatus, setEpisode, setSe
         <span className="text-[var(--text-muted)] text-xs text-right tabular-nums">{index + 1}</span>
         <button onClick={() => openModal(anime.mal_id)} className="group">
           <img
-            src={anime.images?.jpg?.image_url ?? anime.images?.jpg?.large_image_url}
+            src={posterUrl(anime.images)}
             alt={anime.title}
             className="w-14 h-20 object-cover rounded-lg group-hover:ring-1 group-hover:ring-[#22c55e] transition-all"
           />
         </button>
         <div className="min-w-0 flex flex-col gap-1.5">
           <div onClick={() => openModal(anime.mal_id)} className="cursor-pointer min-w-0">
-            <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[#22c55e] transition-colors">{anime.title}</p>
+            <p className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 hover:text-[var(--color-accent)] transition-colors">{anime.title}</p>
             <p className="text-[var(--text-muted)] text-[11px] mt-0.5 line-clamp-1">
               {anime.genres?.slice(0, 3).map(g => g.name).join(' · ') || '—'}
             </p>
@@ -341,10 +363,18 @@ export default function WatchlistTable({ list }) {
       if (!isActive()) break
       if (anime.seasonData !== undefined || fetchedIds.current.has(anime.mal_id)) continue
       fetchedIds.current.add(anime.mal_id)
-      const data = await getAnimeSeasons(anime.mal_id, anime.episodes)
-      if (!isActive()) break
-      setSeasonData(anime.mal_id, data)
-      await new Promise(resolve => setTimeout(resolve, 400))
+
+      // L'espacement des requêtes est assuré par le limiteur de la couche
+      // client ; en rajouter un ici ne ferait que doubler l'attente.
+      // Un animé dont la franchise échoue ne doit pas interrompre les suivants.
+      try {
+        const data = await getAnimeSeasons(anime.mal_id, anime.episodes)
+        if (!isActive()) break
+        setSeasonData(anime.mal_id, data)
+      } catch {
+        if (!isActive()) break
+        fetchedIds.current.delete(anime.mal_id)
+      }
     }
   })
 
@@ -361,7 +391,12 @@ export default function WatchlistTable({ list }) {
   }, [filterStatus])
 
   const isDragEnabled = sort === 'added' && filterStatus === 'all'
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  // Sans KeyboardSensor, la poignée annonçait « draggable » et répondait aux
+  // touches par un silence : réordonner sa liste était impossible sans souris.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const filtered = useMemo(() => {
     let items = filterStatus === 'all' ? list : list.filter(a => a.watchStatus === filterStatus)
@@ -417,7 +452,7 @@ export default function WatchlistTable({ list }) {
             value={sort}
             onChange={e => setSort(e.target.value)}
             aria-label="Trier la liste"
-            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#22c55e] cursor-pointer"
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer"
           >
             {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
@@ -450,7 +485,7 @@ export default function WatchlistTable({ list }) {
               <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest text-right">#</span>
               <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">Affiche</span>
               <div className="flex items-center gap-1.5">
-                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current text-[#22c55e]/60 shrink-0" strokeWidth="2">
+                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current text-[var(--color-accent)]/60 shrink-0" strokeWidth="2">
                   <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round"/>
                 </svg>
                 <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">Titre · Progression</span>
@@ -458,7 +493,12 @@ export default function WatchlistTable({ list }) {
               <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest">Statut</span>
             </div>
 
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              accessibility={{ screenReaderInstructions: INSTRUCTIONS_CLAVIER, announcements: ANNONCES }}
+            >
               <SortableContext items={filtered.map(a => a.mal_id)} strategy={verticalListSortingStrategy}>
                 {filtered.map((anime, index) => (
                   <SortableRow

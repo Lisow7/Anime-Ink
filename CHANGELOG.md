@@ -5,6 +5,49 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.2] — 25 août 2026
+
+### Corrections
+- Une panne de l’API n’affiche plus « animé introuvable » : le message distingue une fiche inexistante d’un service momentanément indisponible, et propose de réessayer
+- Le voyant d’état de l’API restait rouge en permanence — il interrogeait une adresse qui n’est pas un point d’entrée ; il dérive désormais des appels réels, sans requête supplémentaire
+- La censure couvre enfin le genre « Erotica » : 95 animés s’affichaient en clair alors qu’elle était active, seuls « Hentai » et « Ecchi » étant reconnus
+- Le filtre par genre ne propose plus les genres explicites quand la censure est active, et un filtre de ce type déjà posé est levé quand on la réactive
+- Les suggestions de la recherche respectent la censure : leur vignette était servie en clair alors que la même jaquette était floutée dans la grille, et elles indiquent désormais le palier d’âge
+- La recherche de l’accueil n’annonce plus « aucun animé trouvé » quand l’API est en panne : une recherche sans résultat et un service indisponible ont désormais deux messages distincts
+- L’« animé surprise » ne se réduit plus à son titre lorsque son chargement échoue : la section explique la panne et propose de réessayer
+- La liste de suivi ne s’interrompt plus au premier animé dont la franchise échoue
+- Les erreurs de l’API ne sont plus renvoyées aux composants comme si c’étaient des données
+
+### Performance
+- Jaquettes servies en WebP : environ 40 % de poids en moins, à dimensions identiques
+- Première visite du catalogue : 24,8 ko de JavaScript au lieu de 45,6 (−45 %)
+- Chunk `Catalogue` : 23,4 → 6,3 ko gzip, `@dnd-kit` n’étant plus chargé que pour l’onglet « Ma liste »
+- `AnimeModal` chargé à la demande et amorcé au repos, au lieu d’être monté sur toutes les routes
+- Cache applicatif des réponses : revenir sur une page déjà consultée ne déclenche plus de requête
+- Débit des requêtes calé sur le seau à jetons réel de Jikan (rafale de 3, une par seconde), au lieu de 171 par minute pour 60 autorisées
+- Indices `preconnect` corrigés : leur mode d’identifiants ne correspondait pas à celui des requêtes, et Lighthouse les rapportait tous inutilisés
+
+### Accessibilité
+- Recherche conforme au modèle ARIA combobox : flèches, Entrée, Échap, et annonce des suggestions
+- La liste de suivi se réordonne au clavier — la poignée se présentait comme déplaçable mais ne répondait à aucune touche, et sa consigne était en anglais
+- Lien « Aller au contenu » pour sauter la barre de navigation
+- Les trois interrupteurs de consentement aux cookies ont un nom accessible
+- Contrastes conformes WCAG AA dans les deux thèmes : couleurs de note, palette du changelog, liens des mentions légales, filtres, bordures de champs
+- Les liens des mentions légales sont soulignés, la couleur seule ne les distinguant pas
+- Cibles tactiles portées à 24 px minimum (favoris, filtre alphabétique)
+- Les cartes n’imbriquent plus de contrôles interactifs les uns dans les autres
+- États annoncés : `aria-current` sur la navigation, `aria-pressed` sur les bascules, `role="alert"` sur les erreurs
+- Hiérarchie des titres corrigée sur l’accueil, titre unique dans la modale, `scope` sur les en-têtes de tableau
+
+### Maintenance
+- Garde-fou d’accessibilité : axe-core sur 24 scénarios (5 routes, 2 thèmes, bureau et mobile, modales ouvertes), exécuté à chaque pull request
+- La CI de qualité s’exécute aussi sur les pull requests vers `dev`, qu’elle ignorait jusqu’ici
+- Couche réseau isolée en modules testés : 51 tests unitaires
+- Dépendances et actions de CI à jour, ESLint passé en version 10 — vérifié par mutation, il inspecte bien les 59 fichiers
+- Dependabot vise désormais `dev` : ses propositions arrivaient sur `main` et court-circuitaient la branche d’intégration
+
+---
+
 ## [1.1] — 22 avril 2026
 
 ### Corrections

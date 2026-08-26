@@ -1,12 +1,22 @@
 import { ANIME_ACRONYMS } from '../constants/acronyms'
 import { normalizeTitle } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
+import { createJikanClient, JikanError } from './jikan/client'
+import { createRateLimiter } from './jikan/rate-limiter'
+import { createCache } from './jikan/cache'
+import { ttlForPath } from './jikan/ttl'
+
+export { JikanError }
 
 const BASE_URL = 'https://api.jikan.moe/v4'
 const REQUEST_TIMEOUT_MS = 8000
-const MIN_REQUEST_INTERVAL_MS = 350
-const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504])
-let nextRequestAt = 0
+
+// Paramètres mesurés sur api.jikan.moe le 2026-08-25 : 70 requêtes espacées de
+// 400 ms n'en ont vu aboutir que 30 en 28 s, les 429 démarrant dès la 4e. Le
+// plafond n'est pas une fenêtre mais un seau à jetons — une rafale d'environ 3
+// passe, puis le débit soutenu retombe à environ 1 requête par seconde.
+const BURST_CAPACITY = 3
+const REFILL_PER_SECOND = 1
 
 let apiHealth = { status: 'unknown', checkedAt: null }
 const apiHealthListeners = new Set()
@@ -26,93 +36,64 @@ export function subscribeApiHealth(listener) {
   return () => apiHealthListeners.delete(listener)
 }
 
-export class JikanError extends Error {
-  constructor(message, { status = null, retryAfter = null, cause } = {}) {
-    super(message, { cause })
-    this.name = 'JikanError'
-    this.status = status
-    this.retryAfter = retryAfter
+const responseCache = createCache()
+
+/**
+ * Vide le cache de réponses de l'API. Les données de l'utilisateur — favoris,
+ * watchlist, historique — vivent dans localStorage et ne sont pas concernées.
+ */
+export function clearApiCache() {
+  responseCache.clear()
+}
+
+/**
+ * Le délai de garde appartient à chaque tentative réseau et se combine au
+ * signal partagé par le client, sans le remplacer. Un dépassement de délai
+ * n'est pas une annulation de l'utilisateur : il devient une JikanError sans
+ * statut, que le client a le droit de réessayer.
+ */
+async function fetchWithTimeout(path, { signal } = {}) {
+  const controller = new AbortController()
+  let timedOut = false
+  const timeout = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, REQUEST_TIMEOUT_MS)
+
+  const onAbort = () => controller.abort()
+  signal?.addEventListener('abort', onAbort, { once: true })
+
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    })
+
+    if (response.ok) updateApiHealth('available')
+    else if (response.status === 429) updateApiHealth('degraded')
+    else updateApiHealth('unavailable')
+
+    return response
+  } catch (error) {
+    if (signal?.aborted) throw error
+    updateApiHealth('unavailable')
+    if (timedOut) throw new JikanError('Jikan n’a pas répondu à temps', { cause: error })
+    throw error
+  } finally {
+    clearTimeout(timeout)
+    signal?.removeEventListener('abort', onAbort)
   }
 }
 
-function abortError() {
-  return new DOMException('La requête a été annulée', 'AbortError')
-}
+const client = createJikanClient({
+  fetchImpl: fetchWithTimeout,
+  limiter: createRateLimiter({ capacity: BURST_CAPACITY, refillPerSecond: REFILL_PER_SECOND }),
+  cache: responseCache,
+  ttlFor: ttlForPath,
+})
 
-function delay(ms, signal) {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) return reject(abortError())
-    const timer = setTimeout(resolve, ms)
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timer)
-      reject(abortError())
-    }, { once: true })
-  })
-}
-
-function retryDelay(response, attempt) {
-  const retryAfter = response.headers.get('Retry-After')
-  const seconds = retryAfter ? Number(retryAfter) : Number.NaN
-  if (Number.isFinite(seconds)) return Math.min(seconds * 1000, 10000)
-  const retryDate = retryAfter ? Date.parse(retryAfter) : Number.NaN
-  if (Number.isFinite(retryDate)) return Math.min(Math.max(0, retryDate - Date.now()), 10000)
-  return 500 * (2 ** attempt) + Math.floor(Math.random() * 250)
-}
-
-async function acquireRequestSlot(signal) {
-  const now = Date.now()
-  const wait = Math.max(0, nextRequestAt - now)
-  nextRequestAt = Math.max(now, nextRequestAt) + MIN_REQUEST_INTERVAL_MS
-  if (wait > 0) await delay(wait, signal)
-}
-
-async function requestJson(path, { signal, retries = 2 } = {}) {
-  for (let attempt = 0; attempt <= retries; attempt += 1) {
-    if (signal?.aborted) throw abortError()
-    await acquireRequestSlot(signal)
-
-    const timeoutController = new AbortController()
-    const timeout = setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS)
-    const onAbort = () => timeoutController.abort()
-    signal?.addEventListener('abort', onAbort, { once: true })
-
-    try {
-      const response = await fetch(`${BASE_URL}${path}`, {
-        signal: timeoutController.signal,
-        headers: { Accept: 'application/json' },
-      })
-
-      if (!response.ok) {
-        if (RETRYABLE_STATUS.has(response.status) && attempt < retries) {
-          await delay(retryDelay(response, attempt), signal)
-          continue
-        }
-        updateApiHealth(response.status === 429 ? 'degraded' : 'unavailable')
-        throw new JikanError(`Jikan a répondu avec le statut ${response.status}`, {
-          status: response.status,
-          retryAfter: response.headers.get('Retry-After'),
-        })
-      }
-
-      const json = await response.json()
-      updateApiHealth('available')
-      return json
-    } catch (error) {
-      if (signal?.aborted) throw abortError()
-      if (error instanceof JikanError) throw error
-      if (attempt < retries) {
-        await delay(500 * (2 ** attempt) + Math.floor(Math.random() * 250), signal)
-        continue
-      }
-      updateApiHealth('unavailable')
-      throw new JikanError('Impossible de joindre Jikan', { cause: error })
-    } finally {
-      clearTimeout(timeout)
-      signal?.removeEventListener('abort', onAbort)
-    }
-  }
-
-  throw new JikanError('Impossible de joindre Jikan')
+function requestJson(path, options) {
+  return client.request(path, options)
 }
 
 function generateAcronym(title) {
@@ -129,29 +110,31 @@ export async function searchAnime(query, signal) {
   const expandedQuery = ANIME_ACRONYMS[upperQ] || query.trim()
   const isAcronym = expandedQuery !== query.trim()
 
-  try {
-    const data = await requestJson(`/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
-    const lower = expandedQuery.toLowerCase()
-    return (data.data ?? [])
-      .filter((anime) =>
-        anime.title?.toLowerCase().includes(lower) ||
-        anime.title_english?.toLowerCase().includes(lower) ||
-        (isAcronym ? false : generateAcronym(anime.title || '') === upperQ) ||
-        (isAcronym ? false : generateAcronym(anime.title_english || '') === upperQ)
-      )
-      .sort((a, b) => {
-        const dateA = a.aired?.from ? new Date(a.aired.from) : new Date(0)
-        const dateB = b.aired?.from ? new Date(b.aired.from) : new Date(0)
-        return dateA - dateB
-      })
-  } catch (error) {
-    if (error?.name === 'AbortError') throw error
-    throw error
-  }
+  const data = await requestJson(`/anime?q=${encodeURIComponent(expandedQuery)}&limit=20`, { signal })
+  const lower = expandedQuery.toLowerCase()
+
+  return (data.data ?? [])
+    .filter((anime) =>
+      anime.title?.toLowerCase().includes(lower) ||
+      anime.title_english?.toLowerCase().includes(lower) ||
+      (isAcronym ? false : generateAcronym(anime.title || '') === upperQ) ||
+      (isAcronym ? false : generateAcronym(anime.title_english || '') === upperQ)
+    )
+    .sort((a, b) => {
+      const dateA = a.aired?.from ? new Date(a.aired.from) : new Date(0)
+      const dateB = b.aired?.from ? new Date(b.aired.from) : new Date(0)
+      return dateA - dateB
+    })
 }
 
-export async function getAnimeById(id, signal) {
-  const data = await requestJson(`/anime/${id}/full`, { signal })
+/**
+ * @param {object} [options] L'option `bypassCache` est réservée aux actions
+ *   explicites de l'utilisateur : un bouton « Réessayer » doit repartir au
+ *   réseau, sans quoi l'échec mémorisé lui répondrait aussitôt et le bouton
+ *   paraîtrait mort.
+ */
+export async function getAnimeById(id, signal, options = {}) {
+  const data = await requestJson(`/anime/${id}/full`, { signal, ...options })
   return data.data
 }
 
@@ -159,7 +142,7 @@ export function getTopAnime(page = 1, signal) {
   return requestJson(`/top/anime?page=${page}&limit=24`, { signal })
 }
 
-export async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}, signal) {
+export async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}, signal, options = {}) {
   const params = new URLSearchParams({ limit: 24, page })
   if (genre) params.set('genres', genre)
   if (status) params.set('status', status)
@@ -168,17 +151,25 @@ export async function getAnimeByFilter({ genre, status, type, orderBy, letter, p
   if (letter) params.set('letter', letter)
   params.set('sort', orderBy === 'title' ? 'asc' : 'desc')
 
-  return requestJson(`/anime?${params}`, { signal })
+  return requestJson(`/anime?${params}`, { signal, ...options })
 }
 
+/**
+ * La fraîcheur des genres est gouvernée par le cache de réponses
+ * (`ttlForPath`), et par lui seul : un second cache local avec sa propre durée
+ * de vie aurait masqué la première et rendu `clearApiCache()` inopérant.
+ *
+ * Le stock local ne sert plus de porte d'entrée mais de **filet** : si l'API
+ * est injoignable, on ressert la dernière liste connue, y compris d'une session
+ * à l'autre. Le prix est d'une requête par session au lieu d'une par jour —
+ * négligeable, et la liste est plus à jour.
+ */
 export async function getGenres() {
   const CACHE_KEY = 'anime-ink-genres'
-  const CACHE_TTL = 24 * 60 * 60 * 1000
 
   const cached = readStorage(CACHE_KEY, null, value =>
     value && Number.isFinite(value.ts) && Array.isArray(value.data)
   )
-  if (cached && Date.now() - cached.ts < CACHE_TTL && cached.data.length > 0) return cached.data
 
   try {
     const json = await requestJson('/genres/anime')
@@ -269,15 +260,27 @@ export async function getAnimeFranchise(animeTitle, signal) {
   }
 }
 
-export async function getAnimeSeasons(animeId, ownEpisodes) {
-  const cache = new Map()
+// Une franchise se parcourt de proche en proche : sans borne, une longue série
+// consomme des dizaines de requêtes sur un budget d'environ une par seconde, et
+// la watchlist reste vide plusieurs dizaines de secondes. Ces deux plafonds
+// couvrent largement les franchises réelles.
+const MAX_SEASONS = 6
+const MAX_SEASON_LOOKUPS = 12
 
-  async function fetchFull(id, immediate = false) {
-    if (cache.has(id)) return cache.get(id)
-    if (!immediate) await new Promise(r => setTimeout(r, 400))
+export async function getAnimeSeasons(animeId, ownEpisodes) {
+  const seen = new Map()
+  let lookups = 0
+
+  // L'espacement des requêtes est assuré par le limiteur de la couche client :
+  // en rajouter un ici ne ferait que doubler l'attente.
+  async function fetchFull(id) {
+    if (seen.has(id)) return seen.get(id)
+    if (lookups >= MAX_SEASON_LOOKUPS) return null
+
+    lookups += 1
     try {
       const { data } = await requestJson(`/anime/${id}/full`)
-      cache.set(id, data)
+      seen.set(id, data)
       return data
     } catch { return null }
   }
@@ -290,7 +293,7 @@ export async function getAnimeSeasons(animeId, ownEpisodes) {
   }
 
   // Étape 1 : fetch de l'animé de départ
-  const startData = await fetchFull(animeId, true)
+  const startData = await fetchFull(animeId)
   if (!startData) return [{ mal_id: animeId, episodes: ownEpisodes ?? null }]
 
   // Étape 2 : remonter les prequels TV pour trouver la vraie saison 1
@@ -325,9 +328,10 @@ export async function getAnimeSeasons(animeId, ownEpisodes) {
   let queue = tvSequelIds(rootData, bfsSeen)
   queue.forEach(id => bfsSeen.add(id))
 
-  while (queue.length > 0) {
+  while (queue.length > 0 && seasons.length < MAX_SEASONS) {
     const next = []
     for (const id of queue) {
+      if (seasons.length >= MAX_SEASONS) break
       const data = await fetchFull(id)
       if (!data) continue
       if (data.type === 'TV') {

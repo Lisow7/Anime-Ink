@@ -1,12 +1,15 @@
 import { CHANGELOG } from '../data/changelog'
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
 
+// Les couleurs viennent des variables de thème. Figées, elles étaient pensées
+// pour le seul thème sombre et tombaient entre 1,64 et 2,26 en clair, pour un
+// seuil de 4,5 (WCAG 1.4.3).
 const TYPE_STYLE = {
-  feat:   { label: 'Nouveauté',   color: '#22c55e', bg: 'rgba(34,197,94,0.12)' },
-  fix:    { label: 'Correction',  color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
-  perf:   { label: 'Performance', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-  ui:     { label: 'Interface',   color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  deploy: { label: 'Déploiement', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+  feat:   { label: 'Nouveauté',   color: 'var(--tag-feat)',   bg: 'rgba(34,197,94,0.12)' },
+  fix:    { label: 'Correction',  color: 'var(--tag-fix)',    bg: 'rgba(96,165,250,0.12)' },
+  perf:   { label: 'Performance', color: 'var(--tag-perf)',   bg: 'rgba(245,158,11,0.12)' },
+  ui:     { label: 'Interface',   color: 'var(--tag-ui)',     bg: 'rgba(167,139,250,0.12)' },
+  deploy: { label: 'Déploiement', color: 'var(--tag-deploy)', bg: 'rgba(52,211,153,0.12)' },
 }
 
 export default function ChangelogModal({ onClose }) {
@@ -42,15 +45,23 @@ export default function ChangelogModal({ onClose }) {
           </button>
         </div>
 
-        <div className="overflow-y-auto flex flex-col gap-6 px-6 py-5">
+        {/* La liste défile mais ne contient aucun élément focalisable : sans
+            tabIndex, un utilisateur au clavier ne peut pas la faire défiler et
+            n'atteint jamais les versions du bas. */}
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Historique des versions"
+          className="overflow-y-auto flex flex-col gap-6 px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#22c55e]"
+        >
           {CHANGELOG.map((entry, i) => (
             <div key={entry.version} className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-bold ${i === 0 ? 'text-[#22c55e]' : 'text-[var(--text-muted)]'}`}>
+                <span className={`text-sm font-bold ${i === 0 ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)]'}`}>
                   Version {entry.version}
                 </span>
                 {i === 0 && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22c55e]">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[var(--color-accent)]">
                     Actuelle
                   </span>
                 )}

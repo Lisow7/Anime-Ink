@@ -2,8 +2,9 @@ import { useFavorites } from '../context/FavoritesContext'
 import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { STATUS_LABEL } from '../constants/anime'
-import { HENTAI_GENRES, ECCHI_GENRES } from '../constants/ageFilter'
+import { classifyAdultContent } from '../constants/ageFilter'
 import { scoreColor } from '../utils/score'
+import { posterUrl } from '../utils/images'
 
 export default function AnimeListCard({ anime }) {
   const { isFavorite, toggle } = useFavorites()
@@ -11,28 +12,21 @@ export default function AnimeListCard({ anime }) {
   const { blurHentai } = useAgeFilter()
   const { mal_id, title, images, score, episodes, status, genres, synopsis } = anime
   const fav = isFavorite(mal_id)
-  const isHentai = genres?.some(g => HENTAI_GENRES.includes(g.name))
-  const isEcchi = genres?.some(g => ECCHI_GENRES.includes(g.name))
-  const blurred = blurHentai && (isHentai || isEcchi)
-  const ageBadge = isHentai ? '-18' : '-16'
+  const { adult, hentai: isHentai, badge: ageBadge } = classifyAdultContent(genres)
+  const blurred = blurHentai && adult
 
+  // Le conteneur n'est plus un role="button" : il englobait le bouton favori.
+  // Un contrôle interactif imbriqué dans un autre masque l'enfant au lecteur
+  // d'écran et rend l'ordre de focus incohérent. Le titre porte désormais
+  // l'action d'ouverture, chaque contrôle restant atteignable pour lui-même.
   return (
     <div
       onClick={() => openModal(mal_id)}
-      onKeyDown={(event) => {
-        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault()
-          openModal(mal_id)
-        }
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label={`Ouvrir la fiche de ${title}`}
       className="relative group cursor-pointer bg-[var(--bg-surface)] rounded-xl overflow-hidden flex gap-4 p-3 hover:ring-1 hover:ring-[#22c55e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] transition-all duration-200"
     >
       <div className="shrink-0 relative">
         <img
-          src={images?.jpg?.image_url ?? images?.jpg?.large_image_url}
+          src={posterUrl(images)}
           alt={title}
           loading="lazy"
           width={64}
@@ -58,14 +52,22 @@ export default function AnimeListCard({ anime }) {
       </div>
 
       <div className="flex-1 flex flex-col gap-1 min-w-0 pr-8">
-        <h3 title={title} className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 leading-snug">{title}</h3>
+        <h3 title={title} className="text-[var(--text-primary)] text-sm font-semibold line-clamp-1 leading-snug">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); openModal(mal_id) }}
+            className="text-left w-full rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]"
+          >
+            {title}
+          </button>
+        </h3>
 
         <div className="flex items-center gap-2 flex-wrap">
           {score && <span className="text-xs font-bold" style={{ color: scoreColor(score) }}>★ {score}</span>}
           <span className="text-[var(--text-muted)] text-xs">{episodes ? `${episodes} ép.` : '? ép.'}</span>
           {status && (
             <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-              status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[#22c55e]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
+              status === 'Currently Airing' ? 'bg-[#22c55e]/20 text-[var(--color-accent)]' : 'bg-[var(--overlay-soft)] text-[var(--text-muted)]'
             }`}>
               {STATUS_LABEL[status] ?? status}
             </span>
@@ -89,7 +91,7 @@ export default function AnimeListCard({ anime }) {
 
       <button
         onClick={(e) => { e.stopPropagation(); toggle(anime) }}
-        className={`absolute top-3 right-3 transition-colors ${fav ? 'text-[#22c55e]' : 'text-[var(--text-muted)] hover:text-[#22c55e]'}`}
+        className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors ${fav ? 'text-[var(--color-accent)]' : 'text-[var(--text-muted)] hover:text-[var(--color-accent)]'}`}
         aria-label={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <svg viewBox="0 0 24 24" className="w-4 h-4" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">

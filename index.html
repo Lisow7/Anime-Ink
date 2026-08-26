@@ -45,11 +45,21 @@
     <meta name="twitter:image" content="https://lisow7.github.io/Anime-Ink/og-image.svg" />
 
     <!-- Preconnect API & CDN -->
-    <link rel="preconnect" href="https://api.jikan.moe" />
+    <!--
+      Un preconnect n'est réutilisé que si son mode d'identifiants correspond à
+      celui de la requête qui suit. Les trois précédents étaient déclarés à
+      l'envers, et Lighthouse les rapportait tous les trois en « Unused
+      preconnect » : le navigateur ouvrait une seconde connexion à côté.
+
+      · api.jikan.moe : atteint par fetch(), donc en CORS anonyme → crossorigin.
+      · cdn.myanimelist.net : atteint par <img> sans attribut crossorigin, donc
+        en mode non-CORS → surtout PAS de crossorigin.
+      · myanimelist.net : supprimé. Aucune ressource n'en est chargée, cet hôte
+        n'apparaît que dans les liens sortants vers les fiches MyAnimeList.
+    -->
+    <link rel="preconnect" href="https://api.jikan.moe" crossorigin />
     <link rel="dns-prefetch" href="https://api.jikan.moe" />
-    <link rel="preconnect" href="https://myanimelist.net" crossorigin />
-    <link rel="dns-prefetch" href="https://myanimelist.net" />
-    <link rel="preconnect" href="https://cdn.myanimelist.net" crossorigin />
+    <link rel="preconnect" href="https://cdn.myanimelist.net" />
     <link rel="dns-prefetch" href="https://cdn.myanimelist.net" />
 
     <!-- Structured Data — WebSite + SearchAction -->

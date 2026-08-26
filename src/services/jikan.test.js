@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getApiHealth, getTopAnime, JikanError, searchAnime } from './jikan'
+import { clearApiCache, getAnimeById, getAnimeSeasons, getApiHealth, getTopAnime, JikanError, searchAnime } from './jikan'
 
 function response(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -10,6 +10,9 @@ function response(body, status = 200, headers = {}) {
 
 describe('client Jikan', () => {
   beforeEach(() => {
+    // Le cache de réponses est un singleton de module : sans purge, un test
+    // servirait la réponse mémorisée par le précédent.
+    clearApiCache()
     vi.stubGlobal('fetch', vi.fn())
   })
 
@@ -60,5 +63,72 @@ describe('client Jikan', () => {
 
   it('expose le type JikanError', () => {
     expect(new JikanError('test')).toBeInstanceOf(Error)
+  })
+})
+
+describe('remontée de franchise', () => {
+  beforeEach(() => {
+    clearApiCache()
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('borne la remontée pour ne pas épuiser le budget de requêtes', async () => {
+    // Franchise artificielle de 20 saisons enchaînées : 1 → 2 → … → 20.
+    fetch.mockImplementation(async (url) => {
+      const id = Number(String(url).match(/\/anime\/(\d+)\/full/)[1])
+      return response({
+        data: {
+          mal_id: id,
+          type: 'TV',
+          episodes: 12,
+          relations: id < 20
+            ? [{ relation: 'Sequel', entry: [{ type: 'anime', mal_id: id + 1 }] }]
+            : [],
+        },
+      })
+    })
+
+    vi.useFakeTimers()
+    const pending = getAnimeSeasons(1, 12)
+    await vi.runAllTimersAsync()
+    const seasons = await pending
+
+    expect(seasons.length).toBeLessThanOrEqual(6)
+    expect(fetch.mock.calls.length).toBeLessThanOrEqual(12)
+  })
+})
+
+describe('contournement du cache par action explicite', () => {
+  beforeEach(() => {
+    clearApiCache()
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  // Un 404 n'est pas réessayé : une tentative par appel, ce qui isole le cache
+  // négatif de la politique de retry et garde le test rapide.
+  it('rejoue une fiche en échec quand l’utilisateur redemande explicitement', async () => {
+    fetch.mockResolvedValue(response({ status: 404 }, 404))
+
+    await expect(getAnimeById(1)).rejects.toMatchObject({ status: 404 })
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    // Sans contournement : l'échec mémorisé répond, aucune requête de plus.
+    await expect(getAnimeById(1)).rejects.toMatchObject({ status: 404 })
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    // Avec contournement : on repart au réseau.
+    await expect(getAnimeById(1, undefined, { bypassCache: true }))
+      .rejects.toMatchObject({ status: 404 })
+    expect(fetch).toHaveBeenCalledTimes(2)
   })
 })

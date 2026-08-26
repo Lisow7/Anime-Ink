@@ -1,6 +1,31 @@
-export const CURRENT_VERSION = '1.1'
+export const CURRENT_VERSION = '1.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.2',
+    date: '25 août 2026',
+    changes: [
+      { type: 'fix',    label: 'Une panne de l’API n’annonce plus « animé introuvable » — le message distingue une fiche inexistante d’un service momentanément indisponible, avec un bouton pour réessayer' },
+      { type: 'fix',    label: 'Le voyant d’état de l’API restait rouge en permanence : il reflète désormais les appels réels' },
+      { type: 'fix',    label: 'La censure couvre enfin « Erotica » — 95 animés passaient à travers alors qu’elle était active' },
+      { type: 'ui',     label: 'Le filtre par genre masque les genres explicites tant que la censure est active' },
+      { type: 'fix',    label: 'Les suggestions de la recherche respectent la censure — leur vignette s’affichait en clair' },
+      { type: 'fix',    label: 'La recherche de l’accueil ne dit plus « aucun animé trouvé » quand c’est l’API qui est en panne' },
+      { type: 'fix',    label: 'L’« animé surprise » explique la panne et propose de réessayer, au lieu de laisser un titre seul' },
+      { type: 'fix',    label: 'La liste de suivi ne s’arrête plus de charger au premier animé en échec' },
+      { type: 'perf',   label: 'Jaquettes servies en WebP — environ 40 % de poids en moins, à définition identique' },
+      { type: 'perf',   label: 'Première visite du catalogue : 45 % de JavaScript en moins' },
+      { type: 'perf',   label: 'Les réponses de l’API sont mémorisées — revenir sur l’accueil ne recharge plus rien' },
+      { type: 'perf',   label: 'Le rythme des requêtes suit la limite de l’API : plus de blocages en cascade' },
+      { type: 'ui',     label: 'Recherche navigable au clavier (flèches, Entrée, Échap) et annoncée aux lecteurs d’écran' },
+      { type: 'ui',     label: 'La liste de suivi se réordonne au clavier, en français' },
+      { type: 'ui',     label: 'Lien « Aller au contenu » pour sauter la navigation' },
+      { type: 'ui',     label: 'Contrastes conformes WCAG AA dans les deux thèmes — notes, changelog, mentions légales et filtres compris' },
+      { type: 'ui',     label: 'Cibles tactiles agrandies (favoris, filtre alphabétique)' },
+      { type: 'ui',     label: 'Les interrupteurs de consentement aux cookies annoncent enfin ce qu’ils gouvernent' },
+      { type: 'chore',  label: 'Garde-fou d’accessibilité automatisé : 24 scénarios vérifiés à chaque pull request' },
+    ],
+  },
   {
     version: '1.1',
     date: '22 avril 2026',

@@ -32,7 +32,7 @@ export default function NotFound() {
       {/* Trait décoratif */}
       <div className="flex items-center gap-4 mb-8 w-full max-w-xs">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#22c55e]/60" />
-        <span className="text-[#22c55e] text-xs tracking-[0.3em] uppercase font-medium">Not Found</span>
+        <span className="text-[var(--color-accent)] text-xs tracking-[0.3em] uppercase font-medium">Not Found</span>
         <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#22c55e]/60" />
       </div>
 
