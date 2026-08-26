@@ -43,6 +43,8 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 - Garde-fou d’accessibilité : axe-core sur 24 scénarios (5 routes, 2 thèmes, bureau et mobile, modales ouvertes), exécuté à chaque pull request
 - La CI de qualité s’exécute aussi sur les pull requests vers `dev`, qu’elle ignorait jusqu’ici
 - Couche réseau isolée en modules testés : 51 tests unitaires
+- Dépendances et actions de CI à jour, ESLint passé en version 10 — vérifié par mutation, il inspecte bien les 59 fichiers
+- Dependabot vise désormais `dev` : ses propositions arrivaient sur `main` et court-circuitaient la branche d’intégration
 
 ---
 

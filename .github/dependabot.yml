@@ -1,7 +1,14 @@
 version: 2
+
+# `target-branch: dev` sur les deux écosystèmes. Sans lui, Dependabot vise la
+# branche par défaut du dépôt — `main` — et ses PR court-circuitent la branche
+# d'intégration : les fusionner poserait les montées sur `main` seulement, d'où
+# `dev` repartirait ensuite avec les anciennes versions. Les six PR ouvertes en
+# août 2026 visaient toutes `main` pour cette raison.
 updates:
   - package-ecosystem: npm
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
       day: monday
@@ -16,5 +23,6 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: dev
     schedule:
       interval: monthly
