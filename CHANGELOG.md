@@ -9,6 +9,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ### Corrections
 - La liste de suivi respecte la censure : ses jaquettes s’affichaient en clair alors que l’onglet « Favoris », juste à côté, les floutait
+- Les suggestions « Vous aimerez aussi » suivent la censure : personne ne les a choisies, et elles s’affichaient en clair sous une œuvre pour public averti
 - La fiche d’un animé pour public averti annonce son contenu avant de le montrer : ouverte depuis un lien partagé, elle affichait sa jaquette sans que rien n’ait prévenu. Un bouton « Afficher quand même » la révèle, et permet de la remasquer ; le titre et le synopsis restent lisibles
 
 ### Maintenance
