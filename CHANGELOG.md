@@ -5,6 +5,16 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.3] — en préparation
+
+### Corrections
+- La liste de suivi respecte la censure : ses jaquettes s’affichaient en clair alors que l’onglet « Favoris », juste à côté, les floutait
+
+### Maintenance
+- Un test vérifie que toute surface affichant une jaquette classe son contenu adulte, ou figure parmi des exemptions justifiées — c’est lui qui a signalé la liste de suivi
+
+---
+
 ## [1.2] — 25 août 2026
 
 ### Corrections
