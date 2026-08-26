@@ -5,7 +5,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
-## [1.3] — en préparation
+## [1.3] — 26 août 2026
 
 ### Corrections
 - La liste de suivi respecte la censure : ses jaquettes s’affichaient en clair alors que l’onglet « Favoris », juste à côté, les floutait
