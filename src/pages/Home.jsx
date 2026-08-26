@@ -169,9 +169,15 @@ export default function Home() {
   // aria-activedescendant. Les options ne sont donc plus des boutons
   // focalisables — c'est le champ qui porte le clavier.
   const listboxOpen = showSuggestions && Boolean(query.trim())
+  // La classification voyage avec l'option : les suggestions sont un lieu de
+  // découverte au même titre que la grille, et leur vignette s'affichait en
+  // clair alors que la même jaquette était floutée une ligne plus bas.
   const options = suggestionsLoading
     ? []
-    : [...suggestions.map(a => ({ type: 'anime', anime: a })), ...(suggestions.length ? [{ type: 'all' }] : [])]
+    : [
+        ...suggestions.map(a => ({ type: 'anime', anime: a, age: classifyAdultContent(a.genres) })),
+        ...(suggestions.length ? [{ type: 'all' }] : []),
+      ]
   const optionId = index => `suggestion-${index}`
 
   const chooseOption = (index) => {
@@ -294,11 +300,25 @@ export default function Home() {
                             src={posterUrl(option.anime.images)}
                             alt=""
                             className="w-8 h-11 object-cover rounded shrink-0"
+                            style={blurHentai && option.age?.adult ? { filter: 'blur(6px)' } : undefined}
                           />
                           <span className="min-w-0 flex-1 block">
                             <span className="text-[var(--text-primary)] text-sm font-medium truncate block">{option.anime.title}</span>
                             <span className="text-[var(--text-muted)] text-[11px] block">
                               {option.anime.year ?? '—'}{option.anime.score ? ` · ★ ${option.anime.score}` : ''}
+                              {/* Une seule teinte pour les deux paliers : c'est le texte
+                                  « -18 » / « -16 » qui les distingue, la couleur ne fait
+                                  qu'alerter. Le rouge et le violet des cartes tiennent sur
+                                  un voile sombre, pas sur cette surface claire — 4,17:1,
+                                  sous le seuil AA. `--color-danger-text` existe pour ça. */}
+                              {blurHentai && option.age?.adult && (
+                                <>
+                                  {' · '}
+                                  <span style={{ color: 'var(--color-danger-text)' }} className="font-bold">
+                                    {option.age.badge}
+                                  </span>
+                                </>
+                              )}
                             </span>
                           </span>
                         </>
