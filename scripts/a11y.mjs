@@ -24,7 +24,7 @@
 import { createRequire } from 'node:module'
 import { preview } from 'vite'
 import { chromium } from 'playwright'
-import { repondre } from './a11y-fixtures.mjs'
+import { repondre, ANIMES } from './a11y-fixtures.mjs'
 
 const require = createRequire(import.meta.url)
 const AXE = require.resolve('axe-core/axe.min.js')
@@ -85,16 +85,59 @@ const SCENARIOS = [
       await page.waitForTimeout(2000)
     },
   },
+
+  // ── États d'échec ────────────────────────────────────────────────────────
+  // Ils n'existent que lorsque Jikan tombe. Le garde-fou ne les avait donc
+  // jamais vus, et c'est là que vivent les messages, les boutons de reprise et
+  // les annonces aux lecteurs d'écran — tout ce que cette version a ajouté.
+  {
+    nom: 'catalogue, API en panne',
+    route: 'catalogue',
+    reponseApi: () => ({ status: 504 }),
+    temoin: 'main [role="alert"] button',
+  },
+  {
+    nom: 'accueil, API en panne',
+    route: '',
+    reponseApi: () => ({ status: 504 }),
+    temoin: 'main [role="status"] button',
+  },
+
+  // ── Avertissement de contenu ─────────────────────────────────────────────
+  // La fiche n'était visitée qu'avec une œuvre tout public : le voile, le
+  // palier d'âge et le bouton de révélation échappaient à l'analyse.
+  {
+    nom: 'fiche pour public averti, censure active',
+    route: 'anime/1',
+    reponseApi: (url) => (/\/anime\/\d+\/full/.test(url)
+      ? { status: 200, corps: { data: { ...ANIMES[0], genres: [{ mal_id: 12, name: 'Hentai' }] } } }
+      : null),
+    temoin: 'main button[aria-controls="jaquette-anime"]',
+  },
 ]
 
 async function analyser(page, base, scenario) {
   // L'API réelle n'est jamais appelée : la CI ne doit pas dépendre d'un tiers,
   // et un catalogue vide ne testerait presque rien.
-  await page.route('**/api.jikan.moe/**', route => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify(repondre(route.request().url())),
-  }))
+  //
+  // Un scénario peut imposer sa propre réponse — c'est ainsi que les états
+  // d'échec entrent dans le champ du garde-fou. Ils en étaient absents : ils
+  // n'existent que lorsque l'API tombe, et l'API ne tombait jamais ici.
+  await page.route('**/api.jikan.moe/**', route => {
+    const impose = scenario.reponseApi?.(route.request().url())
+    if (impose) {
+      return route.fulfill({
+        status: impose.status,
+        contentType: 'application/json',
+        body: JSON.stringify(impose.corps ?? { status: impose.status, message: 'panne simulée' }),
+      })
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(repondre(route.request().url())),
+    })
+  })
 
   await page.setViewportSize(scenario.mobile ? MOBILE : BUREAU)
   await page.goto(`${base}${scenario.route}`, { waitUntil: 'load' })
@@ -112,8 +155,12 @@ async function analyser(page, base, scenario) {
   if (scenario.prepare) await scenario.prepare(page)
 
   if (scenario.temoin) {
-    const present = await page.locator(scenario.temoin).count()
-    if (present === 0) {
+    // Le témoin est ATTENDU, non compté à l'instant t : un état d'échec ne se
+    // prononce qu'au bout de trois tentatives espacées, bien après le délai de
+    // stabilisation. Le compter aussitôt l'aurait déclaré absent à tort.
+    try {
+      await page.locator(scenario.temoin).first().waitFor({ state: 'attached', timeout: 20_000 })
+    } catch {
       throw new Error(
         `Scénario « ${scenario.nom} » : l'état visé n'a pas été atteint ` +
         `(témoin « ${scenario.temoin} » absent). Analyser la page au repos ` +

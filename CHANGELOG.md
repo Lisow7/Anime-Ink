@@ -14,6 +14,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ### Maintenance
 - Un test vérifie que toute surface affichant une jaquette classe son contenu adulte, ou figure parmi des exemptions justifiées — c’est lui qui a signalé la liste de suivi
+- Le garde-fou d’accessibilité visite désormais les états d’échec et l’avertissement de contenu : 30 scénarios au lieu de 24. Ces écrans n’existent que lorsque l’API tombe, et échappaient donc entièrement à l’analyse
 
 ---
 
