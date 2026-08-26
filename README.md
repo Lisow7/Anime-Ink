@@ -148,7 +148,9 @@ Types : `feat`, `fix`, `perf`, `ui`, `docs`, `ci`, `refactor`
 | `1.x` | Petites mises à jour, corrections, améliorations |
 | `2.0` | Grosse mise à jour — nouvelle feature majeure |
 
-Voir [CHANGELOG.md](./CHANGELOG.md) pour l'historique complet.
+Voir [CHANGELOG.md](./CHANGELOG.md) pour l'historique complet, et
+[ROADMAP.md](./ROADMAP.md) pour ce qui est livré, ce qui reste et ce qui
+demanderait un autre hébergement.
 
 ---
 
