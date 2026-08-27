@@ -4,6 +4,8 @@ import {
   clearApiCache,
   getAnimeById,
   getAnimeRecommendations,
+  getAnimeFranchise,
+  getAnimeSeasons,
   getGenres,
   getTopAnime,
   searchAnime,
@@ -75,7 +77,7 @@ function installerReseau(cas) {
 }
 
 verifierContrat('Jikan', {
-  adaptateur: { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations },
+  adaptateur: { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations, getAnimeSeasons, getAnimeFranchise },
   installerReseau,
   // Le cache de réponses est un singleton de module : sans purge, un cas
   // recevrait la réponse installée par le précédent.

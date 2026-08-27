@@ -112,6 +112,31 @@ export function verifierContrat(nom, { adaptateur, installerReseau, avantChaque 
       recos.forEach(reco => expect(estRecommandationValide(reco)).toBe(true))
     })
 
+    it('rend des saisons identifiées, pour la ligne de progression', async () => {
+      installerReseau('anime')
+      const saisons = await adaptateur.getAnimeSeasons(1, 26)
+
+      // La liste de suivi additionne les épisodes de chaque saison. Une entrée
+      // sans identifiant y ferait une ligne fantôme, et un décompte en chaîne
+      // de caractères une addition silencieusement fausse.
+      expect(Array.isArray(saisons)).toBe(true)
+      expect(saisons.length).toBeGreaterThan(0)
+      saisons.forEach(saison => {
+        expect(typeof saison.mal_id).toBe('number')
+        expect(saison.episodes === null || typeof saison.episodes === 'number').toBe(true)
+      })
+    })
+
+    it('rend une franchise en deux listes, même vides', async () => {
+      installerReseau('anime')
+      const franchise = await adaptateur.getAnimeFranchise({ mal_id: 1, title: 'Cowboy Bebop' })
+
+      // La modale lit les deux sans se protéger : le contrat promet des
+      // tableaux, y compris pour une œuvre isolée.
+      expect(Array.isArray(franchise.seasons)).toBe(true)
+      expect(Array.isArray(franchise.others)).toBe(true)
+    })
+
     it('alimente le voyant de santé', async () => {
       // Le pied de page ne parle pas de la source : il dit à l'utilisateur si
       // ce qu'il regarde est frais. Une source qui n'y verse rien laisse le

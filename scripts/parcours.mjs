@@ -277,6 +277,60 @@ const PARCOURS = [
       )
     },
   },
+  {
+    // Le seul parcours qui parte d'un poste déjà habité. Tous les autres
+    // démarrent d'un navigateur vierge, si bien qu'aucun ne verrait des
+    // données écrites par une version antérieure du site — c'est-à-dire
+    // exactement ce que traverse un utilisateur le jour d'une bascule de
+    // source.
+    nom: 'des favoris enregistrés avant la bascule survivent au changement de source',
+    async executer(page, base) {
+      const AVANT = [
+        { mal_id: 1, title: 'Cowboy Bebop', images: { jpg: { image_url: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg' } } },
+        // Une œuvre que la source actuelle ne connaît pas : le cas qui décide
+        // si la bascule perd des données ou se contente de ne pas les enrichir.
+        { mal_id: 999_999, title: 'Un titre oublié', images: { jpg: { image_url: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg' } } },
+      ]
+
+      await servir(page)
+      // Écrire avant le premier rendu : après coup, l'application a déjà lu le
+      // stockage et l'onglet resterait vide pour une raison sans rapport.
+      await page.addInitScript(favoris => {
+        try {
+          localStorage.setItem('anime-ink-favorites', JSON.stringify(favoris))
+          // Sans consentement, les favoris ne sont pas lus : la bannière
+          // masquerait l'échec qu'on cherche à observer.
+          localStorage.setItem('anime-ink-cookie-consent', JSON.stringify({ preferences: true, userdata: true }))
+        } catch { /* stockage refusé */ }
+      }, AVANT)
+
+      await page.goto(`${base}catalogue?tab=favoris`, { waitUntil: 'load' })
+      await page.waitForTimeout(2500)
+
+      const titres = await page.locator('main article, main .group').allInnerTexts()
+      verifier(
+        titres.some(t => /Cowboy Bebop/i.test(t)),
+        'un favori enregistré avant la bascule a disparu de son onglet',
+      )
+      verifier(
+        titres.some(t => /titre oublié/i.test(t)),
+        "un favori que la nouvelle source ne connaît pas a été effacé : la bascule "
+        + 'ne doit pas emporter des données que l’utilisateur a constituées',
+      )
+
+      // Et l'ouvrir doit s'expliquer plutôt que de laisser une fenêtre vide.
+      await page.locator('main article, main .group').filter({ hasText: /titre oublié/i }).first().click()
+      await page.waitForTimeout(3000)
+      const modale = page.locator('[role="dialog"]')
+      if (await modale.count() > 0) {
+        const contenu = (await modale.first().innerText()).trim()
+        verifier(
+          contenu.length > 0,
+          'la fiche d’un favori inconnu de la source ouvre une fenêtre vide et muette',
+        )
+      }
+    },
+  },
 ]
 
 const serveur = await preview({ preview: { port: 4174, strictPort: true } })

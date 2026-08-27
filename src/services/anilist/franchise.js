@@ -34,8 +34,12 @@ const FORMATS_TV = new Set(['TV', 'TV_SHORT'])
  * `CHARACTER` relie deux séries qui partagent un personnage sans rien avoir de
  * commun par ailleurs — l'inclure ferait apparaître des titres étrangers dans
  * le sélecteur. `ADAPTATION` pointe vers l'œuvre d'origine, souvent un manga.
+ *
+ * `OTHER` n'y figure pas, bien que son nom y invite : sur la chaîne relevée le
+ * 27 août, il désigne « Shingeki no Kyotou », un spécial qui fait bel et bien
+ * partie de la série. C'est le fourre-tout d'AniList, pas sa corbeille.
  */
-const RELATIONS_ETRANGERES = new Set(['CHARACTER', 'ADAPTATION', 'OTHER'])
+const RELATIONS_ETRANGERES = new Set(['CHARACTER', 'ADAPTATION'])
 
 /** Un nœud de relation, réduit à ce dont la franchise a besoin. */
 function lireNoeud(node) {

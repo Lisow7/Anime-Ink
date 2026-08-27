@@ -30,7 +30,7 @@ Application web de découverte et de suivi d'animés, construite avec React 19 e
 | React Router v7 | Routage SPA |
 | Vite | Bundler + serveur de développement |
 | Tailwind CSS v4 | Styles utilitaires |
-| Jikan API v4 | Données animés (wrapper non officiel MyAnimeList) |
+| AniList (GraphQL) | Données animés — `VITE_SOURCE_DONNEES=jikan` rebascule sur l'API historique |
 | GitHub Pages | Hébergement statique |
 | GitHub Actions | CI/CD — déploiement automatique |
 

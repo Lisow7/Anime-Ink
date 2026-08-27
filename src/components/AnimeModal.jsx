@@ -75,6 +75,11 @@ export default function AnimeModal() {
     const load = async () => {
       try {
         const data = await getAnimeById(localAnimeId, controller.signal, { bypassCache })
+        // Une source peut répondre sans rien avoir à dire : une œuvre connue
+        // d'un catalogue et absente de l'autre. Sans cette garde, la modale
+        // s'ouvrirait vide et muette, alors qu'un favori enregistré de longue
+        // date mérite qu'on lui explique ce qui se passe.
+        if (!data) throw new Error('fiche introuvable')
         setAnime(data)
         if (data?.synopsis) {
           setTranslating(true)

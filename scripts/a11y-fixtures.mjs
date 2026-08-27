@@ -43,10 +43,16 @@ const base = (mal_id, title, extra = {}) => ({
 })
 
 export const ANIMES = [
-  base(1, 'Cowboy Bebop', { trailer: { youtube_id: 'qig4KOK2R2g', embed_url: 'https://www.youtube.com/embed/qig4KOK2R2g' } }),
+  // Cowboy Bebop porte une suite : sans relation dans le jeu, la recherche de
+  // saisons prendrait toujours sa branche vide et la ligne de progression de la
+  // liste de suivi ne serait jamais éprouvée.
+  base(1, 'Cowboy Bebop', {
+    trailer: { youtube_id: 'qig4KOK2R2g', embed_url: 'https://www.youtube.com/embed/qig4KOK2R2g' },
+    relations: [{ relation: 'Sequel', entry: [{ mal_id: 4, type: 'anime', name: 'Steins;Gate' }] }],
+  }),
   base(2, 'Sousou no Frieren', { status: 'Currently Airing', airing: true, episodes: null }),
   base(3, 'Contenu adulte', { genres: [{ mal_id: 12, name: 'Hentai' }] }),
-  base(4, 'Steins;Gate'),
+  base(4, 'Steins;Gate', { relations: [{ relation: 'Prequel', entry: [{ mal_id: 1, type: 'anime', name: 'Cowboy Bebop' }] }] }),
   base(5, 'Fullmetal Alchemist'),
   base(6, 'Monster'),
 ]
@@ -105,6 +111,33 @@ function versAniList(anime) {
   }
 }
 
+/**
+ * Les relations d'une fiche, traduites depuis le format Jikan du jeu ci-dessus.
+ *
+ * Elles ne portent que ce que le parcours d'une franchise regarde — identifiant,
+ * format, épisodes, titre — puisque c'est tout ce que la requête demande.
+ */
+const RELATIONS_ANILIST = { Sequel: 'SEQUEL', Prequel: 'PREQUEL', 'Side story': 'SIDE_STORY' }
+
+function relationsVersAniList(anime, animes) {
+  return (anime.relations ?? []).flatMap(rel => (rel.entry ?? [])
+    .filter(e => e.type === 'anime')
+    .map(e => {
+      const cible = animes.find(a => a.mal_id === e.mal_id)
+      return {
+        relationType: RELATIONS_ANILIST[rel.relation] ?? 'OTHER',
+        node: {
+          type: 'ANIME',
+          idMal: e.mal_id,
+          format: FORMATS_ANILIST[cible?.type ?? 'TV'] ?? 'TV',
+          episodes: cible?.episodes ?? null,
+          seasonYear: cible?.year ?? null,
+          title: { romaji: cible?.title ?? e.name, english: null },
+        },
+      }
+    }))
+}
+
 const PAGE_INFO_ANILIST = { currentPage: 1, lastPage: 3, hasNextPage: true, total: 72 }
 
 /**
@@ -118,9 +151,8 @@ export function repondreAniList(operation, variables = {}, animes = ANIMES) {
 
   if (operation === 'media' || operation === 'relations') {
     const demandee = media.find(m => m.idMal === Number(variables.idMal)) ?? media[0]
-    // Une franchise vide : les fixtures ne décrivent pas de suite, et le
-    // sélecteur de saisons ne doit pas apparaître pour autant.
-    return { data: { Media: { ...demandee, relations: { edges: [] } } } }
+    const source = animes.find(a => a.mal_id === demandee.idMal) ?? animes[0]
+    return { data: { Media: { ...demandee, relations: { edges: relationsVersAniList(source, animes) } } } }
   }
   if (operation === 'recommandations') {
     return { data: { Media: { recommendations: { nodes: media.slice(1, 4).map(m => ({ mediaRecommendation: m })) } } } }
