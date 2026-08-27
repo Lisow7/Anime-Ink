@@ -299,6 +299,20 @@ const PARCOURS = [
       await page.goto(`${base}profil`, { waitUntil: 'load' })
       const section = page.locator('section', { has: page.getByRole('heading', { name: /reprendre/i }) })
       await section.waitFor({ timeout: 15_000 })
+
+      // La progression vient du stockage local et s'affiche aussitôt ; les
+      // dates arrivent par le réseau, donc plus tard. Lire le texte dès que la
+      // section paraît revient à mesurer une course — elle se gagne sur une
+      // machine rapide et se perd en intégration continue.
+      if (SOURCE.nom === 'anilist') {
+        await section.getByText(/Épisode 9/).waitFor({ timeout: 15_000 })
+      } else {
+        // Rien n'arrivera : on laisse passer le temps qu'une date aurait mis,
+        // sans quoi on constaterait son absence avant même qu'elle ait pu
+        // paraître.
+        await page.waitForTimeout(4000)
+      }
+
       const texte = (await section.innerText()).replace(/\s+/g, ' ')
 
       // La progression vient du stockage local : elle doit s'afficher quoi
