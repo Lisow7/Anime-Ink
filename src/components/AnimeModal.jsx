@@ -5,7 +5,7 @@ import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { classifyAdultContent } from '../constants/ageFilter'
-import { getAnimeById, getAnimeRecommendations, getAnimeFranchise } from '../services/jikan'
+import { ATTRIBUTION, getAnimeById, getAnimeRecommendations, getAnimeFranchise } from '../services/anime'
 import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
@@ -75,6 +75,11 @@ export default function AnimeModal() {
     const load = async () => {
       try {
         const data = await getAnimeById(localAnimeId, controller.signal, { bypassCache })
+        // Une source peut répondre sans rien avoir à dire : une œuvre connue
+        // d'un catalogue et absente de l'autre. Sans cette garde, la modale
+        // s'ouvrirait vide et muette, alors qu'un favori enregistré de longue
+        // date mérite qu'on lui explique ce qui se passe.
+        if (!data) throw new Error('fiche introuvable')
         setAnime(data)
         if (data?.synopsis) {
           setTranslating(true)
@@ -111,7 +116,7 @@ export default function AnimeModal() {
     if (franchiseLoadedFor.current === animeId) return
     franchiseLoadedFor.current = animeId
     const controller = new AbortController()
-    getAnimeFranchise(anime.title, controller.signal).then(data => {
+    getAnimeFranchise(anime, controller.signal).then(data => {
       let seasons = data.seasons
       let others = data.others
 
@@ -370,7 +375,7 @@ export default function AnimeModal() {
                 href: s.url,
               }))
               const malLink = anime.url
-                ? [{ label: 'MyAnimeList', color: '#2e51a2', href: anime.url }]
+                ? [{ label: ATTRIBUTION.nom, color: ATTRIBUTION.couleur, href: anime.url }]
                 : []
               const links = [...streaming, ...malLink]
               if (links.length === 0) return null
@@ -442,10 +447,10 @@ export default function AnimeModal() {
                 suggestions-ci, personne ne les a choisies — c'est de la
                 découverte, comme la grille.
 
-                Jikan ne joint pas les genres à une recommandation : on classe
-                ce qui est fourni, et à défaut on retient le registre de la
-                fiche ouverte. Le jour où l'API enrichit sa réponse, la première
-                branche prend le relais sans rien changer ici. */}
+                AniList joint les genres et la mention d'âge à chaque
+                suggestion : chacune est donc jugée pour elle-même. Le repli sur
+                le registre de la fiche ouverte reste en place pour Jikan, qui
+                ne les fournissait pas — c'est la seconde branche. */}
             {recommendations.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h3 className="text-[var(--text-primary)] font-semibold">Vous aimerez aussi</h3>

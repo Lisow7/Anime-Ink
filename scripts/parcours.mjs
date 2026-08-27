@@ -15,31 +15,14 @@
  */
 import { preview } from 'vite'
 import { chromium } from 'playwright'
-import { repondre } from './a11y-fixtures.mjs'
+import { SOURCE, cesserDeServir, servirSource } from './source-test.mjs'
 
 const BUREAU = { width: 1280, height: 900 }
 
 /** Réponses simulées, avec un jeu de genres explicites pour la censure. */
 const HENTAI = [{ mal_id: 12, name: 'Hentai' }]
 
-function servir(page, { enPanne = false, genresImposes = null } = {}) {
-  return page.route('**/api.jikan.moe/**', route => {
-    if (enPanne) {
-      return route.fulfill({
-        status: 504,
-        contentType: 'application/json',
-        body: JSON.stringify({ status: 504, message: 'panne simulée' }),
-      })
-    }
-    const corps = repondre(route.request().url())
-    if (genresImposes && corps?.data) {
-      corps.data = Array.isArray(corps.data)
-        ? corps.data.map(a => ({ ...a, genres: genresImposes }))
-        : { ...corps.data, genres: genresImposes }
-    }
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(corps) })
-  })
-}
+const servir = servirSource
 
 /** Lève avec un message lisible : un parcours muet ne sert à rien. */
 function verifier(condition, message) {
@@ -153,7 +136,7 @@ const PARCOURS = [
       )
 
       let requetes = 0
-      page.on('request', r => { if (r.url().includes('api.jikan.moe')) requetes += 1 })
+      page.on('request', r => { if (SOURCE.estRequete(r.url())) requetes += 1 })
       await page.getByRole('button', { name: /r.essayer/i }).first().click()
       await page.waitForTimeout(3000)
       verifier(requetes > 0, 'le bouton « Réessayer » n’émet aucune requête')
@@ -168,18 +151,18 @@ const PARCOURS = [
 
       // Antidater l'entrée plutôt qu'attendre une heure : le secours ne
       // s'active qu'après expiration, et un test qui patiente n'en est pas un.
-      const antidatee = await page.evaluate(() => {
-        const cle = Object.keys(sessionStorage).find(k => k.includes('anime-ink-cache:/anime?'))
+      const antidatee = await page.evaluate((prefixe) => {
+        const cle = Object.keys(sessionStorage).find(k => k.includes(prefixe))
         if (!cle) return false
         const entree = JSON.parse(sessionStorage.getItem(cle))
         entree.expiresAt = Date.now() - 60_000
         sessionStorage.setItem(cle, JSON.stringify(entree))
         return true
-      })
+      }, SOURCE.cleReserveCatalogue)
       verifier(antidatee, "aucune réponse de catalogue n'a été mise en réserve")
 
       // L'API tombe. La réserve est périmée — elle doit servir quand même.
-      await page.unroute('**/api.jikan.moe/**')
+      await cesserDeServir(page)
       await servir(page, { enPanne: true })
       await page.reload({ waitUntil: 'load' })
       await page.waitForTimeout(8000)
@@ -222,7 +205,7 @@ const PARCOURS = [
       // ne rien lui demander. Deux exigences distinctes — l'affichage tient aux
       // gardes de rendu, le silence réseau à la garde de l'effet. Les vérifier
       // séparément, sinon l'une masque l'échec de l'autre.
-      await page.unroute('**/api.jikan.moe/**')
+      await cesserDeServir(page)
       await servir(page, { enPanne: true })
 
       // Vider le cache de réponses, sans quoi la mesure serait trompeuse : la
@@ -232,7 +215,7 @@ const PARCOURS = [
       await page.evaluate(() => { try { sessionStorage.clear() } catch { /* stockage refusé */ } })
 
       const appels = []
-      const noter = r => { if (r.url().includes('api.jikan.moe')) appels.push(r.url()) }
+      const noter = r => { if (SOURCE.estRequeteCatalogue(r)) appels.push(r.url()) }
       page.on('request', noter)
 
       await page.goto(`${base}catalogue?tab=recents`, { waitUntil: 'load' })
@@ -246,7 +229,7 @@ const PARCOURS = [
         + "une panne de l'API ne doit pas emporter des données locales",
       )
 
-      const versCatalogue = appels.filter(u => /\/anime\?/.test(u))
+      const versCatalogue = appels
       verifier(
         versCatalogue.length === 0,
         `l'onglet « Récents » a interrogé le catalogue ${versCatalogue.length} fois `
@@ -292,6 +275,60 @@ const PARCOURS = [
         explicites.length === 0,
         `censure active, le menu propose : ${explicites.join(', ')}`,
       )
+    },
+  },
+  {
+    // Le seul parcours qui parte d'un poste déjà habité. Tous les autres
+    // démarrent d'un navigateur vierge, si bien qu'aucun ne verrait des
+    // données écrites par une version antérieure du site — c'est-à-dire
+    // exactement ce que traverse un utilisateur le jour d'une bascule de
+    // source.
+    nom: 'des favoris enregistrés avant la bascule survivent au changement de source',
+    async executer(page, base) {
+      const AVANT = [
+        { mal_id: 1, title: 'Cowboy Bebop', images: { jpg: { image_url: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg' } } },
+        // Une œuvre que la source actuelle ne connaît pas : le cas qui décide
+        // si la bascule perd des données ou se contente de ne pas les enrichir.
+        { mal_id: 999_999, title: 'Un titre oublié', images: { jpg: { image_url: 'https://cdn.myanimelist.net/images/anime/4/19644.jpg' } } },
+      ]
+
+      await servir(page)
+      // Écrire avant le premier rendu : après coup, l'application a déjà lu le
+      // stockage et l'onglet resterait vide pour une raison sans rapport.
+      await page.addInitScript(favoris => {
+        try {
+          localStorage.setItem('anime-ink-favorites', JSON.stringify(favoris))
+          // Sans consentement, les favoris ne sont pas lus : la bannière
+          // masquerait l'échec qu'on cherche à observer.
+          localStorage.setItem('anime-ink-cookie-consent', JSON.stringify({ preferences: true, userdata: true }))
+        } catch { /* stockage refusé */ }
+      }, AVANT)
+
+      await page.goto(`${base}catalogue?tab=favoris`, { waitUntil: 'load' })
+      await page.waitForTimeout(2500)
+
+      const titres = await page.locator('main article, main .group').allInnerTexts()
+      verifier(
+        titres.some(t => /Cowboy Bebop/i.test(t)),
+        'un favori enregistré avant la bascule a disparu de son onglet',
+      )
+      verifier(
+        titres.some(t => /titre oublié/i.test(t)),
+        "un favori que la nouvelle source ne connaît pas a été effacé : la bascule "
+        + 'ne doit pas emporter des données que l’utilisateur a constituées',
+      )
+
+      // Et l'ouvrir doit s'expliquer plutôt que de laisser une fenêtre vide.
+      await page.locator('main article, main .group').filter({ hasText: /titre oublié/i }).first().click()
+      await page.waitForTimeout(3000)
+      const modale = page.locator('[role="dialog"]')
+      if (await modale.count() > 0) {
+        const contenu = (await modale.first().innerText()).trim()
+        verifier(
+          contenu.length > 0,
+          'la fiche d’un favori inconnu de la source ouvre une fenêtre vide et muette',
+        )
+      }
     },
   },
 ]

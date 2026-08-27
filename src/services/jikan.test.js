@@ -33,6 +33,24 @@ describe('client Jikan', () => {
     fetch.mockResolvedValue(response({ message: 'Not found' }, 404))
 
     await expect(getTopAnime()).rejects.toMatchObject({ name: 'JikanError', status: 404 })
+    // Un 404 dit que la fiche demandée n'existe pas, pas que la source est
+    // tombée. Allumer le voyant rouge parce qu'un utilisateur a ouvert un lien
+    // périmé lui ferait croire à une panne qui n'a pas lieu.
+    expect(getApiHealth().status).not.toBe('unavailable')
+  })
+
+  it('signale la source indisponible sur une erreur serveur', async () => {
+    // Faux timers obligatoires : un 5xx est réessayé, et laisser s'écouler les
+    // attentes réelles ferait expirer le test — puis épuiserait le limiteur,
+    // que les cas suivants partagent.
+    vi.useFakeTimers()
+    fetch.mockImplementation(async () => response({ message: 'Bad gateway' }, 502))
+
+    const requete = getTopAnime()
+    const verdict = expect(requete).rejects.toMatchObject({ name: 'JikanError', status: 502 })
+    await vi.runAllTimersAsync()
+    await verdict
+
     expect(getApiHealth().status).toBe('unavailable')
   })
 

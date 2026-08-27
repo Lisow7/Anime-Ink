@@ -5,6 +5,31 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.6] — 27 août 2026
+
+### Nouveautés
+- **Le site lit désormais AniList.** L’API Jikan, qui servait les données jusqu’ici, ferme le 1ᵉʳ octobre 2026 — annoncé par son équipe. Rien ne change dans l’usage : mêmes écrans, mêmes favoris, même liste de suivi
+- Les saisons d’une série sont lues dans les liens que le catalogue déclare, au lieu d’être devinées en comparant les titres. Les franchises dont les titres ne se ressemblent pas cessent d’être manquées
+- Chaque suggestion « Vous aimerez aussi » est jugée sur ses propres genres pour la censure. Jusqu’ici elles héritaient du registre de la fiche ouverte, faute que l’ancienne source les fournisse
+
+### Corrections
+- La popularité d’une fiche affiche de nouveau un rang. Le nouveau catalogue compte des membres là où le précédent donnait une place : la fiche annonçait « POPULARITÉ #464889 »
+- Une fiche que le catalogue ne connaît pas s’explique au lieu d’ouvrir une fenêtre vide
+- Un lien périmé n’allume plus le voyant « API indisponible » : une fiche introuvable n’est pas une panne
+
+### Ce qui change à l’écran
+- **Le menu des genres propose 19 entrées au lieu de 78.** AniList classe plus largement ; les genres sans équivalent disparaissent du menu. Un lien mis en signet vers l’un d’eux affiche le catalogue complet, le filtre revenant à « tous »
+- Le pied de page et les mentions légales citent AniList
+
+### Maintenance
+- La source est interchangeable : `VITE_SOURCE_DONNEES=jikan` rebascule sur l’API historique, qui reste câblée et testée. Le choix est résolu à la compilation, si bien qu’une seule des deux part dans le bundle
+- Les dix parcours utilisateur et les trente passes d’accessibilité sont verts **sur les deux sources** — un écart accuserait le contrat commun
+- Un dixième parcours part d’un poste déjà habité : des favoris écrits avant la bascule doivent y survivre, y compris ceux que la nouvelle source ignore. Tous les autres démarrent d’un navigateur vierge et n’auraient rien vu
+- Le démarrage passe de 105,6 à 103,1 ko : le nouvel adaptateur pèse moins que l’ancien
+- **Non mesuré** : AniList sert des jaquettes en PNG là où la source précédente servait du WebP. Le budget de poids ne couvre que les fichiers du site, pas les images distantes
+
+---
+
 ## [1.5] — 27 août 2026
 
 ### Corrections

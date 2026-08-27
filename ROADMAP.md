@@ -1,6 +1,6 @@
 # Feuille de route — Anime-Ink
 
-> État au 27 août 2026. **v1.3 en production** : https://lisow7.github.io/Anime-Ink/
+> État au 27 août 2026. **v1.5 en production** : https://lisow7.github.io/Anime-Ink/
 >
 > Ce document sépare ce qui est **vérifié** de ce qui reste à faire. Une première
 > version de cette liste vivait dans la branche `perf/jikan-cache-deduplication`
@@ -227,6 +227,56 @@ possible : **une seule surface reste en suspens**.
 *(La ligne sur `filter=explicit_genres` a disparu d'ici : sa conclusion était
 fausse. Voir « La nature de la panne » ci-dessus — le paramètre n'est pas cassé,
 ses variantes ne sont simplement pas en cache.)*
+
+## 🔴 Le cap : passer à AniList avant le 1er octobre 2026
+
+**L'API publique de Jikan ferme.** Annoncé sur son Discord en juin, rapporté
+dans l'[issue #610](https://github.com/jikan-me/jikan-rest/issues/610) :
+`Jikan public API will be discontinued on October 1, 2026.` Les 504 qui frappent
+le site ne sont donc pas une panne dont on peut attendre la fin.
+
+**Décision prise le 27 août : migrer vers [AniList](https://docs.anilist.co),
+directement.**
+
+✅ **Fait le 27 août 2026 (v1.6).** Les cinq phases sont livrées : le site lit
+AniList, Jikan reste câblé derrière `VITE_SOURCE_DONNEES=jikan`, et les dix
+parcours comme les trente passes d'accessibilité sont verts sur les deux
+sources.
+
+→ **[Plan détaillé](./docs/plan-migration-anilist.md)** — cinq phases, chacune
+livrable, la bascule prouvée par mutation.
+
+### Ce qui a été vérifié avant de décider
+
+- `Access-Control-Allow-Origin: *` et **aucune clé** : appelable depuis un site
+  statique, contrairement à l'API officielle de MyAnimeList qui répond `403` ;
+- **`Media(idMal:)` retrouve un animé par son identifiant MyAnimeList** — les
+  favoris, la liste de suivi et l'historique déjà stockés **restent valides** ;
+- `X-RateLimit-Remaining` et `Retry-After` sont exposés, là où Jikan n'envoie
+  aucun en-tête de quota ;
+- **`isAdult`, booléen natif** — et indispensable : trois titres adultes le
+  portent **sans** « Hentai » dans leurs genres. Notre liste de noms les
+  laisserait passer. AniList n'a d'ailleurs pas d'« Erotica », le genre même qui
+  nous avait échappé en v1.3. Ses recommandations portent genres **et**
+  `isAdult`, ce qui lèvera la limite assumée ci-dessous.
+
+Réserve mesurée : **30 requêtes/minute** actuellement — deux fois moins que
+Jikan — réduction que la documentation d'AniList assume, elle qui annonce 90.
+GraphQL compense en groupant, mais c'est une compensation à gagner.
+
+### Tenrai, écarté — et gardé comme repli
+
+[Tenrai](https://api.tenrai.org) est un clone de Jikan v4 : réponses **identiques
+champ pour champ**, six endpoints sur six en `200`, CORS ouvert, aucune clé.
+Changer une constante d'URL aurait suffi, et la bascule avait été préparée.
+
+Écartée parce qu'elle reproduit **exactement le profil du service qui ferme** :
+communautaire, gouvernance opaque, financée par dons, `429` dès la 8ᵉ requête
+rapide **sans en-tête de quota**, et pas de genres sur les recommandations. Une
+migration jetable qu'il aurait fallu refaire.
+
+**Reste un repli crédible** : si AniList échoue en cours de route, une constante
+d'URL rend le site fonctionnel.
 
 ## Limite assumée
 
