@@ -48,8 +48,18 @@ export function createJikanClient({
   retries = 2,
   retryDelayFor = defaultRetryDelay,
   failureTtl = 30_000,
+  /** Prévenu quand une réponse périmée a été resservie, avec sa date. */
+  onStale,
 }) {
   const inFlight = new Map()
+
+  /** Sert la réserve s'il y en a une, en signalant de quand elle date. */
+  function servirLaReserve(path) {
+    const secours = cache.getStale?.(path)
+    if (secours === undefined) return undefined
+    onStale?.(cache.staleDate?.(path) ?? null)
+    return secours
+  }
 
   async function run(path, signal) {
     for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -67,6 +77,9 @@ export function createJikanClient({
           await sleep(retryDelayFor(attempt, null))
           continue
         }
+
+        const secours = servirLaReserve(path)
+        if (secours !== undefined) return secours
 
         throw error instanceof JikanError
           ? error
@@ -95,6 +108,19 @@ export function createJikanClient({
       // en échec : mémoriser sa panne rendrait le bouton « autre animé » inerte
       // sans le moindre retour visuel, au pire moment.
       if (ttlFor(path) > 0) cache.set(FAILURE_KEY + path, failure, failureTtl)
+
+      /**
+       * Dernier recours : la réponse précédente, périmée mais réelle.
+       *
+       * Réservé aux PANNES. Un `404` est une réponse, pas une défaillance :
+       * resservir une vieille copie prétendrait que la ressource existe
+       * encore. Un `400` non plus — la requête est fautive, la répéter en
+       * servant du passé masquerait le défaut.
+       */
+      if (RETRYABLE_STATUS.has(response.status)) {
+        const secours = servirLaReserve(path)
+        if (secours !== undefined) return secours
+      }
 
       throw new JikanError(failure.message, {
         status: failure.status,

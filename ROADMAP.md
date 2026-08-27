@@ -85,19 +85,27 @@ inattendu dégrade en liste vide, et la fiche bascule sur sa page « introuvable
 Écrire une détection ajouterait un chemin de code pour un cas que le contrat
 absorbe.
 
-**« Servir la dernière réponse valide pendant une panne » — arbitrage, pas
-tâche.** Le constat tient : `cache.js` supprime l'entrée dès son expiration, il
-n'existe aucun mode « périmé plutôt que rien ». Mais le gain serait mince. Le
-cache vit en `sessionStorage` : il meurt avec l'onglet. Servir du périmé
-n'aiderait donc que dans une session ouverte depuis plus d'une heure — pas dans
-le cas qui fait mal, l'arrivée sur un site dont l'API est tombée, où le cache est
-vide de toute façon.
+**« Servir la dernière réponse valide pendant une panne » — fait, après avoir
+été écarté.** Je l'avais classé « arbitrage, pas tâche » : le cache vivant en
+`sessionStorage`, servir du périmé n'aide pas à l'arrivée sur un site dont l'API
+est déjà tombée, puisque le cache y est vide.
 
-Le rendre utile supposerait `localStorage`, que le projet refuse délibérément :
-ce quota de 5 Mo porte les favoris, la liste de suivi et l'historique, données
-irremplaçables qu'un cache jetable n'a pas à mettre en péril. **C'est donc un
-choix entre confort hors-ligne et protection des données de l'utilisateur**, à
-poser comme tel le jour où on le reprendra — pas une ligne à cocher.
+Cet argument tient toujours. Ce qui a changé, c'est le poids de l'autre
+scénario : **la panne de Jikan dure et va par intermittence**. Consulter le
+catalogue, puis le perdre quand une durée de validité expire alors que la
+réponse est là, n'est plus l'exception — c'est le cas courant. Jikan applique
+d'ailleurs cette pratique à son propre cache : ses réponses portent
+`X-Cache-Status: STALE` pendant les pannes de MyAnimeList.
+
+Implémenté sous la forme du `stale-if-error` de la RFC 5861 : l'entrée périmée
+n'est plus effacée mais gardée un jour en réserve, et resservie **quand le
+réseau a définitivement échoué**. Réservé aux pannes — un `404` reste un `404`,
+resservir une vieille copie prétendrait que la ressource existe encore.
+
+Ce que cela ne fait pas, et ne fera pas sans changer d'avis sur le stockage :
+aider une première visite pendant une panne. Le rendre possible supposerait
+`localStorage`, que le projet refuse pour protéger le quota des favoris, de la
+liste de suivi et de l'historique.
 
 **Enfin, une nuance sur `Retry-After`** : sa prise en charge existe bien dans le
 code, mais **Jikan n'envoie jamais cet en-tête** (mesuré sur un vrai `429`). Le
@@ -158,10 +166,33 @@ aujourd'hui — les lire comme des manques urgents serait un contresens :
 
 ## Vérifications en production
 
-La panne de Jikan est **partielle** : `/anime/{id}/full`, `/genres/anime` et
-`/anime/{id}/recommendations` répondent ; tous les endpoints à requête —
-`/anime?…`, `/top/anime`, et `filter=` sous toutes ses valeurs — restent en
-`504`. Ce qui pouvait être vérifié l'a donc été, le reste attend.
+### La nature de la panne, mesurée
+
+Elle ne se répartit pas par endpoint, comme je l'ai d'abord cru, mais **par
+présence dans le cache de Jikan**. Deux requêtes vers le même endpoint, à la
+seconde près :
+
+| requête | réponse | `X-Cache-Status` |
+|---|---|---|
+| `/anime?q=naruto` — demandée 3 min plus tôt | **200** | `STALE` |
+| `/anime?q=zzqqxx-inexistant-1234` — jamais demandée | **504** | — |
+
+Jikan sert donc son cache **même périmé**, et échoue dès qu'il doit interroger
+MyAnimeList, qui refuse ses connexions. Ce qui répond n'est pas « ce qui marche »
+mais « ce qu'il a déjà ».
+
+**Cela invalide une conclusion écrite plus haut dans ce dépôt** : j'avais déduit
+du `504` sur `/genres/anime?filter=…`, alors que le même endpoint sans paramètre
+répondait, que **le paramètre était cassé**. C'est faux. La liste complète sort
+du cache ; les variantes filtrées n'y sont pas, voilà tout.
+
+Le choix de filtrer les genres explicites côté client **reste le bon**, mais pour
+une meilleure raison : dépendre d'une requête supplémentaire ajoute un point de
+défaillance, et cette panne le démontre — la liste complète survit, ses variantes
+non.
+
+Ce qui pouvait être vérifié l'a donc été, et bien au-delà de ce qu'on croyait
+possible : **une seule surface reste en suspens**.
 
 - [x] **l'avertissement de la fiche, contre du vrai contenu explicite** (27 août
       2026). Sur `/anime/11617`, *High School DxD*, genre `Ecchi` : jaquette
@@ -169,14 +200,33 @@ La panne de Jikan est **partielle** : `/anime/{id}/full`, `/genres/anime` et
       « Afficher quand même » à `aria-expanded="false"`. **Le focus seul ne
       révèle rien** ; `Entrée` lève le flou et bascule le libellé en « Masquer la
       jaquette ». Titre et synopsis lisibles à toutes les étapes.
-- [ ] le floutage dans **la grille, les suggestions de recherche et la liste de
-      suivi** — il faut un catalogue chargé, donc `/anime?…` ou `/top/anime` ;
-- [ ] le floutage des **suggestions « Vous aimerez aussi »** — elles ne vivent
-      que dans la modale, qui ne s'ouvre qu'au clic sur une carte ;
-- [ ] `/genres/anime?filter=explicit_genres` : toujours `504` le 27 août, alors
-      que le même endpoint sans paramètre répond. **Le paramètre est donc cassé
-      indépendamment de la panne générale** — ce qui conforte le choix de filtrer
-      les genres côté client plutôt que de s'y fier.
+- [x] **cinq des six surfaces de floutage, en production** (27 août 2026), sans
+      attendre le catalogue. La manœuvre vaut d'être notée : **visiter une fiche
+      l'inscrit dans l'historique**, ce qui peuple l'onglet « Récents » avec de
+      vraies cartes sans qu'aucune requête de catalogue soit nécessaire. De là,
+      un clic ouvre la modale, et son bouton « Ma liste » alimente la liste de
+      suivi.
+
+      | Surface | mesure |
+      |---|---|
+      | carte de grille (`AnimeCard`) | `blur(12px)` |
+      | carte en vue liste (`AnimeListCard`) | `blur(8px)` |
+      | liste de suivi (`WatchlistTable`) | `blur(12px)`, dans ses deux dispositions |
+      | suggestions « Vous aimerez aussi » | `blur(10px)` sur les six |
+      | fiche détail | `blur(16px)` + avertissement |
+
+      Les six recommandations sont d'autant plus concluantes qu'**aucune ne porte
+      de genre** — Jikan ne les joint pas. C'est donc bien le repli sur le
+      registre de la fiche ouverte qui a joué, en conditions réelles.
+- [ ] le floutage des **suggestions de recherche** — seule surface encore non
+      vérifiée. Elle exige que Jikan réponde à la requête exacte que la frappe
+      compose, or seules les recherches déjà en cache sortent. Il n'y a pas de
+      contournement : amorcer le cache demanderait que le scrape réussisse, ce
+      qui est précisément ce qui échoue.
+
+*(La ligne sur `filter=explicit_genres` a disparu d'ici : sa conclusion était
+fausse. Voir « La nature de la panne » ci-dessus — le paramètre n'est pas cassé,
+ses variantes ne sont simplement pas en cache.)*
 
 ## Limite assumée
 

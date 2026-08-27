@@ -87,3 +87,77 @@ describe('cache de réponses', () => {
     expect(cache.get('/anime/1/full')).toEqual({ title: 'X' })
   })
 })
+
+describe('secours périmé', () => {
+  it('rend une entrée expirée à qui la demande explicitement', () => {
+    vi.useFakeTimers()
+    const cache = createCache()
+
+    cache.set('/top/anime', { data: [1, 2] }, 1000)
+    vi.advanceTimersByTime(1500)
+
+    expect(cache.get('/top/anime')).toBeUndefined()
+    expect(cache.getStale('/top/anime')).toEqual({ data: [1, 2] })
+  })
+
+  it('cesse de la rendre passé le délai de grâce', () => {
+    vi.useFakeTimers()
+    const cache = createCache({ graceMs: 60_000 })
+
+    cache.set('/top/anime', { data: [1] }, 1000)
+    vi.advanceTimersByTime(1000 + 60_000 + 1)
+
+    expect(cache.getStale('/top/anime')).toBeUndefined()
+  })
+
+  it('ne rend rien pour une clé jamais mise en cache', () => {
+    const cache = createCache()
+    expect(cache.getStale('/jamais/vue')).toBeUndefined()
+  })
+
+  it('retrouve une entrée expirée dans le miroir de session', () => {
+    vi.useFakeTimers()
+    const storage = fakeSessionStorage()
+    vi.stubGlobal('sessionStorage', storage)
+
+    const premier = createCache()
+    premier.set('/anime?page=1', { data: ['a'] }, 1000)
+    vi.advanceTimersByTime(1500)
+
+    // Un cache neuf : rien en mémoire, tout à retrouver dans le miroir.
+    const second = createCache()
+    expect(second.get('/anime?page=1')).toBeUndefined()
+    expect(second.getStale('/anime?page=1')).toEqual({ data: ['a'] })
+  })
+
+  it('oublie l’entrée du miroir une fois la grâce écoulée', () => {
+    vi.useFakeTimers()
+    const storage = fakeSessionStorage()
+    vi.stubGlobal('sessionStorage', storage)
+
+    const cache = createCache({ graceMs: 60_000 })
+    cache.set('/anime?page=1', { data: ['a'] }, 1000)
+    vi.advanceTimersByTime(1000 + 60_000 + 1)
+
+    expect(cache.getStale('/anime?page=1')).toBeUndefined()
+    expect(storage.getItem('anime-ink-cache:/anime?page=1')).toBeNull()
+  })
+})
+
+describe('date de mise en réserve', () => {
+  it('retient le moment où la réponse a été rangée', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-27T10:00:00Z'))
+    const cache = createCache()
+
+    cache.set('/top/anime', { data: [1] }, 1000)
+    vi.advanceTimersByTime(5000)
+
+    expect(cache.staleDate('/top/anime')).toBe(new Date('2026-08-27T10:00:00Z').getTime())
+  })
+
+  it('ne date rien qui n’a pas été mis en réserve', () => {
+    const cache = createCache()
+    expect(cache.staleDate('/jamais/vue')).toBeUndefined()
+  })
+})

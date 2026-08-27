@@ -22,9 +22,27 @@ function sessionStore() {
  * session d'onglet, et les durées de validité bornent la fraîcheur sans
  * promettre une conservation.
  */
-export function createCache({ maxEntries = 200 } = {}) {
+/** Un jour de sursis après expiration : au-delà, mieux vaut une erreur franche. */
+const GRACE_PAR_DEFAUT = 24 * 60 * 60 * 1000
+
+export function createCache({ maxEntries = 200, graceMs = GRACE_PAR_DEFAUT } = {}) {
   const store = new Map()
 
+  const perimee = entry => Date.now() >= entry.expiresAt
+  const horsGrace = entry => Date.now() >= entry.expiresAt + graceMs
+
+  function oublier(key) {
+    store.delete(key)
+    const storage = sessionStore()
+    try { storage?.removeItem(PREFIX + key) } catch { /* stockage refusé */ }
+  }
+
+  /**
+   * Rend l'entrée telle qu'elle est, expirée ou non : c'est à l'appelant de
+   * décider ce qu'il en fait. Une entrée périmée était auparavant effacée ici,
+   * ce qui interdisait tout secours — on jetait la seule copie disponible au
+   * moment précis où elle allait servir.
+   */
   function readMirror(key) {
     const storage = sessionStore()
     if (!storage) return undefined
@@ -35,7 +53,7 @@ export function createCache({ maxEntries = 200 } = {}) {
 
       const entry = JSON.parse(raw)
       if (!entry || !Number.isFinite(entry.expiresAt)) return undefined
-      if (Date.now() >= entry.expiresAt) {
+      if (horsGrace(entry)) {
         storage.removeItem(PREFIX + key)
         return undefined
       }
@@ -68,28 +86,44 @@ export function createCache({ maxEntries = 200 } = {}) {
 
   return {
     get(key) {
-      let entry = store.get(key)
+      const entry = store.get(key) ?? readMirror(key)
+      if (!entry) return undefined
 
-      if (!entry) {
-        entry = readMirror(key)
-        if (!entry) return undefined
-        remember(key, entry)
-        return entry.value
-      }
+      if (horsGrace(entry)) { oublier(key); return undefined }
 
-      if (Date.now() >= entry.expiresAt) {
-        store.delete(key)
-        return undefined
-      }
-
+      // L'entrée reste en réserve même périmée : `getStale` en aura besoin.
       remember(key, entry)
+      return perimee(entry) ? undefined : entry.value
+    },
+
+    /**
+     * La dernière réponse connue, périmée mais servie plutôt que rien.
+     *
+     * Réservée aux situations où le réseau a définitivement échoué : c'est le
+     * `stale-if-error` de la RFC 5861, et Jikan lui-même s'en sert — ses
+     * réponses portent `X-Cache-Status: STALE` pendant les pannes de
+     * MyAnimeList. Une donnée d'hier vaut mieux qu'un écran vide.
+     */
+    getStale(key) {
+      const entry = store.get(key) ?? readMirror(key)
+      if (!entry) return undefined
+      if (horsGrace(entry)) { oublier(key); return undefined }
       return entry.value
     },
 
     set(key, value, ttlMs) {
-      const entry = { value, expiresAt: Date.now() + ttlMs }
+      // `storedAt` sert à dire à l'utilisateur de quand date ce qu'il regarde
+      // quand une panne nous fait ressortir cette entrée.
+      const entry = { value, storedAt: Date.now(), expiresAt: Date.now() + ttlMs }
       remember(key, entry)
       writeMirror(key, entry)
+    },
+
+    /** Quand cette réponse a été rangée, ou `undefined` si rien n'est en réserve. */
+    staleDate(key) {
+      const entry = store.get(key) ?? readMirror(key)
+      if (!entry || horsGrace(entry)) return undefined
+      return entry.storedAt
     },
 
     /**
