@@ -17,6 +17,9 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 - Une fiche que le catalogue ne connaît pas s’explique au lieu d’ouvrir une fenêtre vide
 - Un lien périmé n’allume plus le voyant « API indisponible » : une fiche introuvable n’est pas une panne
 
+### Performance
+- Une fiche télécharge **137 ko de jaquette au lieu de 478**. Elle chargeait une image de 460 pixels dans un cadre de 192 — un choix de taille hérité de la bascule, invisible au budget de poids qui ne mesure que les fichiers du site. L’aperçu partagé sur les réseaux garde la grande version, où le poids ne coûte rien
+
 ### Ce qui change à l’écran
 - **Le menu des genres propose 19 entrées au lieu de 78.** AniList classe plus largement ; les genres sans équivalent disparaissent du menu. Un lien mis en signet vers l’un d’eux affiche le catalogue complet, le filtre revenant à « tous »
 - Le pied de page et les mentions légales citent AniList
@@ -26,7 +29,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 - Les dix parcours utilisateur et les trente passes d’accessibilité sont verts **sur les deux sources** — un écart accuserait le contrat commun
 - Un dixième parcours part d’un poste déjà habité : des favoris écrits avant la bascule doivent y survivre, y compris ceux que la nouvelle source ignore. Tous les autres démarrent d’un navigateur vierge et n’auraient rien vu
 - Le démarrage passe de 105,6 à 103,1 ko : le nouvel adaptateur pèse moins que l’ancien
-- **Non mesuré** : AniList sert des jaquettes en PNG là où la source précédente servait du WebP. Le budget de poids ne couvre que les fichiers du site, pas les images distantes
+- **Mesuré depuis** : AniList sert des jaquettes en PNG là où la source précédente servait du WebP — 140 ko contre 13 ko pour la même image. La fiche a été allégée de 478 à 137 ko en cessant de charger du 460 pixels dans un cadre de 192 ; le reste suppose de convertir les images, ce que l'hébergement actuel ne permet pas (consigné dans `ROADMAP.md`)
 
 ---
 
