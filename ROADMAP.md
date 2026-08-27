@@ -228,6 +228,27 @@ possible : **une seule surface reste en suspens**.
 fausse. Voir « La nature de la panne » ci-dessus — le paramètre n'est pas cassé,
 ses variantes ne sont simplement pas en cache.)*
 
+## Chantier proposé, non engagé
+
+**Passer à AniList, garder Jikan en réserve** → [plan détaillé](./docs/plan-migration-anilist.md).
+
+Jikan souffre depuis juillet 2026 d'une panne intermittente [connue et non
+résolue](https://github.com/jikan-me/jikan-rest/issues/610). AniList est
+utilisable depuis un site statique — CORS ouvert, aucune clé — et
+`Media(idMal:)` permet de retrouver un animé par son identifiant MyAnimeList,
+donc **les favoris et listes déjà stockés resteraient valides**.
+
+Le plan retient **deux adaptateurs derrière un contrat interne, une seule source
+active** : les deux API donnent des scores sur des barèmes différents et des
+genres qui ne se recouvrent pas, si bien que les mélanger produirait des
+incohérences visibles.
+
+Bénéfice inattendu : AniList expose `isAdult`, un booléen natif. Notre censure
+repose sur une liste de noms de genres — or trois titres adultes d'AniList
+portent `isAdult: true` **sans** « Hentai » dans leurs genres. Le marqueur est
+plus fiable que la liste, et il accompagne les recommandations, ce qui lèverait
+la limite assumée ci-dessous.
+
 ## Limite assumée
 
 Jikan ne joint pas les genres à une recommandation. Les classer exactement
