@@ -156,14 +156,27 @@ aujourd'hui — les lire comme des manques urgents serait un contresens :
       performance se surveille par le **poids** en intégration continue et par
       Lighthouse en laboratoire.
 
-## Vérifications en attente
+## Vérifications en production
 
-- [ ] confirmer les correctifs de censure **en production contre du vrai contenu
-      adulte** : ils ont été prouvés localement et par tests, mais Jikan était en
-      panne au moment de la mise en ligne, donc le catalogue ne chargeait rien ;
-- [ ] retester `/genres/anime?filter=explicit_genres` : ses **quatre** valeurs
-      répondaient `504` alors que le même endpoint sans paramètre fonctionnait —
-      à savoir si le paramètre est cassé durablement.
+La panne de Jikan est **partielle** : `/anime/{id}/full`, `/genres/anime` et
+`/anime/{id}/recommendations` répondent ; tous les endpoints à requête —
+`/anime?…`, `/top/anime`, et `filter=` sous toutes ses valeurs — restent en
+`504`. Ce qui pouvait être vérifié l'a donc été, le reste attend.
+
+- [x] **l'avertissement de la fiche, contre du vrai contenu explicite** (27 août
+      2026). Sur `/anime/11617`, *High School DxD*, genre `Ecchi` : jaquette
+      floutée à 16 px, mention « Contenu réservé à un public averti », bouton
+      « Afficher quand même » à `aria-expanded="false"`. **Le focus seul ne
+      révèle rien** ; `Entrée` lève le flou et bascule le libellé en « Masquer la
+      jaquette ». Titre et synopsis lisibles à toutes les étapes.
+- [ ] le floutage dans **la grille, les suggestions de recherche et la liste de
+      suivi** — il faut un catalogue chargé, donc `/anime?…` ou `/top/anime` ;
+- [ ] le floutage des **suggestions « Vous aimerez aussi »** — elles ne vivent
+      que dans la modale, qui ne s'ouvre qu'au clic sur une carte ;
+- [ ] `/genres/anime?filter=explicit_genres` : toujours `504` le 27 août, alors
+      que le même endpoint sans paramètre répond. **Le paramètre est donc cassé
+      indépendamment de la panne générale** — ce qui conforte le choix de filtrer
+      les genres côté client plutôt que de s'y fier.
 
 ## Limite assumée
 
