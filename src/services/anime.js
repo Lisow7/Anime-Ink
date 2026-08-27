@@ -28,7 +28,6 @@ export {
   getRandomAnime,
   getTopAnime,
   searchAnime,
-  clearApiCache,
 } from './anilist'
 
 /**
@@ -47,5 +46,12 @@ export const ATTRIBUTION = {
   debit: '30 requêtes par minute',
 }
 
-export { ErreurApi } from './socle/client'
 export { getApiHealth, subscribeApiHealth } from './sante-api'
+
+/*
+ * Ce qui n'est PAS réexporté ici l'est volontairement : `clearApiCache`,
+ * `ErreurApi` et le quota restant n'ont aucun appelant dans les écrans. Une
+ * façade qui expose ce dont personne ne se sert oblige chaque lecteur à se
+ * demander qui l'utilise. Ils restent accessibles depuis leur module le jour
+ * où un écran en aura besoin.
+ */
