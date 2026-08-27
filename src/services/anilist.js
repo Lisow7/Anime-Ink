@@ -1,7 +1,7 @@
 import { animeDepuisAniList, paginationDepuisAniList, statutDepuisAniList } from './anilist/traduction'
 import { catalogueDesGenres, nomAniListDepuisIdMal } from './anilist/genres'
 import { cleDeRequete, ttlPourCle } from './anilist/requetes'
-import { creerReseauAniList, quotaConnu } from './anilist/reseau'
+import { creerReseauAniList } from './anilist/reseau'
 import { parcourirFranchise } from './anilist/franchise'
 import { creerClientReseau, ErreurApi } from './socle/client'
 import { createRateLimiter } from './socle/rate-limiter'
@@ -275,4 +275,3 @@ export const getProchainsEpisodes = adaptateur.getProchainsEpisodes
 export const getRandomAnime = adaptateur.getRandomAnime
 export const clearApiCache = adaptateur.clearApiCache
 
-export { quotaConnu, ErreurApi }

@@ -1,5 +1,14 @@
 # Passer à AniList avant le 1er octobre
 
+> ✅ **Plan exécuté, et clos le 28 août 2026.** Les cinq phases sont livrées, la
+> bascule est en production, et l'adaptateur de l'API précédente a été retiré du
+> code une fois éprouvée.
+>
+> Ce document est conservé comme **compte rendu**, non comme feuille de route :
+> il porte les mesures qui ont fondé chaque décision — débits relevés, écarts de
+> catalogue, pièges rencontrés — et c'est ce qui rendra le prochain changement
+> de source moins coûteux. Ce qui reste à faire vit dans `ROADMAP.md`.
+
 > Plan, pas exécution. Écrit le 27 août 2026, après mesure des trois API.
 > **Décision prise : AniList, directement.** Les phases restent à valider une à une.
 
