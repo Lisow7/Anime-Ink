@@ -238,6 +238,11 @@ le site ne sont donc pas une panne dont on peut attendre la fin.
 **Décision prise le 27 août : migrer vers [AniList](https://docs.anilist.co),
 directement.**
 
+✅ **Fait le 27 août 2026 (v1.6).** Les cinq phases sont livrées : le site lit
+AniList, Jikan reste câblé derrière `VITE_SOURCE_DONNEES=jikan`, et les dix
+parcours comme les trente passes d'accessibilité sont verts sur les deux
+sources.
+
 → **[Plan détaillé](./docs/plan-migration-anilist.md)** — cinq phases, chacune
 livrable, la bascule prouvée par mutation.
 

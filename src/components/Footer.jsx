@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useCookieConsent } from '../context/CookieContext'
 import ChangelogModal from './ChangelogModal'
 import { CURRENT_VERSION } from '../data/changelog'
-import { getApiHealth, subscribeApiHealth } from '../services/jikan'
+import { ATTRIBUTION, getApiHealth, subscribeApiHealth } from '../services/anime'
 
 /** « 27 août à 14:19 » — l'année est superflue, la réserve ne tient qu'un jour. */
 function dateLisible(horodatage) {
@@ -47,14 +47,14 @@ export default function Footer() {
         <p className="text-[var(--text-muted)] text-xs text-center leading-relaxed">
           © {new Date().getFullYear()} Anime-Ink · Données fournies par{' '}
           <a
-            href="https://jikan.moe"
+            href={ATTRIBUTION.url}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--color-accent)] transition-colors underline underline-offset-2"
           >
-            Jikan API
+            {ATTRIBUTION.nom}
           </a>
-          {' '}· Source non officielle de MyAnimeList
+          {' '}· {ATTRIBUTION.description}
         </p>
 
         <button

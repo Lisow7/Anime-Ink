@@ -24,7 +24,7 @@
 import { createRequire } from 'node:module'
 import { preview } from 'vite'
 import { chromium } from 'playwright'
-import { repondre, ANIMES } from './a11y-fixtures.mjs'
+import { servirSource } from './source-test.mjs'
 
 const require = createRequire(import.meta.url)
 const AXE = require.resolve('axe-core/axe.min.js')
@@ -93,13 +93,13 @@ const SCENARIOS = [
   {
     nom: 'catalogue, API en panne',
     route: 'catalogue',
-    reponseApi: () => ({ status: 504 }),
+    enPanne: true,
     temoin: 'main [role="alert"] button',
   },
   {
     nom: 'accueil, API en panne',
     route: '',
-    reponseApi: () => ({ status: 504 }),
+    enPanne: true,
     temoin: 'main [role="status"] button',
   },
 
@@ -109,9 +109,7 @@ const SCENARIOS = [
   {
     nom: 'fiche pour public averti, censure active',
     route: 'anime/1',
-    reponseApi: (url) => (/\/anime\/\d+\/full/.test(url)
-      ? { status: 200, corps: { data: { ...ANIMES[0], genres: [{ mal_id: 12, name: 'Hentai' }] } } }
-      : null),
+    genresImposes: [{ mal_id: 12, name: 'Hentai' }],
     temoin: 'main button[aria-controls="jaquette-anime"]',
   },
 ]
@@ -123,23 +121,8 @@ async function analyser(page, base, scenario) {
   // Un scénario peut imposer sa propre réponse — c'est ainsi que les états
   // d'échec entrent dans le champ du garde-fou. Ils en étaient absents : ils
   // n'existent que lorsque l'API tombe, et l'API ne tombait jamais ici.
-  await page.route('**/api.jikan.moe/**', route => {
-    const impose = scenario.reponseApi?.(route.request().url())
-    if (impose) {
-      return route.fulfill({
-        status: impose.status,
-        contentType: 'application/json',
-        body: JSON.stringify(impose.corps ?? { status: impose.status, message: 'panne simulée' }),
-      })
-    }
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(repondre(route.request().url())),
-    })
-  })
+  await servirSource(page, { enPanne: scenario.enPanne, genresImposes: scenario.genresImposes })
 
-  await page.setViewportSize(scenario.mobile ? MOBILE : BUREAU)
   await page.goto(`${base}${scenario.route}`, { waitUntil: 'load' })
   await page.waitForTimeout(STABILISATION_MS)
 

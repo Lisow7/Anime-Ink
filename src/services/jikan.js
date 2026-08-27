@@ -5,8 +5,10 @@ import { createJikanClient, JikanError } from './jikan/client'
 import { createRateLimiter } from './jikan/rate-limiter'
 import { createCache } from './jikan/cache'
 import { ttlForPath } from './jikan/ttl'
+import { mettreAJourSante, signalerDonneePerimee, statutDepuisReponse } from './sante-api'
 
 export { JikanError }
+export { getApiHealth, subscribeApiHealth } from './sante-api'
 
 const BASE_URL = 'https://api.jikan.moe/v4'
 const REQUEST_TIMEOUT_MS = 8000
@@ -17,43 +19,6 @@ const REQUEST_TIMEOUT_MS = 8000
 // passe, puis le débit soutenu retombe à environ 1 requête par seconde.
 const BURST_CAPACITY = 3
 const REFILL_PER_SECOND = 1
-
-let apiHealth = { status: 'unknown', checkedAt: null, staleSince: null }
-const apiHealthListeners = new Set()
-
-function diffuserSante() {
-  apiHealthListeners.forEach((listener) => listener(apiHealth))
-}
-
-function updateApiHealth(status) {
-  // Une réponse fraîche annule le signalement : ce qui s'affiche n'est plus
-  // une copie de secours.
-  const staleSince = status === 'available' ? null : apiHealth.staleSince
-  apiHealth = { status, checkedAt: Date.now(), staleSince }
-  diffuserSante()
-}
-
-/**
- * Une réponse périmée vient d'être resservie. L'utilisateur regarde des données
- * qui peuvent dater : le lui taire serait lui laisser croire qu'elles sont
- * fraîches.
- */
-function signalerDonneePerimee(storedAt) {
-  if (!Number.isFinite(storedAt)) return
-  if (apiHealth.staleSince === storedAt) return
-  apiHealth = { ...apiHealth, staleSince: storedAt }
-  diffuserSante()
-}
-
-export function getApiHealth() {
-  return apiHealth
-}
-
-export function subscribeApiHealth(listener) {
-  apiHealthListeners.add(listener)
-  listener(apiHealth)
-  return () => apiHealthListeners.delete(listener)
-}
 
 const responseCache = createCache()
 
@@ -88,14 +53,12 @@ async function fetchWithTimeout(path, { signal } = {}) {
       headers: { Accept: 'application/json' },
     })
 
-    if (response.ok) updateApiHealth('available')
-    else if (response.status === 429) updateApiHealth('degraded')
-    else updateApiHealth('unavailable')
+    mettreAJourSante(statutDepuisReponse(response.status))
 
     return response
   } catch (error) {
     if (signal?.aborted) throw error
-    updateApiHealth('unavailable')
+    mettreAJourSante('unavailable')
     if (timedOut) throw new JikanError('Jikan n’a pas répondu à temps', { cause: error })
     throw error
   } finally {
@@ -213,7 +176,14 @@ export async function getAnimeRecommendations(id, signal) {
   return (data.data ?? []).slice(0, 6).map(r => r.entry)
 }
 
-export async function getAnimeFranchise(animeTitle, signal) {
+/**
+ * @param {object} anime la fiche ouverte. Seul son titre sert ici — Jikan ne
+ *   sait retrouver une franchise que par recherche textuelle — mais la
+ *   signature prend l'objet entier pour rester celle d'AniList, qui la situe
+ *   par son identifiant.
+ */
+export async function getAnimeFranchise(anime, signal) {
+  const animeTitle = anime?.title
   if (!animeTitle) return { seasons: [], others: [] }
 
   // Filtre qui accepte un titre direct ou un titre inversé "SousTitre: Franchise"

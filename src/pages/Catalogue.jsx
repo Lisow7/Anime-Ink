@@ -11,7 +11,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { ADULT_GENRES } from '../constants/ageFilter'
-import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
+import { ATTRIBUTION, searchAnime, getAnimeByFilter, getGenres } from '../services/anime'
 import { groupAnime } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
 
@@ -455,7 +455,7 @@ export default function Catalogue() {
         <div role="alert" className="flex flex-col items-center gap-4 py-20 text-center">
           <span className="text-5xl" aria-hidden="true">⚠️</span>
           <p className="text-[var(--text-primary)] font-semibold text-lg">Impossible de charger les animés</p>
-          <p className="text-[var(--text-muted)] text-sm">L'API Jikan est momentanément indisponible. Réessaie dans quelques instants.</p>
+          <p className="text-[var(--text-muted)] text-sm">L&apos;API {ATTRIBUTION.nom} est momentanément indisponible. Réessaie dans quelques instants.</p>
           <button
             onClick={() => { contournerAuProchainAppel.current = true; setError(false); setRetryKey(k => k + 1) }}
             className="mt-2 px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold rounded-lg transition-colors"

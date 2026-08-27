@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useDebounce } from '../hooks/useDebounce'
 import { useSEO } from '../hooks/useSEO'
 import AnimeCard from '../components/AnimeCard'
-import { getTopAnime, getRandomAnime, searchAnime } from '../services/jikan'
+import { ATTRIBUTION, getTopAnime, getRandomAnime, searchAnime } from '../services/anime'
 import { groupAnime } from '../utils/groupAnime'
 import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
@@ -256,7 +256,7 @@ export default function Home() {
           <p role="status" aria-live="polite" className="sr-only">
             {!listboxOpen ? ''
               : suggestionsLoading ? 'Recherche en cours…'
-              : suggestionsError ? 'Recherche indisponible : l’API Jikan ne répond pas.'
+              : suggestionsError ? `Recherche indisponible : l’API ${ATTRIBUTION.nom} ne répond pas.`
               : suggestions.length === 0 ? 'Aucun animé trouvé.'
               : `${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''} disponible${suggestions.length > 1 ? 's' : ''}.`}
           </p>
@@ -270,7 +270,7 @@ export default function Home() {
                 </div>
               ) : suggestionsError ? (
                 <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
-                  L&apos;API Jikan est momentanément indisponible. Réessaie dans quelques instants.
+                  L&apos;API {ATTRIBUTION.nom} est momentanément indisponible. Réessaie dans quelques instants.
                 </p>
               ) : suggestions.length === 0 ? (
                 <p className="px-4 py-3 text-[var(--text-muted)] text-sm">
@@ -390,7 +390,7 @@ export default function Home() {
                 <div className="absolute top-10 right-0 w-56 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-3 shadow-2xl text-left pointer-events-none">
                   <p className="text-[var(--text-primary)] text-xs font-semibold mb-1">Anime aléatoire</p>
                   <p className="text-[var(--text-muted)] text-[11px] leading-relaxed">
-                    Chaque suggestion appelle l'API Jikan (MyAnimeList). Limitée à 3 requêtes / seconde.
+                    Chaque suggestion appelle l&apos;API {ATTRIBUTION.nom}. Limitée à {ATTRIBUTION.debit}.
                   </p>
                   <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-[var(--border-subtle)]">
                     <svg viewBox="0 0 24 24" className="w-3 h-3 text-[var(--color-accent)] fill-none stroke-current shrink-0" strokeWidth="2">
@@ -490,7 +490,7 @@ export default function Home() {
             className="flex flex-col items-center gap-3 py-8 px-4 text-center rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-color)]"
           >
             <p className="text-[var(--text-muted)] text-sm">
-              L&apos;animé surprise n&apos;a pas pu être chargé : l&apos;API Jikan ne répond pas.
+              L&apos;animé surprise n&apos;a pas pu être chargé : l&apos;API {ATTRIBUTION.nom} ne répond pas.
             </p>
             {/* `false` et non `true` : seul ce chemin rallume le squelette.
                 Le rafraîchissement laisserait la section vide pendant l'appel. */}

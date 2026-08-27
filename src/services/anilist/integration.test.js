@@ -3,6 +3,7 @@ import { creerAdaptateurAniList } from '../anilist'
 import { creerReseauAniList, quotaConnu } from './reseau'
 import { createCache } from '../jikan/cache'
 import { cleDeRequete, ttlPourCle } from './requetes'
+import { getApiHealth } from '../sante-api'
 
 /**
  * Les briques héritées, éprouvées sur la nouvelle source.
@@ -73,6 +74,11 @@ describe('AniList branché sur les briques héritées', () => {
     vi.advanceTimersByTime(25 * 60 * 60 * 1000 - 60_000)
 
     expect((await getAnimeById(1)).title).toBe('Cowboy Bebop')
+
+    // Et le dire : resservir une copie sans le signaler laisserait
+    // l'utilisateur croire ces données fraîches. C'est le fil `onStale`, qui
+    // alimente la mention « données du … » du pied de page.
+    expect(getApiHealth().staleSince).toEqual(expect.any(Number))
     vi.useRealTimers()
   })
 

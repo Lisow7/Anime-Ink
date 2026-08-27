@@ -30,6 +30,13 @@ export default defineConfig([
     },
   },
   {
+    // Les fichiers de configuration tournent sous Node, pas dans le navigateur :
+    // analysés avec les seules globales du navigateur, leur `process` passait
+    // pour une faute.
+    files: ['*.config.js'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['src/context/**/*.{js,jsx}'],
     rules: {
       // Les modules de contexte exportent volontairement le Provider et son hook associé.

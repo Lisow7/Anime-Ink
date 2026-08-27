@@ -219,23 +219,35 @@ L'adaptateur l'est aussi — limiteur, cache, réseau, reprises. C'est ce qui
 manquait à l'adaptateur historique, dont la suite de conformité dure huit
 secondes quand celle d'AniList en prend moins d'une demie.
 
-### 4 — La bascule
+### 4 — La bascule ✅ *(fait le 27 août 2026)*
 
-Une constante décide de la source. AniList par défaut.
+Les écrans importent `services/anime`, façade dont l'alias `source-donnees` de
+`vite.config.js` décide à la compilation. Importer les deux adaptateurs coûtait
+1,6 ko gzip au démarrage pour du code inerte ; ainsi, seule la source retenue
+part dans le bundle — et le démarrage descend même à 103,1 ko, l'adaptateur
+AniList pesant moins que l'ancien.
 
-*Fini quand* : les neuf parcours et le garde-fou d'accessibilité passent sur
-AniList. **Prouvé par mutation** : forcer la source sur Jikan doit les faire
-passer tout autant — sinon le contrat fuit.
+Trois fonctions manquaient et auraient laissé la modale et la liste de suivi
+vides : l'état de santé (déplacé dans `sante-api.js`, alimenté par les deux
+sources), la franchise et les saisons (lues dans les relations déclarées).
 
-### 5 — Ce que l'utilisateur verra
+*Prouvé* : le build par défaut ne contient que `graphql.anilist.co`, celui forcé
+sur Jikan que `api.jikan.moe` — et les dix parcours comme les trente passes
+d'accessibilité sont verts **des deux côtés**.
 
-Le sélecteur de genres passera de 78 à 19 entrées. Les scores changeront de
-barème si la conversion est mal faite. L'attribution en pied de page et dans les
-mentions légales doit citer AniList — et les messages d'erreur nomment « l'API
-Jikan » à six endroits.
+### 5 — Ce que l'utilisateur verra ✅ *(fait le 27 août 2026)*
 
-*Fini quand* : la QA visuelle est faite, et le changelog dit ce qui change pour
-un visiteur.
+Les huit écrans qui nommaient Jikan passent par `ATTRIBUTION`, qui suit la
+source du build : nom, adresse, couleur du lien externe, description et débit
+annoncé. Le lien de la fiche s'intitulait « MyAnimeList » alors qu'il pointe
+désormais vers AniList ; « limitée à 3 requêtes / seconde » était devenu faux.
+
+Le menu des genres tombe de 78 à 19 entrées, dit au changelog. Un signet vers
+un genre disparu affiche le catalogue complet, le filtre revenant à « tous » :
+dégradation visible, préférée à une page vide.
+
+**Reste non mesuré** : AniList sert des jaquettes en PNG là où MyAnimeList
+servait du WebP. Le budget ne couvre que les fichiers du site.
 
 ## Les risques, et ce qui reste incertain
 
