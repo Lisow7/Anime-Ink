@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { creerAdaptateurAniList } from '../anilist'
 import { creerReseauAniList, quotaConnu } from './reseau'
-import { createCache } from '../jikan/cache'
+import { createCache } from '../socle/cache'
 import { cleDeRequete, ttlPourCle } from './requetes'
 import { getApiHealth } from '../sante-api'
 
@@ -143,7 +143,7 @@ describe('les particularités d’AniList', () => {
     const interroger = creerReseauAniList()
     await interroger(cleDeRequete('media', { idMal: 1 }), {})
 
-    // Jikan n'exposait aucun quota : le lire permet de ralentir avant le refus
+    // L'API précédente n'exposait aucun quota : le lire permet de ralentir avant le refus
     // plutôt que de le subir.
     expect(quotaConnu().restant).toBe(17)
     expect(quotaConnu().resetA).toBeGreaterThan(Date.now())

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createJikanClient } from './client'
+import { creerClientReseau } from './client'
 import { createCache } from './cache'
 
 function jsonResponse(body, status = 200, headers = {}) {
@@ -35,7 +35,7 @@ function pendingFetch() {
 }
 
 function makeClient(fetchImpl, options = {}) {
-  return createJikanClient({
+  return creerClientReseau({
     fetchImpl,
     limiter: openLimiter(),
     cache: createCache(),
@@ -44,7 +44,7 @@ function makeClient(fetchImpl, options = {}) {
   })
 }
 
-describe('client Jikan', () => {
+describe('client réseau', () => {
   it('ne lance qu’une requête pour deux appels concurrents sur le même chemin', async () => {
     // Une Response ne se lit qu'une fois : le mock en fabrique une par appel,
     // comme le ferait le vrai réseau.
@@ -82,12 +82,12 @@ describe('client Jikan', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2)
   })
 
-  it('lève une JikanError sans réessayer sur un 404', async () => {
+  it('lève une ErreurApi sans réessayer sur un 404', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ message: 'Not found' }, 404))
     const client = makeClient(fetchImpl)
 
     await expect(client.request('/anime/999999/full')).rejects.toMatchObject({
-      name: 'JikanError',
+      name: 'ErreurApi',
       status: 404,
     })
     expect(fetchImpl).toHaveBeenCalledTimes(1)
@@ -157,11 +157,11 @@ describe('client Jikan', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2)
   })
 
-  it('convertit une panne réseau persistante en JikanError', async () => {
+  it('convertit une panne réseau persistante en ErreurApi', async () => {
     const fetchImpl = vi.fn(async () => { throw new TypeError('Failed to fetch') })
     const client = makeClient(fetchImpl, { retryDelayFor: () => 0 })
 
-    await expect(client.request('/anime/1/full')).rejects.toMatchObject({ name: 'JikanError' })
+    await expect(client.request('/anime/1/full')).rejects.toMatchObject({ name: 'ErreurApi' })
     expect(fetchImpl).toHaveBeenCalledTimes(3)
   })
 

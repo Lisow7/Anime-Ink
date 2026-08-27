@@ -47,5 +47,5 @@ export const ATTRIBUTION = {
   debit: '30 requêtes par minute',
 }
 
-export { JikanError } from './jikan/client'
+export { ErreurApi } from './socle/client'
 export { getApiHealth, subscribeApiHealth } from './sante-api'

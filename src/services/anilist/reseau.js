@@ -1,4 +1,4 @@
-import { JikanError } from '../jikan/client'
+import { ErreurApi } from '../socle/client'
 import { mettreAJourSante, statutDepuisReponse } from '../sante-api'
 import { lireCle, OPERATIONS } from './requetes'
 
@@ -64,7 +64,7 @@ export function creerReseauAniList({ attendre = ms => new Promise(r => setTimeou
   return async function interroger(cle, { signal } = {}) {
     const { operation, variables } = lireCle(cle)
     const requete = OPERATIONS[operation]
-    if (!requete) throw new JikanError(`Opération AniList inconnue : ${operation}`, { status: 400 })
+    if (!requete) throw new ErreurApi(`Opération AniList inconnue : ${operation}`, { status: 400 })
 
     await menagerLeQuota(attendre)
 
@@ -115,7 +115,7 @@ export function creerReseauAniList({ attendre = ms => new Promise(r => setTimeou
     } catch (erreur) {
       if (signal?.aborted) throw erreur
       mettreAJourSante('unavailable')
-      if (expire) throw new JikanError('AniList n’a pas répondu à temps', { cause: erreur })
+      if (expire) throw new ErreurApi('AniList n’a pas répondu à temps', { cause: erreur })
       throw erreur
     } finally {
       clearTimeout(minuterie)
