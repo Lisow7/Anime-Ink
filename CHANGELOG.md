@@ -5,7 +5,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
-## [1.4] — en préparation
+## [1.4] — 27 août 2026
 
 ### Corrections
 - Tes favoris, tes animés récents et ta liste de suivi ne disparaissent plus quand l’API est en panne : ils vivent sur ton appareil et n’avaient aucune raison d’attendre une réponse. Ces trois onglets déclenchaient pourtant une requête à chaque visite, dont l’échec vidait l’écran
