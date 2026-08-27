@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.3'
+export const CURRENT_VERSION = '1.4'
 
 export const CHANGELOG = [
+  {
+    version: '1.4',
+    date: '27 août 2026',
+    changes: [
+      { type: 'fix', label: 'Tes favoris, tes récents et ta liste ne disparaissent plus quand l’API est en panne — ils vivent sur ton appareil' },
+    ],
+  },
   {
     version: '1.3',
     date: '26 août 2026',

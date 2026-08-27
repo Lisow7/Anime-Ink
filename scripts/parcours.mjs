@@ -160,6 +160,61 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'les onglets locaux survivent à une panne de l’API',
+    async executer(page, base) {
+      // D'abord peupler l'historique pendant que l'API répond : la fiche l'écrit
+      // toute seule, à condition d'avoir le consentement.
+      await servir(page)
+      await page.goto(`${base}catalogue`, { waitUntil: 'load' })
+      await page.getByRole('button', { name: /tout accepter/i }).click()
+      await page.waitForTimeout(600)
+      await page.goto(`${base}anime/1`, { waitUntil: 'load' })
+      await page.locator('main h1').waitFor({ timeout: 15_000 })
+      await page.waitForTimeout(800)
+
+      const enregistres = await page.evaluate(() => {
+        try { return JSON.parse(localStorage.getItem('anime-ink-history') || '[]').length } catch { return 0 }
+      })
+      verifier(enregistres > 0, "la visite d'une fiche n'a rien écrit dans l'historique")
+
+      // L'API tombe. « Récents » ne lui doit rien : il doit rester debout, et
+      // ne rien lui demander. Deux exigences distinctes — l'affichage tient aux
+      // gardes de rendu, le silence réseau à la garde de l'effet. Les vérifier
+      // séparément, sinon l'une masque l'échec de l'autre.
+      await page.unroute('**/api.jikan.moe/**')
+      await servir(page, { enPanne: true })
+
+      // Vider le cache de réponses, sans quoi la mesure serait trompeuse : la
+      // requête du catalogue a déjà été servie plus haut, et le cache la
+      // resservirait sans toucher au réseau. On mesurerait alors ce que le cache
+      // épargne, pas ce que l'onglet demande.
+      await page.evaluate(() => { try { sessionStorage.clear() } catch { /* stockage refusé */ } })
+
+      const appels = []
+      const noter = r => { if (r.url().includes('api.jikan.moe')) appels.push(r.url()) }
+      page.on('request', noter)
+
+      await page.goto(`${base}catalogue?tab=recents`, { waitUntil: 'load' })
+      await page.waitForTimeout(6000)
+      page.off('request', noter)
+
+      const cartes = await page.locator('main img[alt]').count()
+      verifier(
+        cartes > 0,
+        "l'onglet « Récents » est vide alors qu'il ne dépend d'aucune requête : "
+        + "une panne de l'API ne doit pas emporter des données locales",
+      )
+
+      const versCatalogue = appels.filter(u => /\/anime\?/.test(u))
+      verifier(
+        versCatalogue.length === 0,
+        `l'onglet « Récents » a interrogé le catalogue ${versCatalogue.length} fois `
+        + "alors qu'il lit le stockage local — autant de requêtes prises sur un "
+        + 'budget d\'une par seconde',
+      )
+    },
+  },
+  {
     nom: 'la censure floute le contenu explicite, et la lever le dévoile',
     async executer(page, base) {
       await servir(page, { genresImposes: HENTAI })
