@@ -201,14 +201,14 @@ Les quatre points ci-dessus tiennent tous au même fait : **GitHub Pages ne sert
 que des fichiers**. Ni en-tête configurable, ni réécriture, ni transformation
 d'image. Instruit le 27 août 2026, sur documentation à jour :
 
-| | GitHub Pages | Vercel *Hobby* | Cloudflare Pages | Netlify *gratuit* |
+| | GitHub Pages | Vercel | Cloudflare Pages | Netlify *gratuit* |
 |---|---|---|---|---|
 | Réécriture SPA en `200` | ❌ | ✅ | ✅ | ✅ |
 | En-têtes HTTP | ❌ | ✅ | ✅ | ✅ |
 | Conversion WebP | ❌ | ✅ | 💰 20 $/mois | ❔ crédits |
 | Prix | 0 € | **0 €** | 0 € | 0 € |
 
-**Vercel en offre Hobby couvre les trois, gratuitement**, par un seul fichier
+**Vercel couvre les trois**, par un seul fichier
 `vercel.json` — [la documentation](https://vercel.com/docs/project-configuration/vercel-json)
 donne les trois clés nécessaires :
 
@@ -221,12 +221,18 @@ donne les trois clés nécessaires :
   **5 000 transformations par mois**, mises en cache après le premier appel —
   le catalogue en consomme environ mille une fois pour toutes.
 
-⚠️ **Deux conditions à connaître** : l'offre Hobby est réservée à un usage
-personnel **non commercial**, ce que le site respecte tant qu'il ne porte ni
-publicité ni monétisation ; et l'adresse change (`lisow7.github.io/Anime-Ink/`
-→ `anime-ink.vercel.app`), ce qui touche `base` dans `vite.config.js`, le
-`basename` du routeur, `ORIGINE` dans `useSEO.js`, et les liens déjà partagés —
-GitHub Pages peut rester en place pour rediriger.
+💡 **Le compte est en offre Pro**, souscrite pour un autre projet : ce site en
+profite **sans surcoût**, avec des quotas plus larges et sans la clause d'usage
+personnel non commercial que porte l'offre gratuite. Cette page a d'abord
+annoncé « Hobby », par supposition et non par vérification — les deux projets
+sont distincts, mais l'abonnement, lui, se partage.
+
+⚠️ **Ce qu'il reste à décider** : l'adresse change
+(`lisow7.github.io/Anime-Ink/` → `anime-ink.vercel.app`), ce qui touche `base`
+dans `vite.config.js`, le `basename` du routeur, `ORIGINE` dans `useSEO.js`, et
+les liens déjà partagés — GitHub Pages peut rester en place pour rediriger.
+**Chaque changement d'adresse coûte en référencement** : si un nom de domaine
+propre est envisagé, mieux vaut le prendre avant et ne changer qu'une fois.
 
 ✅ **Fait, et mesuré sur un déploiement réel** (27 août 2026) — le dépôt sait se
 construire pour les deux hôtes, `VERCEL=1` tranchant au build. Le site public
