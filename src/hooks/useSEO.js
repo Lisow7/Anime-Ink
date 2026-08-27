@@ -2,7 +2,17 @@ import { useEffect } from 'react'
 
 const DEFAULT_TITLE = "Anime-Ink — Découvre l'univers des animés"
 const DEFAULT_DESC  = "Recherche, explore et découvre des milliers d'animés. Catalogue complet, favoris, suivi de progression et filtres avancés."
-const ORIGINE = 'https://lisow7.github.io'
+/* global __ORIGINE_SITE__ */
+/**
+ * L'origine du site, fixée à la compilation par l'hôte qui construit.
+ *
+ * Ni `window.location.origin`, ni une constante recopiée : la première ferait
+ * qu'une préversion se déclare canonique et entre en concurrence avec le site
+ * réel dans les moteurs de recherche ; la seconde mentirait le jour d'un
+ * changement d'hébergement — c'est exactement ce genre de recopie qui avait
+ * doublé le préfixe.
+ */
+const ORIGINE = typeof __ORIGINE_SITE__ === 'string' ? __ORIGINE_SITE__ : 'https://lisow7.github.io'
 
 /**
  * L'adresse canonique d'un chemin.
