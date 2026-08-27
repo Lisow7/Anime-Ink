@@ -50,9 +50,14 @@
   avertissement de contenu), à chaque pull request.
 - **Couverture du filtre d'âge** : toute surface affichant une jaquette doit
   classer son contenu. Aucune exemption.
-- Les deux sont **prouvés par mutation** : on a vérifié qu'ils échouent quand ils
+- **Parcours utilisateur** : 7 scénarios dans un vrai navigateur — recherche,
+  filtres et leur persistance dans l'URL, favoris avec et sans consentement,
+  mode dégradé, censure, sélecteur de genres.
+- Les trois sont **prouvés par mutation** : on a vérifié qu'ils échouent quand ils
   doivent échouer.
-- 65 tests unitaires sur la couche réseau et les utilitaires.
+- 65 tests unitaires sur la couche réseau et les utilitaires. Ils ne voient rien
+  des pages : neutraliser le floutage d'une carte les laisse tous verts, et fait
+  échouer un parcours.
 
 ### Performance
 
@@ -87,8 +92,6 @@ tout le travail.
 
 ### Qualité
 
-- [ ] tests de parcours Playwright — le navigateur est déjà outillé pour
-      l'accessibilité, il ne manque que les scénarios ;
 - [ ] budgets Core Web Vitals et poids des bundles en intégration continue ;
 - [ ] valider les réponses de l'API contre des schémas versionnés.
 

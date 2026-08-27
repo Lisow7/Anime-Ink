@@ -5,6 +5,17 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.4] — en préparation
+
+### Maintenance
+- Sept parcours utilisateur vérifiés à chaque pull request, dans un vrai navigateur : recherche, filtres et leur persistance dans l’URL, favoris avec et sans consentement, mode dégradé, censure. Les tests existants ne couvraient que la couche réseau et les utilitaires — aucun ne regardait ce que les pages font
+- Feuille de route rapatriée dans le dépôt et relue dans le code : deux points s’y annonçaient livrés sans l’être
+
+> Rien de visible pour un visiteur dans ce lot : la version affichée reste `1.3`
+> jusqu’à ce qu’un changement constatable la fasse bouger.
+
+---
+
 ## [1.3] — 26 août 2026
 
 ### Corrections
