@@ -127,7 +127,12 @@ réelles, et il ne faut pas le croire tel.
 - [ ] calendrier des sorties — **une bonne partie du chemin est faite** : le
       champ `nextAiringEpisode` est déjà interrogé, il reste à en faire une vue
       par semaine plutôt qu'une liste par série ;
-- [ ] import/export JSON des favoris et de la liste ;
+- [x] ~~import/export JSON des favoris et de la liste~~ — livré en v1.8, sur le
+      Profil, et étendu à l'historique. **Une restauration complète sans jamais
+      remplacer** : importer une vieille sauvegarde ne peut pas faire reculer une
+      progression. Le consentement, lui, n'est ni exporté ni restauré — le
+      remettre depuis un fichier fabriquerait un accord que la personne n'a pas
+      donné sur cette machine ;
 - [ ] filtres par année, studio, saison, durée ;
 - [ ] statistiques personnelles, sans traçage ;
 - [ ] comparaison de plusieurs animés.

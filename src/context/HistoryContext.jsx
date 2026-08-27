@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useCookieConsent, hasConsent } from './CookieContext'
 import { readStorage, removeStorage, writeStorage } from '../utils/storage'
+import { fusionner } from '../utils/fusion'
 
 const KEY = 'anime-ink-history'
 const MAX = 20
@@ -44,13 +45,34 @@ export function HistoryProvider({ children }) {
     })
   }
 
+
+  /**
+   * Ajoute une liste restaurée, sans jamais écraser ce qui est déjà là.
+   *
+   * L'existant passe devant : le dédoublonnage garde la première occurrence
+   * d'un identifiant. Une restauration complète donc, elle ne remplace pas —
+   * importer une vieille sauvegarde ne peut pas faire reculer ce qui a été
+   * fait depuis.
+   */
+  const importer = (entrees) => {
+    if (!canStore) return 0
+    let ajoutes = 0
+    setHistory(prev => {
+      const suivant = fusionner(prev, entrees)
+      ajoutes = suivant.length - prev.length
+      writeStorage(KEY, suivant)
+      return suivant
+    })
+    return ajoutes
+  }
+
   const clearHistory = () => {
     setHistory([])
     removeStorage(KEY)
   }
 
   return (
-    <HistoryContext.Provider value={{ history, addToHistory, removeFromHistory, clearHistory }}>
+    <HistoryContext.Provider value={{ history, addToHistory, removeFromHistory, clearHistory, importer }}>
       {children}
     </HistoryContext.Provider>
   )

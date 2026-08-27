@@ -107,6 +107,17 @@ const SCENARIOS = [
   // La fiche n'était visitée qu'avec une œuvre tout public : le voile, le
   // palier d'âge et le bouton de révélation échappaient à l'analyse.
   {
+    // Boutons, champ de fichier masqué et zone d'annonce : de quoi égarer un
+    // lecteur d'écran si les libellés manquent.
+    nom: 'profil, sauvegarde des données',
+    route: 'profil',
+    stockage: {
+      'anime-ink-cookie-consent': { preferences: true, userdata: true },
+      'anime-ink-favorites': [{ mal_id: 1, title: 'Cowboy Bebop', images: {}, genres: [] }],
+    },
+    temoin: 'main section input[type="file"]',
+  },
+  {
     // Une section faite de dates et de compteurs sur fond coloré : exactement
     // là où le contraste et les libellés se perdent.
     nom: 'profil, section « Reprendre » garnie',
