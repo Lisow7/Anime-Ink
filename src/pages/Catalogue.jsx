@@ -11,7 +11,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { ADULT_GENRES } from '../constants/ageFilter'
-import { searchAnime, getAnimeByFilter, getGenres } from '../services/jikan'
+import { searchAnime, getAnimeByFilter, getGenres } from '../services/anime'
 import { groupAnime } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
 

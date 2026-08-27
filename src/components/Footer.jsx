@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useCookieConsent } from '../context/CookieContext'
 import ChangelogModal from './ChangelogModal'
 import { CURRENT_VERSION } from '../data/changelog'
-import { getApiHealth, subscribeApiHealth } from '../services/jikan'
+import { getApiHealth, subscribeApiHealth } from '../services/anime'
 
 /** « 27 août à 14:19 » — l'année est superflue, la réserve ne tient qu'un jour. */
 function dateLisible(horodatage) {

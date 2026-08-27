@@ -7,7 +7,7 @@ import { useModal } from '../context/ModalContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { classifyAdultContent } from '../constants/ageFilter'
-import { getAnimeSeasons } from '../services/jikan'
+import { getAnimeSeasons } from '../services/anime'
 import { posterUrl } from '../utils/images'
 
 const TYPE_TAG_LABELS = { Movie: 'Film', OVA: 'OVA', ONA: 'ONA', Special: 'Spécial', 'TV Special': 'Spécial TV' }

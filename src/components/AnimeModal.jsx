@@ -5,7 +5,7 @@ import { useHistory } from '../context/HistoryContext'
 import { useWatchlist } from '../context/WatchlistContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { classifyAdultContent } from '../constants/ageFilter'
-import { getAnimeById, getAnimeRecommendations, getAnimeFranchise } from '../services/jikan'
+import { getAnimeById, getAnimeRecommendations, getAnimeFranchise } from '../services/anime'
 import { translateSynopsis } from '../services/translate'
 import { STATUS_LABEL, PLATFORM_COLORS } from '../constants/anime'
 import { scoreColor } from '../utils/score'
@@ -111,7 +111,7 @@ export default function AnimeModal() {
     if (franchiseLoadedFor.current === animeId) return
     franchiseLoadedFor.current = animeId
     const controller = new AbortController()
-    getAnimeFranchise(anime.title, controller.signal).then(data => {
+    getAnimeFranchise(anime, controller.signal).then(data => {
       let seasons = data.seasons
       let others = data.others
 

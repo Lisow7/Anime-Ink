@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
-import { getAnimeById } from '../services/jikan'
+import { getAnimeById } from '../services/anime'
 import { useHistory } from '../context/HistoryContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { classifyAdultContent } from '../constants/ageFilter'

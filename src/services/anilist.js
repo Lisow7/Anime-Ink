@@ -2,9 +2,11 @@ import { animeDepuisAniList, paginationDepuisAniList } from './anilist/traductio
 import { catalogueDesGenres, nomAniListDepuisIdMal } from './anilist/genres'
 import { cleDeRequete, ttlPourCle } from './anilist/requetes'
 import { creerReseauAniList, quotaConnu } from './anilist/reseau'
+import { parcourirFranchise } from './anilist/franchise'
 import { createJikanClient, JikanError } from './jikan/client'
 import { createRateLimiter } from './jikan/rate-limiter'
 import { createCache } from './jikan/cache'
+import { signalerDonneePerimee } from './sante-api'
 
 /**
  * L'adaptateur AniList, branché sur les briques déjà éprouvées.
@@ -44,6 +46,10 @@ export function creerAdaptateurAniList({
 } = {}) {
   const client = createJikanClient({
     fetchImpl, limiter, cache, ttlFor: ttlPourCle,
+    // Sans ce fil, une copie de secours serait resservie en silence : le pied
+    // de page annoncerait des données fraîches alors qu'elles peuvent dater
+    // d'un jour.
+    onStale: signalerDonneePerimee,
     ...(retries === undefined ? {} : { retries }),
   })
 
@@ -126,6 +132,53 @@ export function creerAdaptateurAniList({
     )
   }
 
+  /** Demande les relations d'un titre ; un échec vaut « on s'arrête là ». */
+  async function relationsDe(id, signal) {
+    try {
+      const data = await demander('relations', { idMal: Number(id) }, { signal })
+      return data?.data?.Media ?? null
+    } catch {
+      // Une franchise qu'on ne peut pas suivre ne doit pas faire disparaître la
+      // fiche : le sélecteur de saisons s'efface, le reste s'affiche.
+      return null
+    }
+  }
+
+  /**
+   * La franchise d'un titre.
+   *
+   * Prend l'objet et non son titre : AniList situe une œuvre par son
+   * identifiant, quand l'API historique n'avait que la recherche textuelle pour
+   * retrouver ses voisines.
+   */
+  async function getAnimeFranchise(anime, signal) {
+    const id = anime?.mal_id
+    if (!Number.isFinite(id)) return { seasons: [], others: [] }
+
+    const { saisons, autres } = await parcourirFranchise(id, unId => relationsDe(unId, signal))
+    return { seasons: saisons, others: autres }
+  }
+
+  /**
+   * Les saisons d'une franchise, pour la ligne de progression de la liste de
+   * suivi. `ownEpisodes` prime sur ce que la source annonce : une série en
+   * cours de diffusion voit son décompte bouger, et celui que l'utilisateur a
+   * sous les yeux ne doit pas changer sous lui.
+   */
+  async function getAnimeSeasons(animeId, ownEpisodes) {
+    const id = Number(animeId)
+    const repli = [{ mal_id: id, episodes: ownEpisodes ?? null }]
+    if (!Number.isFinite(id)) return repli
+
+    const { saisons } = await parcourirFranchise(id, unId => relationsDe(unId))
+    if (saisons.length === 0) return repli
+
+    return saisons.map(s => ({
+      mal_id: s.mal_id,
+      episodes: s.mal_id === id ? (ownEpisodes ?? s.episodes ?? null) : (s.episodes ?? null),
+    }))
+  }
+
   async function getRandomAnime() {
     // AniList n'a pas d'endpoint aléatoire : une page au hasard parmi les mieux
     // notées en tient lieu, sans prétendre à l'équivalence.
@@ -141,6 +194,8 @@ export function creerAdaptateurAniList({
     getAnimeByFilter,
     getGenres,
     getAnimeRecommendations,
+    getAnimeFranchise,
+    getAnimeSeasons,
     getRandomAnime,
     clearApiCache: () => cache.clear(),
   }
@@ -155,6 +210,8 @@ export const getTopAnime = adaptateur.getTopAnime
 export const getAnimeByFilter = adaptateur.getAnimeByFilter
 export const getGenres = adaptateur.getGenres
 export const getAnimeRecommendations = adaptateur.getAnimeRecommendations
+export const getAnimeFranchise = adaptateur.getAnimeFranchise
+export const getAnimeSeasons = adaptateur.getAnimeSeasons
 export const getRandomAnime = adaptateur.getRandomAnime
 export const clearApiCache = adaptateur.clearApiCache
 

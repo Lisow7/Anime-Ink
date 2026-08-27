@@ -6,6 +6,7 @@ import {
   estRecommandationValide,
   champsManquants,
 } from './contrat-anime'
+import { getApiHealth, reinitialiserSante } from './sante-api'
 
 /**
  * La suite qu'un adaptateur doit passer pour être recevable.
@@ -109,6 +110,21 @@ export function verifierContrat(nom, { adaptateur, installerReseau, avantChaque 
 
       expect(Array.isArray(recos)).toBe(true)
       recos.forEach(reco => expect(estRecommandationValide(reco)).toBe(true))
+    })
+
+    it('alimente le voyant de santé', async () => {
+      // Le pied de page ne parle pas de la source : il dit à l'utilisateur si
+      // ce qu'il regarde est frais. Une source qui n'y verse rien laisse le
+      // voyant sur « inconnu » à vie, sans qu'aucune erreur ne se produise —
+      // c'est exactement ce qui serait arrivé après la bascule, l'état vivant
+      // jusqu'ici dans le module Jikan.
+      reinitialiserSante()
+      expect(getApiHealth().status).toBe('unknown')
+
+      installerReseau('anime')
+      await adaptateur.getAnimeById(1)
+
+      expect(getApiHealth().status).toBe('available')
     })
 
     it('ne rend jamais `undefined` là où un tableau est attendu', async () => {

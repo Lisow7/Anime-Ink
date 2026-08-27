@@ -30,6 +30,9 @@ const CHAMPS_MEDIA = `
 
 const PAGE_INFO = 'pageInfo { currentPage lastPage hasNextPage total }'
 
+/** Le strict nécessaire pour situer un titre dans sa franchise. */
+const CHAMPS_FRANCHISE = 'idMal format episodes seasonYear title { romaji english }'
+
 export const OPERATIONS = {
   media: {
     query: `query ($idMal: Int) { Media(idMal: $idMal, type: ANIME) { ${CHAMPS_MEDIA} } }`,
@@ -56,6 +59,26 @@ export const OPERATIONS = {
     query: `query ($idMal: Int) {
       Media(idMal: $idMal, type: ANIME) {
         recommendations(perPage: 6, sort: RATING_DESC) { nodes { mediaRecommendation { ${CHAMPS_MEDIA} } } }
+      }
+    }`,
+  },
+  /**
+   * Les relations d'un titre — de quoi reconstituer une franchise.
+   *
+   * Volontairement dépourvue de `CHAMPS_MEDIA` : le parcours d'une franchise
+   * enchaîne un appel par saison, et n'a besoin que de l'identifiant, du
+   * format, du nombre d'épisodes et du titre. Y verser la fiche complète
+   * multiplierait le poids de chaque saut sans rien apporter à l'écran.
+   *
+   * Chaque nœud porte déjà son format : c'est ce qui permet de ne descendre
+   * que dans les branches télévisées, là où l'API historique devait demander
+   * chaque séquelle pour découvrir de quel type elle était.
+   */
+  relations: {
+    query: `query ($idMal: Int) {
+      Media(idMal: $idMal, type: ANIME) {
+        ${CHAMPS_FRANCHISE}
+        relations { edges { relationType node { type ${CHAMPS_FRANCHISE} } } }
       }
     }`,
   },
@@ -94,7 +117,9 @@ const JOUR = 24 * HEURE
  */
 export function ttlPourCle(cle) {
   const operation = cle.slice(0, cle.indexOf(':'))
-  if (operation === 'media' || operation === 'recommandations') return JOUR
+  // Une franchise ne gagne une saison que de loin en loin : la mettre de côté
+  // pour la journée épargne un appel par saison à chaque ouverture de fiche.
+  if (operation === 'media' || operation === 'recommandations' || operation === 'relations') return JOUR
   if (operation === 'recherche' || operation === 'classement' || operation === 'catalogue') return HEURE
   return 0
 }

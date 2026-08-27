@@ -1,4 +1,5 @@
 import { JikanError } from '../jikan/client'
+import { mettreAJourSante, statutDepuisReponse } from '../sante-api'
 import { lireCle, OPERATIONS } from './requetes'
 
 const ENDPOINT = 'https://graphql.anilist.co'
@@ -82,18 +83,28 @@ export function creerReseauAniList({ attendre = ms => new Promise(r => setTimeou
       })
 
       noterQuota(reponse)
-      if (!reponse.ok) return reponse
+      if (!reponse.ok) {
+        mettreAJourSante(statutDepuisReponse(reponse.status))
+        return reponse
+      }
 
       const corps = await reponse.json()
       if (Array.isArray(corps?.errors) && corps.errors.length > 0) {
         const message = corps.errors[0]?.message ?? 'Requête AniList refusée'
         // 400 : la requête est en cause, pas le service. Le client ne la
         // réessaiera pas, et ne servira pas de copie périmée à sa place.
+        const statut = corps.errors[0]?.status ?? 400
+        // Le voyant est jugé sur le statut porté par l'erreur, pas sur le 200
+        // de l'enveloppe : AniList rend ses pannes comme ses refus en 200, et
+        // s'en tenir au code HTTP afficherait « disponible » pendant une panne.
+        mettreAJourSante(statutDepuisReponse(statut))
         return new Response(JSON.stringify({ message }), {
-          status: corps.errors[0]?.status ?? 400,
+          status: statut,
           headers: { 'Content-Type': 'application/json' },
         })
       }
+
+      mettreAJourSante('available')
 
       // Le corps a été lu : il faut en refabriquer un que le client puisse lire
       // à son tour.
@@ -103,6 +114,7 @@ export function creerReseauAniList({ attendre = ms => new Promise(r => setTimeou
       })
     } catch (erreur) {
       if (signal?.aborted) throw erreur
+      mettreAJourSante('unavailable')
       if (expire) throw new JikanError('AniList n’a pas répondu à temps', { cause: erreur })
       throw erreur
     } finally {
