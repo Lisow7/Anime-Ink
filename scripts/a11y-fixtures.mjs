@@ -1,10 +1,11 @@
 /**
- * Jeu de données servi au garde-fou d'accessibilité à la place de l'API Jikan.
+ * Jeu de données servi aux scripts de vérification à la place de l'API.
  *
  * Deux raisons, également importantes :
- *   - la CI ne doit pas dépendre d'un tiers. Jikan renvoie régulièrement des
- *     504 ; un garde-fou qui rougit au gré de l'humeur de MyAnimeList finit
- *     ignoré, ce qui est pire que pas de garde-fou du tout ;
+ *   - la CI ne doit pas dépendre d'un tiers. Une API publique tombe, se limite
+ *     ou ferme — celle qui servait ce site l'a fait ; un garde-fou qui rougit
+ *     au gré de l'humeur d'un service extérieur finit ignoré, ce qui est pire
+ *     que pas de garde-fou du tout ;
  *   - un catalogue vide ne teste presque rien. Sans contenu garanti, l'analyse
  *     porte sur un écran de chargement et déclare « conforme » sans avoir vu
  *     une seule carte.
@@ -65,12 +66,12 @@ const PAGINATION = {
 }
 
 /**
- * La même fiche, telle qu'AniList la servirait.
+ * La même fiche, telle qu'AniList la sert.
  *
- * Traduire à partir du jeu ci-dessus plutôt que d'en écrire un second garantit
- * que les deux sources décrivent **le même contenu** : c'est la condition pour
- * qu'un parcours qui passe d'un côté et échoue de l'autre accuse le code, et
- * non deux jeux de données qui auraient divergé.
+ * Le jeu ci-dessus est écrit dans la forme que l'application **consomme** —
+ * celle du contrat interne, celle que les favoris gardent sur l'appareil. Cette
+ * fonction la retraduit vers ce que l'API rend réellement, de sorte que les
+ * scripts éprouvent la traduction elle-même et pas seulement l'affichage.
  *
  * Les jaquettes pointent vers `s4.anilist.co`, comme en production : c'est
  * aussi ce qui vérifie que la politique de sécurité de contenu les autorise.
@@ -176,24 +177,4 @@ export function repondreAniList(operation, variables = {}, animes = ANIMES) {
     return { data: { Media: { recommendations: { nodes: media.slice(1, 4).map(m => ({ mediaRecommendation: m })) } } } }
   }
   return { data: { Page: { pageInfo: PAGE_INFO_ANILIST, media } } }
-}
-
-/** Répond à toute requête Jikan par une donnée stable. */
-export function repondre(url) {
-  const chemin = url.replace(/^https:\/\/api\.jikan\.moe\/v4/, '')
-
-  const fiche = chemin.match(/^\/anime\/(\d+)\/full/)
-  if (fiche) return { data: ANIMES.find(a => a.mal_id === Number(fiche[1])) ?? ANIMES[0] }
-
-  if (/^\/anime\/\d+\/recommendations/.test(chemin)) {
-    return { data: ANIMES.slice(1, 4).map(entry => ({ entry })) }
-  }
-  if (chemin.startsWith('/genres/')) {
-    return { data: [{ mal_id: 1, name: 'Action', count: 10 }, { mal_id: 2, name: 'Comédie', count: 8 }] }
-  }
-  if (chemin.startsWith('/random/')) return { data: ANIMES[0] }
-  if (chemin.startsWith('/top/')) return { data: ANIMES, pagination: PAGINATION }
-  if (chemin.startsWith('/anime')) return { data: ANIMES, pagination: PAGINATION }
-
-  return { data: [] }
 }

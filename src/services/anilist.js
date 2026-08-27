@@ -23,8 +23,9 @@ import { signalerDonneePerimee } from './sante-api'
  * refus, le compteur descendant de 29 à 25.
  *
  * D'où une capacité de 5 et un jeton toutes les deux secondes — 30 par minute.
- * Et, ce que Jikan ne permettait pas : `X-RateLimit-Remaining` est lu à chaque
- * réponse, pour ralentir **avant** le refus plutôt que le subir.
+ * `X-RateLimit-Remaining` est lu à chaque réponse, pour ralentir **avant** le
+ * refus plutôt que le subir — ce que l'API précédente ne permettait pas, faute
+ * d'exposer le moindre compteur.
  */
 
 const RAFALE = 5
@@ -124,9 +125,9 @@ export function creerAdaptateurAniList({
   /**
    * Les recommandations — et c'est ici qu'AniList change la donne.
    *
-   * Ni Jikan ni Tenrai ne joignent les genres à une suggestion, ce qui
+   * L'API précédente ne joignait pas les genres à une suggestion, ce qui
    * obligeait à deviner son registre d'après la fiche ouverte. AniList les
-   * fournit, avec `isAdult`.
+   * fournit, avec `isAdult` : chaque suggestion est jugée pour elle-même.
    */
   async function getAnimeRecommendations(id, signal) {
     const data = await demander('recommandations', { idMal: Number(id) }, { signal })

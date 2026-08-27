@@ -304,14 +304,7 @@ const PARCOURS = [
       // dates arrivent par le réseau, donc plus tard. Lire le texte dès que la
       // section paraît revient à mesurer une course — elle se gagne sur une
       // machine rapide et se perd en intégration continue.
-      if (SOURCE.nom === 'anilist') {
-        await section.getByText(/Épisode 9/).waitFor({ timeout: 15_000 })
-      } else {
-        // Rien n'arrivera : on laisse passer le temps qu'une date aurait mis,
-        // sans quoi on constaterait son absence avant même qu'elle ait pu
-        // paraître.
-        await page.waitForTimeout(4000)
-      }
+      await section.getByText(/Épisode 9/).waitFor({ timeout: 15_000 })
 
       const texte = (await section.innerText()).replace(/\s+/g, ' ')
 
@@ -320,25 +313,15 @@ const PARCOURS = [
       verifier(/Cowboy Bebop/.test(texte), `« Reprendre » n'affiche pas la série suivie : « ${texte.slice(0, 120)} »`)
       verifier(/Épisode 3 sur 26/.test(texte), `la progression d'une série terminée manque : « ${texte.slice(0, 160)} »`)
 
-      // La date, elle, dépend de ce que la source sait faire — c'est une
-      // capacité, pas une promesse du contrat commun. AniList date les
-      // épisodes ; l'API historique ne le sait pas, et la section doit alors
-      // s'afficher SANS dates plutôt que de ne pas s'afficher.
-      if (SOURCE.nom === 'anilist') {
-        verifier(
-          /Épisode 9/.test(texte),
-          `la date du prochain épisode n'apparaît pas pour une série en diffusion : « ${texte.slice(0, 160)} »`,
-        )
-        verifier(
-          !/Cowboy Bebop[^É]*Épisode 3 sur 26 Épisode \d/.test(texte),
-          `une série terminée annonce un prochain épisode : « ${texte.slice(0, 200)} »`,
-        )
-      } else {
-        verifier(
-          !/Épisode \d+ (aujourd|demain|dans |le )/.test(texte),
-          `une source qui ne sait pas dater les épisodes en annonce quand même : « ${texte.slice(0, 160)} »`,
-        )
-      }
+      // La date vient du réseau, et seulement pour ce qui diffuse encore.
+      verifier(
+        /Épisode 9/.test(texte),
+        `la date du prochain épisode n'apparaît pas pour une série en diffusion : « ${texte.slice(0, 160)} »`,
+      )
+      verifier(
+        !/Cowboy Bebop[^É]*Épisode 3 sur 26 Épisode \d/.test(texte),
+        `une série terminée annonce un prochain épisode : « ${texte.slice(0, 200)} »`,
+      )
     },
   },
   {

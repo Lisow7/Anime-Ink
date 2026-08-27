@@ -10,11 +10,12 @@ const adaptateur = creerAdaptateurAniList({ limiter: { acquire: () => Promise.re
 const { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations, getAnimeSeasons, getAnimeFranchise, getProchainsEpisodes } = adaptateur
 
 /**
- * Le nouvel adaptateur, soumis au contrat — **la même suite que Jikan**.
+ * L'adaptateur soumis au contrat.
  *
- * C'est le critère de fin de la deuxième phase, et toute la raison d'avoir
- * écrit le contrat avant : deux sources qui passent la même épreuve rendent la
- * même forme. Sans elle, la comparaison se ferait écran par écran, à l'œil.
+ * Cette suite a d'abord servi à prouver qu'une seconde source rendait la même
+ * forme que la première, sans comparer écran par écran. La première a fermé ;
+ * la suite reste, et garde la traduction d'AniList de dériver — une note
+ * ramenée sur cent ou un identifiant devenu chaîne y échoue aussitôt.
  */
 
 /** Média réel d'AniList, capturé le 27 août 2026 sur `Media(idMal: 1)`. */
