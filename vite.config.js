@@ -17,6 +17,40 @@ const SOURCES = { anilist: './src/services/anilist.js', jikan: './src/services/j
 const sourceDemandee = process.env.VITE_SOURCE_DONNEES
 const sourceDonnees = SOURCES[sourceDemandee] ?? SOURCES.anilist
 
+/**
+ * Où le site est servi, décidé par l'hôte qui construit.
+ *
+ * Vercel pose `VERCEL=1` dans l'environnement de build : la configuration s'y
+ * adapte seule, sans réglage à tenir à jour de part et d'autre. Les deux
+ * hébergements peuvent ainsi coexister le temps de la transition, chacun
+ * construit correctement depuis le même dépôt.
+ *
+ * Trois choses en dépendent, et elles doivent bouger **ensemble** — un préfixe
+ * juste avec un routeur qui l'ignore donne un site qui ne s'affiche pas :
+ *   - `base` : le préfixe des ressources ;
+ *   - le `basename` du routeur, lu depuis `import.meta.env.BASE_URL` ;
+ *   - l'origine des adresses canoniques.
+ *
+ * L'origine de production est **fixe même en préversion** : une préversion qui
+ * se déclarerait canonique se mettrait en concurrence avec le site réel dans
+ * les moteurs de recherche.
+ */
+const surVercel = Boolean(process.env.VERCEL)
+const domaineVercel = process.env.VERCEL_PROJECT_PRODUCTION_URL
+const origineSite = surVercel && domaineVercel
+  ? `https://${domaineVercel}`
+  : 'https://lisow7.github.io'
+
+/**
+ * L'optimisation d'images n'existe que chez Vercel.
+ *
+ * AniList ne sert que du PNG — aucune variante WebP, aucune négociation de
+ * contenu, vérifié. La transformation doit donc venir de l'hébergement, et
+ * `/_vercel/image` n'existe que là. Ailleurs, les jaquettes sont servies telles
+ * quelles, comme aujourd'hui.
+ */
+const optimiseLesImages = surVercel
+
 const inlineCssPlugin = {
   name: 'inline-css',
   apply: 'build',
@@ -36,7 +70,8 @@ const inlineCssPlugin = {
 }
 
 export default defineConfig({
-  base: '/Anime-Ink/',
+  // GitHub Pages sert le site sous le nom du dépôt ; Vercel le sert à la racine.
+  base: surVercel ? '/' : '/Anime-Ink/',
   plugins: [react(), tailwindcss(), inlineCssPlugin],
   resolve: {
     alias: {
@@ -47,6 +82,8 @@ export default defineConfig({
     // Le nom sert à l'attribution affichée en pied de page ; il doit suivre
     // l'alias, sinon le site citerait une source qu'il n'interroge pas.
     __SOURCE_DONNEES__: JSON.stringify(SOURCES[sourceDemandee] ? sourceDemandee : 'anilist'),
+    __ORIGINE_SITE__: JSON.stringify(origineSite),
+    __OPTIMISE_IMAGES__: JSON.stringify(optimiseLesImages),
   },
   build: {
     rollupOptions: {

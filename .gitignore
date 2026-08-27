@@ -35,3 +35,6 @@ CLAUDE.md
 # Playwright
 test-results
 playwright-report
+
+# Lien local vers le projet Vercel (identifiants de déploiement)
+.vercel
