@@ -7,6 +7,12 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ## [1.8] — 28 août 2026
 
+### Nouveautés
+- **Tes données peuvent enfin sortir du navigateur.** Un bouton sur ton profil télécharge tes favoris, ta liste de suivi et ton historique dans un fichier. Un autre les restaure — sur un autre appareil, ou après un nettoyage de navigateur. Jusqu’ici, un « effacer les données du site » les emportait sans recours
+- **Une restauration complète, elle ne remplace jamais.** Importer une vieille sauvegarde ne peut pas faire reculer une progression : une série suivie jusqu’à l’épisode 12 le reste, même si le fichier la connaît à l’épisode 3
+- Le fichier n’emporte **pas** ton consentement aux cookies : le restaurer reviendrait à te faire dire oui à ta place. Il te sera redemandé, comme à la première visite
+- Un fichier abîmé ou venu d’ailleurs est refusé **en entier**, sans rien écrire : une restauration à moitié laisserait un état dont personne ne saurait d’où il vient
+
 ### Maintenance
 - **L'ancienne source de données est retirée du code.** Elle n'était plus interrogée depuis la v1.6 et ferme le 1ᵉʳ octobre : la garder câblée revenait à maintenir et tester un chemin vers un service éteint. Rien ne change à l'écran
 - Le socle réseau qu'elle avait apporté — cache, limiteur, secours pendant une panne — reste en place et sert la source actuelle

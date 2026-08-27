@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useCookieConsent, hasConsent } from './CookieContext'
 import { readStorage, removeStorage, writeStorage } from '../utils/storage'
+import { fusionner } from '../utils/fusion'
 
 const KEY = 'anime-ink-watchlist'
 const dedup = (arr) => arr.filter((a, i, self) => self.findIndex(b => b.mal_id === a.mal_id) === i)
@@ -123,13 +124,27 @@ export function WatchlistProvider({ children }) {
     save(next)
   }
 
+  /**
+   * Ajoute une liste restaurée, sans jamais écraser ce qui est déjà là.
+   *
+   * L'existant passe devant : le dédoublonnage garde la première occurrence
+   * d'un identifiant. Une série suivie jusqu'à l'épisode 12 le reste, même si
+   * le fichier restauré la connaît à l'épisode 3.
+   */
+  const importer = (entrees) => {
+    if (!canStore) return 0
+    const suivant = fusionner(watchlist, entrees)
+    save(suivant)
+    return suivant.length - watchlist.length
+  }
+
   const clearWatchlist = () => {
     setWatchlist([])
     removeStorage(KEY)
   }
 
   return (
-    <WatchlistContext.Provider value={{ watchlist, getStatus, setStatus, setEpisode, setSeason, setSeasonData, remove, reorder, clearWatchlist }}>
+    <WatchlistContext.Provider value={{ watchlist, getStatus, setStatus, setEpisode, setSeason, setSeasonData, remove, reorder, clearWatchlist, importer }}>
       {children}
     </WatchlistContext.Provider>
   )

@@ -1,6 +1,14 @@
-export const CURRENT_VERSION = '1.7'
+export const CURRENT_VERSION = '1.8'
 
 export const CHANGELOG = [
+  {
+    version: '1.8',
+    date: '28 août 2026',
+    changes: [
+      { type: 'feat', label: 'Télécharge tes favoris, ta liste et ton historique dans un fichier — et restaure-les sur un autre appareil' },
+      { type: 'ui', label: 'Une restauration complète tes données sans jamais écraser ce qui est déjà là' },
+    ],
+  },
   {
     version: '1.7',
     date: '27 août 2026',
