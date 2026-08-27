@@ -112,9 +112,18 @@ export function createCache({ maxEntries = 200, graceMs = GRACE_PAR_DEFAUT } = {
     },
 
     set(key, value, ttlMs) {
-      const entry = { value, expiresAt: Date.now() + ttlMs }
+      // `storedAt` sert à dire à l'utilisateur de quand date ce qu'il regarde
+      // quand une panne nous fait ressortir cette entrée.
+      const entry = { value, storedAt: Date.now(), expiresAt: Date.now() + ttlMs }
       remember(key, entry)
       writeMirror(key, entry)
+    },
+
+    /** Quand cette réponse a été rangée, ou `undefined` si rien n'est en réserve. */
+    staleDate(key) {
+      const entry = store.get(key) ?? readMirror(key)
+      if (!entry || horsGrace(entry)) return undefined
+      return entry.storedAt
     },
 
     /**

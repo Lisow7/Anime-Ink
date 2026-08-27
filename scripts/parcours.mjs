@@ -191,6 +191,13 @@ const PARCOURS = [
         `panne survenue après consultation : ${cartes} carte(s) affichée(s), `
         + `${enErreur} écran(s) d'erreur — la dernière réponse connue devait être resservie`,
       )
+
+      // Resservir une copie sans le dire laisserait croire qu'elle est fraîche.
+      const mention = await page.locator('footer [role="status"]').first().innerText()
+      verifier(
+        /données du/i.test(mention),
+        `le pied de page ne signale pas que les données sont datées : « ${mention.replace(/\s+/g, ' ')} »`,
+      )
     },
   },
   {

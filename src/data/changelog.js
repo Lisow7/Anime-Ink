@@ -6,6 +6,7 @@ export const CHANGELOG = [
     date: '27 août 2026',
     changes: [
       { type: 'fix', label: 'Une panne de l’API ne vide plus un écran déjà consulté — la dernière version connue est resservie' },
+      { type: 'ui',  label: 'Le pied de page indique de quand datent les données resservies pendant une panne' },
     ],
   },
   {

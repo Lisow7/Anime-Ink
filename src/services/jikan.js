@@ -18,12 +18,31 @@ const REQUEST_TIMEOUT_MS = 8000
 const BURST_CAPACITY = 3
 const REFILL_PER_SECOND = 1
 
-let apiHealth = { status: 'unknown', checkedAt: null }
+let apiHealth = { status: 'unknown', checkedAt: null, staleSince: null }
 const apiHealthListeners = new Set()
 
-function updateApiHealth(status) {
-  apiHealth = { status, checkedAt: Date.now() }
+function diffuserSante() {
   apiHealthListeners.forEach((listener) => listener(apiHealth))
+}
+
+function updateApiHealth(status) {
+  // Une réponse fraîche annule le signalement : ce qui s'affiche n'est plus
+  // une copie de secours.
+  const staleSince = status === 'available' ? null : apiHealth.staleSince
+  apiHealth = { status, checkedAt: Date.now(), staleSince }
+  diffuserSante()
+}
+
+/**
+ * Une réponse périmée vient d'être resservie. L'utilisateur regarde des données
+ * qui peuvent dater : le lui taire serait lui laisser croire qu'elles sont
+ * fraîches.
+ */
+function signalerDonneePerimee(storedAt) {
+  if (!Number.isFinite(storedAt)) return
+  if (apiHealth.staleSince === storedAt) return
+  apiHealth = { ...apiHealth, staleSince: storedAt }
+  diffuserSante()
 }
 
 export function getApiHealth() {
@@ -90,6 +109,7 @@ const client = createJikanClient({
   limiter: createRateLimiter({ capacity: BURST_CAPACITY, refillPerSecond: REFILL_PER_SECOND }),
   cache: responseCache,
   ttlFor: ttlForPath,
+  onStale: signalerDonneePerimee,
 })
 
 function requestJson(path, options) {
