@@ -1,11 +1,13 @@
 import { verifierContrat } from './contrat-anime.conformite'
-import {
-  getAnimeById,
-  getAnimeRecommendations,
-  getGenres,
-  getTopAnime,
-  searchAnime,
-} from './anilist'
+import { creerAdaptateurAniList } from './anilist'
+
+/**
+ * Un limiteur transparent : le contrat porte sur la FORME de ce qui sort, pas
+ * sur le débit. Le vrai limiteur ferait durer cette suite plus d'une minute —
+ * un jeton toutes les deux secondes — pour ne rien prouver de plus.
+ */
+const adaptateur = creerAdaptateurAniList({ limiter: { acquire: () => Promise.resolve() } })
+const { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations } = adaptateur
 
 /**
  * Le nouvel adaptateur, soumis au contrat — **la même suite que Jikan**.
@@ -68,4 +70,7 @@ function installerReseau(cas) {
 verifierContrat('AniList', {
   adaptateur: { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations },
   installerReseau,
+  // Le cache est propre à cet adaptateur : sans purge, un cas recevrait la
+  // réponse installée par le précédent.
+  avantChaque: () => adaptateur.clearApiCache(),
 })
