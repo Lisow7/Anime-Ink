@@ -62,7 +62,7 @@ export default function App() {
     <FavoritesProvider>
     <WatchlistProvider>
     <ModalProvider>
-      <BrowserRouter basename="/Anime-Ink">
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <div className="min-h-screen flex flex-col overflow-x-hidden">
           {/* La barre de navigation précède le contenu sur toutes les pages et
               compte six à huit contrôles tabulables. Sans ce lien, un utilisateur
