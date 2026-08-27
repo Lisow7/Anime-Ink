@@ -156,6 +156,22 @@ export function repondreAniList(operation, variables = {}, animes = ANIMES) {
     const source = animes.find(a => a.mal_id === demandee.idMal) ?? animes[0]
     return { data: { Media: { ...demandee, relations: { edges: relationsVersAniList(source, animes) } } } }
   }
+  if (operation === 'prochainsEpisodes') {
+    // Un jeu volontairement mixte : une série qui diffuse encore et une qui
+    // est terminée. Sans la seconde, l'écran « sans date » — le cas le plus
+    // fréquent d'une liste de suivi — ne serait jamais éprouvé.
+    const demandes = new Set((variables.ids ?? []).map(Number))
+    return { data: { Page: { media: animes
+      .filter(a => demandes.size === 0 || demandes.has(a.mal_id))
+      .map(a => ({
+        idMal: a.mal_id,
+        status: STATUTS_ANILIST[a.status] ?? 'FINISHED',
+        episodes: a.episodes ?? null,
+        nextAiringEpisode: a.status === 'Currently Airing'
+          ? { episode: 9, airingAt: Math.floor(Date.UTC(2026, 7, 30, 17, 0, 0) / 1000) }
+          : null,
+      })) } } }
+  }
   if (operation === 'recommandations') {
     return { data: { Media: { recommendations: { nodes: media.slice(1, 4).map(m => ({ mediaRecommendation: m })) } } } }
   }

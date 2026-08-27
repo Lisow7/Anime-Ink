@@ -5,6 +5,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { Link } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
+import OuReprendre from '../components/OuReprendre'
 
 function StatCard({ label, value, sub }) {
   return (
@@ -154,6 +155,10 @@ export default function Profil() {
               </div>
             </section>
           )}
+
+          {/* Où reprendre — avant les compteurs : on vient d'abord pour
+              continuer une série, pas pour lire des statistiques. */}
+          <OuReprendre watchlist={watchlist} />
 
           {/* Ma liste par statut */}
           {watchlist.length > 0 && (

@@ -22,17 +22,30 @@ import { gzipSync } from 'node:zlib'
 const ASSETS = 'dist/assets'
 
 /**
- * Mesuré au 27 août 2026 : 100,7 ko au démarrage, 138,7 ko au total.
+ * Mesuré au 27 août 2026 : 103,9 ko au démarrage, 142,6 ko au total.
  *
  * Les marges sont de l'ordre de 3 %, et ce n'est pas de la coquetterie : un
  * premier réglage à 10 % laissait passer, sans un mot, le retour d'une route
  * entière dans le chunk d'entrée — +4,6 ko, la régression même que ce budget
  * doit refuser. Un plafond se règle sur ce qu'on veut attraper, pas sur une
  * fraction confortable du mesuré.
+ *
+ * Relevé de 104 à 105 ko le 27 août : le mesuré était monté à 103,9, soit 0,1 ko
+ * de marge — un cliquet qui refuse le prochain octet ne protège plus, il bloque.
+ *
+ * 105 et non 107, et l'écart n'est pas un détail : à 107, la mutation de
+ * référence — une route entière remise dans le chunk d'entrée, mesurée à
+ * 105,6 ko — **passait sans un mot**. C'est la régression même que ce budget
+ * existe pour refuser, et relâcher le plafond « pour se donner de l'air »
+ * l'aurait rendue invisible une seconde fois.
+ *
+ * La règle, donc : **le plafond se règle sur la plus petite régression qu'on
+ * veut attraper**, jamais sur une fraction confortable du mesuré. Et il ne se
+ * relève qu'avec la mesure qui le justifie, dans le commit qui l'accompagne.
  */
 const PLAFONDS = {
-  demarrage: 104 * 1024,
-  total: 143 * 1024,
+  demarrage: 105 * 1024,
+  total: 146 * 1024,
 }
 
 const gz = chemin => gzipSync(readFileSync(chemin)).length
