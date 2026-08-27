@@ -148,9 +148,17 @@ export function bandeAnnonceDepuisAniList(trailer) {
   }
 }
 
-/** Le rang « toutes périodes » sur la note, l'équivalent le plus proche de `rank`. */
-function rangDepuisAniList(rankings) {
-  const rang = (rankings ?? []).find(r => r.type === 'RATED' && r.allTime)
+/**
+ * Un rang « toutes périodes », par note ou par popularité.
+ *
+ * L'interface affiche les deux comme des places de classement — « #55 ». Le
+ * champ `popularity` d'AniList ne dit pas une place mais un **nombre de
+ * membres** : l'y verser affichait « POPULARITÉ #464889 », un classement
+ * absurde là où MyAnimeList donnait un rang. Les deux valeurs se lisent donc
+ * dans `rankings`, seul endroit où AniList exprime une place.
+ */
+function rangDepuisAniList(rankings, type = 'RATED') {
+  const rang = (rankings ?? []).find(r => r.type === type && r.allTime)
   return Number.isFinite(rang?.rank) ? rang.rank : null
 }
 
@@ -174,7 +182,7 @@ export function animeDepuisAniList(media) {
     score: scoreSurDix(media.averageScore),
     scored_by: Number.isFinite(media.popularity) ? media.popularity : null,
     rank: rangDepuisAniList(media.rankings),
-    popularity: Number.isFinite(media.popularity) ? media.popularity : null,
+    popularity: rangDepuisAniList(media.rankings, 'POPULAR'),
     type: typeDepuisAniList(media.format),
     episodes: Number.isFinite(media.episodes) ? media.episodes : null,
     duration: dureeDepuisAniList(media.duration, media.format),

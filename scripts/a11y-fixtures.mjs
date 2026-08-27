@@ -107,7 +107,9 @@ function versAniList(anime) {
     description: anime.synopsis,
     studios: { nodes: (anime.studios ?? []).map(s => ({ id: s.mal_id, name: s.name })) },
     trailer: anime.trailer ? { id: anime.trailer.youtube_id, site: 'youtube' } : null,
-    rankings: anime.rank ? [{ rank: anime.rank, type: 'RATED', allTime: true }] : [],
+    rankings: anime.rank
+      ? [{ rank: anime.rank, type: 'RATED', allTime: true }, { rank: anime.popularity, type: 'POPULAR', allTime: true }]
+      : [],
   }
 }
 

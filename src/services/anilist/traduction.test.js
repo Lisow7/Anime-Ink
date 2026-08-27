@@ -42,7 +42,7 @@ const COWBOY_BEBOP = {
   description: 'Enter a world in the distant future.<br><br>\nWhile developing a rapport.',
   studios: { nodes: [{ id: 14, name: 'Sunrise' }] },
   trailer: { id: 'abc123', site: 'youtube' },
-  rankings: [{ rank: 46, type: 'RATED', allTime: true }],
+  rankings: [{ rank: 46, type: 'RATED', allTime: true }, { rank: 56, type: 'POPULAR', allTime: true }],
 }
 
 describe('traduction AniList → contrat', () => {
@@ -119,6 +119,11 @@ describe('traduction AniList → contrat', () => {
     expect(anime.season).toBe('spring')
     expect(anime.year).toBe(1998)
     expect(anime.rank).toBe(46)
+    // La popularité s'affiche comme une PLACE — « #56 ». Le champ `popularity`
+    // d'AniList compte des membres, pas des places : l'y verser affichait
+    // « POPULARITÉ #464889 ». Le rang se lit donc dans `rankings`, et cette
+    // attente distingue les deux valeurs, toutes deux présentes dans le média.
+    expect(anime.popularity).toBe(56)
     expect(anime.studios).toEqual([{ mal_id: 14, name: 'Sunrise' }])
     // Les genres portent leur identifiant MyAnimeList : les URL déjà partagées
     // et les favoris enregistrés continuent de désigner la même chose.
