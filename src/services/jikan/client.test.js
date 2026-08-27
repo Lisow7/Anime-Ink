@@ -209,3 +209,40 @@ describe('client Jikan', () => {
     expect(seen[0]?.aborted).toBe(true)
   })
 })
+
+describe('secours par la dernière réponse connue', () => {
+  it('ressert la donnée périmée quand l’API tombe', async () => {
+    vi.useFakeTimers()
+    const cache = createCache()
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ data: 'frais' }))
+      .mockResolvedValue(jsonResponse({ status: 504 }, 504))
+
+    const client = makeClient(fetchImpl, { cache, retries: 0, ttlFor: () => 1000 })
+
+    expect(await client.request('/top/anime')).toEqual({ data: 'frais' })
+    vi.advanceTimersByTime(1500)
+
+    // L'API est tombée : plutôt que de rejeter, on ressert ce qu'on a.
+    expect(await client.request('/top/anime')).toEqual({ data: 'frais' })
+    vi.useRealTimers()
+  })
+
+  it('ne ressert rien pour une ressource qui n’existe pas', async () => {
+    const cache = createCache()
+    const fetchImpl = vi.fn(async () => jsonResponse({ status: 404 }, 404))
+    const client = makeClient(fetchImpl, { cache, retries: 0 })
+
+    // Un 404 est une réponse, pas une panne : servir une vieille copie
+    // prétendrait que la ressource existe encore.
+    await expect(client.request('/anime/999999/full')).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('rejette normalement quand rien n’a jamais été mis en réserve', async () => {
+    const cache = createCache()
+    const fetchImpl = vi.fn(async () => jsonResponse({ status: 504 }, 504))
+    const client = makeClient(fetchImpl, { cache, retries: 0 })
+
+    await expect(client.request('/top/anime')).rejects.toMatchObject({ status: 504 })
+  })
+})

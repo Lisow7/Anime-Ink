@@ -160,6 +160,40 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'une panne ne vide pas un catalogue déjà consulté',
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(`${base}catalogue`, { waitUntil: 'load' })
+      await page.locator('main img[alt]').first().waitFor({ timeout: 15_000 })
+
+      // Antidater l'entrée plutôt qu'attendre une heure : le secours ne
+      // s'active qu'après expiration, et un test qui patiente n'en est pas un.
+      const antidatee = await page.evaluate(() => {
+        const cle = Object.keys(sessionStorage).find(k => k.includes('anime-ink-cache:/anime?'))
+        if (!cle) return false
+        const entree = JSON.parse(sessionStorage.getItem(cle))
+        entree.expiresAt = Date.now() - 60_000
+        sessionStorage.setItem(cle, JSON.stringify(entree))
+        return true
+      })
+      verifier(antidatee, "aucune réponse de catalogue n'a été mise en réserve")
+
+      // L'API tombe. La réserve est périmée — elle doit servir quand même.
+      await page.unroute('**/api.jikan.moe/**')
+      await servir(page, { enPanne: true })
+      await page.reload({ waitUntil: 'load' })
+      await page.waitForTimeout(8000)
+
+      const cartes = await page.locator('main img[alt]').count()
+      const enErreur = await page.locator('main [role="alert"]').count()
+      verifier(
+        cartes > 0 && enErreur === 0,
+        `panne survenue après consultation : ${cartes} carte(s) affichée(s), `
+        + `${enErreur} écran(s) d'erreur — la dernière réponse connue devait être resservie`,
+      )
+    },
+  },
+  {
     nom: 'les onglets locaux survivent à une panne de l’API',
     async executer(page, base) {
       // D'abord peupler l'historique pendant que l'API répond : la fiche l'écrit

@@ -85,19 +85,27 @@ inattendu dégrade en liste vide, et la fiche bascule sur sa page « introuvable
 Écrire une détection ajouterait un chemin de code pour un cas que le contrat
 absorbe.
 
-**« Servir la dernière réponse valide pendant une panne » — arbitrage, pas
-tâche.** Le constat tient : `cache.js` supprime l'entrée dès son expiration, il
-n'existe aucun mode « périmé plutôt que rien ». Mais le gain serait mince. Le
-cache vit en `sessionStorage` : il meurt avec l'onglet. Servir du périmé
-n'aiderait donc que dans une session ouverte depuis plus d'une heure — pas dans
-le cas qui fait mal, l'arrivée sur un site dont l'API est tombée, où le cache est
-vide de toute façon.
+**« Servir la dernière réponse valide pendant une panne » — fait, après avoir
+été écarté.** Je l'avais classé « arbitrage, pas tâche » : le cache vivant en
+`sessionStorage`, servir du périmé n'aide pas à l'arrivée sur un site dont l'API
+est déjà tombée, puisque le cache y est vide.
 
-Le rendre utile supposerait `localStorage`, que le projet refuse délibérément :
-ce quota de 5 Mo porte les favoris, la liste de suivi et l'historique, données
-irremplaçables qu'un cache jetable n'a pas à mettre en péril. **C'est donc un
-choix entre confort hors-ligne et protection des données de l'utilisateur**, à
-poser comme tel le jour où on le reprendra — pas une ligne à cocher.
+Cet argument tient toujours. Ce qui a changé, c'est le poids de l'autre
+scénario : **la panne de Jikan dure et va par intermittence**. Consulter le
+catalogue, puis le perdre quand une durée de validité expire alors que la
+réponse est là, n'est plus l'exception — c'est le cas courant. Jikan applique
+d'ailleurs cette pratique à son propre cache : ses réponses portent
+`X-Cache-Status: STALE` pendant les pannes de MyAnimeList.
+
+Implémenté sous la forme du `stale-if-error` de la RFC 5861 : l'entrée périmée
+n'est plus effacée mais gardée un jour en réserve, et resservie **quand le
+réseau a définitivement échoué**. Réservé aux pannes — un `404` reste un `404`,
+resservir une vieille copie prétendrait que la ressource existe encore.
+
+Ce que cela ne fait pas, et ne fera pas sans changer d'avis sur le stockage :
+aider une première visite pendant une panne. Le rendre possible supposerait
+`localStorage`, que le projet refuse pour protéger le quota des favoris, de la
+liste de suivi et de l'historique.
 
 **Enfin, une nuance sur `Retry-After`** : sa prise en charge existe bien dans le
 code, mais **Jikan n'envoie jamais cet en-tête** (mesuré sur un vrai `429`). Le
