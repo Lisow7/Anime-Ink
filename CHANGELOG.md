@@ -10,6 +10,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 ### Maintenance
 - Sept parcours utilisateur vérifiés à chaque pull request, dans un vrai navigateur : recherche, filtres et leur persistance dans l’URL, favoris avec et sans consentement, mode dégradé, censure. Les tests existants ne couvraient que la couche réseau et les utilitaires — aucun ne regardait ce que les pages font
 - Un budget de poids refuse les régressions de bundle : 100,7 ko au démarrage, 138,7 ko au total, plafonds serrés à 3 %. La performance gagnée en v1.2 ne pouvait jusqu’ici être reperdue sans que rien ne le signale
+- La règle de numérotation des versions est écrite dans le README : quelle version porte un commit, quand la version affichée bouge, et l’avertissement qu’avant la 1.2 la convention était l’inverse
 - Feuille de route rapatriée dans le dépôt et relue dans le code : deux points s’y annonçaient livrés sans l’être, et les instruire a suffi à les régler — l’un était sans objet, l’autre est un arbitrage et non une tâche
 
 > Rien de visible pour un visiteur dans ce lot : la version affichée reste `1.3`
