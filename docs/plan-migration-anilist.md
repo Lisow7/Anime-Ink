@@ -184,13 +184,40 @@ Trois choses apprises en chemin :
   AniList sert du PNG là où MyAnimeList servait du WebP : l'écart de poids est à
   mesurer avant la bascule.
 
-### 3 — Le débit et le cache
+### 3 — Le débit et le cache ✅ *(fait le 27 août 2026)*
 
 Caler le limiteur sur **30/min mesuré**, lire `X-RateLimit-Remaining` pour
 anticiper plutôt que subir, brancher `Retry-After`.
 
 *Fini quand* : une rafale ne provoque aucun `429`, et le cache, le secours
 périmé et la déduplication fonctionnent inchangés.
+
+**Fait.** Les quatre briques sont **reprises telles quelles** — aucune n'a été
+réécrite pour GraphQL. La requête entre dans le moule du client en encodant son
+opération et ses variables dans la clé de cache : deux requêtes identiques
+produisent la même clé, donc le même cache et la même déduplication.
+
+Débit mesuré plutôt que cru : AniList annonce 90/min et en applique **30**. Une
+rafale de cinq passe sans refus, le compteur descendant de 29 à 25 — d'où une
+capacité de 5 et un jeton toutes les deux secondes.
+
+Et ce que Jikan ne permettait pas : **`X-RateLimit-Remaining` est lu à chaque
+réponse**. Quand il reste trois requêtes ou moins, l'adaptateur attend la fin de
+la fenêtre plutôt que de se faire refuser puis de retenter — trois appels perdus
+au lieu d'une attente.
+
+Deux pièges rencontrés, tous deux dans les tests :
+
+- **AniList répond `200` sur une erreur GraphQL**, le corps portant `errors`.
+  S'en remettre au code HTTP aurait mis cette erreur en cache comme une réponse
+  valide. Elle est retraduite en réponse fautive, avec le statut qu'elle
+  annonce ;
+- **sous faux timers, l'attente entre deux tentatives ne s'écoule jamais** : le
+  test expirait au lieu d'échouer. Les reprises sont désormais injectables.
+
+L'adaptateur l'est aussi — limiteur, cache, réseau, reprises. C'est ce qui
+manquait à l'adaptateur historique, dont la suite de conformité dure huit
+secondes quand celle d'AniList en prend moins d'une demie.
 
 ### 4 — La bascule
 
