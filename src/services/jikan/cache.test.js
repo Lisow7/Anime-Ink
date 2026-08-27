@@ -143,3 +143,21 @@ describe('secours périmé', () => {
     expect(storage.getItem('anime-ink-cache:/anime?page=1')).toBeNull()
   })
 })
+
+describe('date de mise en réserve', () => {
+  it('retient le moment où la réponse a été rangée', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-27T10:00:00Z'))
+    const cache = createCache()
+
+    cache.set('/top/anime', { data: [1] }, 1000)
+    vi.advanceTimersByTime(5000)
+
+    expect(cache.staleDate('/top/anime')).toBe(new Date('2026-08-27T10:00:00Z').getTime())
+  })
+
+  it('ne date rien qui n’a pas été mis en réserve', () => {
+    const cache = createCache()
+    expect(cache.staleDate('/jamais/vue')).toBeUndefined()
+  })
+})

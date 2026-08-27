@@ -5,6 +5,13 @@ import ChangelogModal from './ChangelogModal'
 import { CURRENT_VERSION } from '../data/changelog'
 import { getApiHealth, subscribeApiHealth } from '../services/jikan'
 
+/** « 27 août à 14:19 » — l'année est superflue, la réserve ne tient qu'un jour. */
+function dateLisible(horodatage) {
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(horodatage))
+}
+
 export default function Footer() {
   const apiHealth = useSyncExternalStore(subscribeApiHealth, getApiHealth, getApiHealth)
   const [showChangelog, setShowChangelog] = useState(false)
@@ -30,6 +37,10 @@ export default function Footer() {
           }`} />
           <span className="text-[var(--text-muted)] text-xs" role="status" aria-live="polite">
             {statusLabel}
+            {/* Quand une panne nous fait ressortir une réponse déjà connue,
+                l'utilisateur regarde des données qui peuvent dater. Le taire
+                lui laisserait croire qu'elles sont fraîches. */}
+            {apiHealth.staleSince && ` · données du ${dateLisible(apiHealth.staleSince)}`}
           </span>
         </div>
 

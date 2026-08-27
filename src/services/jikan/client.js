@@ -48,8 +48,18 @@ export function createJikanClient({
   retries = 2,
   retryDelayFor = defaultRetryDelay,
   failureTtl = 30_000,
+  /** Prévenu quand une réponse périmée a été resservie, avec sa date. */
+  onStale,
 }) {
   const inFlight = new Map()
+
+  /** Sert la réserve s'il y en a une, en signalant de quand elle date. */
+  function servirLaReserve(path) {
+    const secours = cache.getStale?.(path)
+    if (secours === undefined) return undefined
+    onStale?.(cache.staleDate?.(path) ?? null)
+    return secours
+  }
 
   async function run(path, signal) {
     for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -68,7 +78,7 @@ export function createJikanClient({
           continue
         }
 
-        const secours = cache.getStale?.(path)
+        const secours = servirLaReserve(path)
         if (secours !== undefined) return secours
 
         throw error instanceof JikanError
@@ -108,7 +118,7 @@ export function createJikanClient({
        * servant du passé masquerait le défaut.
        */
       if (RETRYABLE_STATUS.has(response.status)) {
-        const secours = cache.getStale?.(path)
+        const secours = servirLaReserve(path)
         if (secours !== undefined) return secours
       }
 
