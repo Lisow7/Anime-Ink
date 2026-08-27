@@ -39,10 +39,29 @@ describe('accord entre le code et la configuration de l’hébergement', () => {
     expect(hotes).toContain('cdn.myanimelist.net')
   })
 
-  it('sert les routes en réécriture, sans changer de code de statut', () => {
-    // C'est tout l'objet du déplacement : la même page, mais en `200`. Un
-    // `redirects` à la place ferait un détour visible et garderait le défaut.
-    expect(CONFIG.rewrites).toEqual([{ source: '/(.*)', destination: '/index.html' }])
+  it('réécrit chaque route de l’application, et elles seules', () => {
+    // Les routes sont lues dans le code plutôt que recopiées : en ajouter une
+    // sans l'inscrire ici la ferait répondre `404` en production, alors même
+    // qu'elle marche en développement.
+    const app = readFileSync(fileURLToPath(new URL('../App.jsx', import.meta.url)), 'utf8')
+    const routes = [...app.matchAll(/<Route\s+path="([^"]+)"/g)]
+      .map(m => m[1])
+      .filter(chemin => chemin !== '*' && chemin !== '/')          // l'accueil est un fichier, pas une réécriture
+      .map(chemin => chemin.replace(/:(\w+)/g, ':$1'))
+
+    const reecrites = CONFIG.rewrites.map(r => r.source)
+    routes.forEach(route => {
+      expect(reecrites, `la route ${route} n'est pas réécrite : elle répondra 404 en production`).toContain(route)
+    })
+  })
+
+  it('ne réécrit pas tout et n’importe quoi', () => {
+    // Une réécriture attrape-tout rendrait `200` sur **toute** adresse, y
+    // compris inventée : le « soft 404 » que la documentation déconseille, et
+    // le symétrique exact du défaut qu'on répare.
+    const attrapeTout = CONFIG.rewrites.filter(r => /^\/\(?\.\*\)?/.test(r.source))
+    expect(attrapeTout).toEqual([])
+    // Un `redirects` ferait un détour visible et garderait le défaut.
     expect(CONFIG.redirects).toBeUndefined()
   })
 
