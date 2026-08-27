@@ -120,7 +120,7 @@ fiche ouverte — **disparaît**.
 Chacune se termine sur un état livrable et vérifiable. Aucune ne casse la
 précédente.
 
-### 1 — Le contrat interne
+### 1 — Le contrat interne ✅ *(fait le 27 août 2026)*
 
 Définir la forme que l'application consomme : un animé, une page de résultats,
 une recommandation. La déduire de ce dont les composants ont **réellement**
@@ -129,6 +129,26 @@ d'une API qu'on quitte.
 
 *Fini quand* : le contrat est écrit et testé, et l'adaptateur Jikan actuel le
 remplit sans que les pages changent. **Bascule non faite, site inchangé.**
+
+**Fait.** `contrat-anime.js` décrit la forme ; `contrat-anime.conformite.js`
+porte la suite qu'un adaptateur doit passer — c'est là qu'est la valeur, une
+description en prose n'engageant à rien. L'adaptateur Jikan la passe : **9 tests,
+et aucune page n'a changé.**
+
+Prouvée par mutation : en laissant le score sur 100, comme le ferait un
+adaptateur AniList mal fini, la suite sort en *« expected 87.5 to be less than
+or equal to 10 »*.
+
+Deux décisions à connaître avant la phase 2 :
+
+- **le contrat garde les noms de champs existants.** Les favoris, la liste de
+  suivi et l'historique persistent ces objets dans `localStorage` : renommer un
+  champ rendrait illisibles des données constituées par l'utilisateur. Ce n'est
+  pas la forme de Jikan, c'est le sous-ensemble que l'application consomme,
+  relevé dans les destructurations ;
+- **la suite dure 8 secondes**, parce que le limiteur de débit réel s'applique
+  aussi aux tests — `jikan.js` construit son client en dur. Le rendre injectable
+  relève de la phase 3.
 
 ### 2 — L'adaptateur AniList
 
