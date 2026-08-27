@@ -8,9 +8,9 @@ const DELAI_MS = 8000
 /**
  * Sous quel reste de quota on s'arrête d'anticiper pour attendre franchement.
  *
- * AniList expose `X-RateLimit-Remaining` à chaque réponse — Jikan n'exposait
- * rien, ce qui obligeait à deviner. Le lire permet de ralentir **avant** le
- * refus plutôt que de le subir et de retenter.
+ * AniList expose `X-RateLimit-Remaining` à chaque réponse. Le lire permet de
+ * ralentir **avant** le refus plutôt que de le subir et de retenter — l'API
+ * précédente n'exposait rien, et il fallait deviner.
  */
 const SEUIL_PRUDENCE = 3
 

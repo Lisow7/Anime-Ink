@@ -2,8 +2,15 @@
  * Le contrat que l'application attend d'une source de données.
  *
  * Il n'existait qu'à l'état implicite, éparpillé dans les destructurations des
- * composants. L'écrire est le préalable au changement d'API : tant qu'aucune
- * forme n'est nommée, on ne peut pas vérifier qu'une nouvelle source la remplit.
+ * composants. L'écrire fut le préalable au changement d'API d'août 2026 : tant
+ * qu'aucune forme n'est nommée, on ne peut pas vérifier qu'une nouvelle source
+ * la remplit.
+ *
+ * Une seule source subsiste depuis. Ce module n'arbitre donc plus entre deux
+ * adaptateurs, mais il garde tout son emploi : il fige ce que les écrans
+ * attendent, et la suite de conformité empêche la traduction d'AniList d'y
+ * déroger sans qu'on le voie — une note ramenée sur cent, un identifiant
+ * devenu chaîne, un tableau devenu `undefined`.
  *
  * ## Pourquoi ces noms de champs et pas d'autres
  *
@@ -12,9 +19,15 @@
  * Renommer un champ rendrait illisibles des données que l'utilisateur a
  * constituées — la migration serait à écrire, à tester, et à réussir du premier
  * coup chez tout le monde. Le contrat épouse donc la forme existante, non par
- * fidélité à Jikan, mais parce que la rompre coûterait aux utilisateurs.
+ * fidélité à l'API disparue, mais parce que la rompre coûterait aux
+ * utilisateurs.
  *
- * Ce n'est pas « la forme de Jikan » : c'est le **sous-ensemble** que
+ * ⚠️ **Cette raison survit à la source qui l'a introduite.** `mal_id` reste
+ * juste — c'est bien un identifiant MyAnimeList, celui par lequel AniList
+ * retrouve une œuvre (`Media(idMal:)`). Le renommer « pour épurer » casserait
+ * les favoris, la liste et l'historique de chaque visiteur.
+ *
+ * Ce n'est pas la forme d'une API : c'est le **sous-ensemble** que
  * l'application consomme réellement, relevé dans les destructurations de
  * `AnimeCard`, `AnimeListCard`, `AnimeModal`, `AnimeDetail`, `Home`, et dans ce
  * que les trois contextes de persistance écrivent.
@@ -92,10 +105,10 @@ export function estPageValide(page) {
 /**
  * Une recommandation, telle que la modale la consomme.
  *
- * Ni Jikan ni Tenrai ne joignent les genres à leur `entry` — vérifié sur les
- * deux. Le contrat ne les exige donc pas, mais **les accepte** : AniList les
- * fournit, avec `isAdult`, et le floutage des suggestions cessera alors de
- * reposer sur le registre de la fiche ouverte.
+ * Le contrat n'exige pas les genres sur une suggestion — l'API historique ne
+ * les joignait pas, et cette tolérance a été écrite pour elle. AniList les
+ * fournit, avec `isAdult` : chaque suggestion est donc jugée pour elle-même, et
+ * le repli sur le registre de la fiche ouverte ne sert plus.
  */
 export function estRecommandationValide(entry) {
   return estAnimeAffichable(entry)

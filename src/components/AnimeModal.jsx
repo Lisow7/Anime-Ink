@@ -447,10 +447,11 @@ export default function AnimeModal() {
                 suggestions-ci, personne ne les a choisies — c'est de la
                 découverte, comme la grille.
 
-                AniList joint les genres et la mention d'âge à chaque
-                suggestion : chacune est donc jugée pour elle-même. Le repli sur
-                le registre de la fiche ouverte reste en place pour Jikan, qui
-                ne les fournissait pas — c'est la seconde branche. */}
+                Chaque suggestion est jugée sur ses propres genres, que la
+                source fournit. Le second terme n'est pas un repli malgré les
+                apparences : il floute aussi les suggestions d'une fiche classée
+                adulte, même celles qui ne le sont pas. Retirer cette clause
+                relâcherait la censure — c'est un arbitrage, pas du ménage. */}
             {recommendations.length > 0 && (
               <div className="flex flex-col gap-3">
                 <h3 className="text-[var(--text-primary)] font-semibold">Vous aimerez aussi</h3>

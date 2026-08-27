@@ -346,10 +346,18 @@ le site ne sont donc pas une panne dont on peut attendre la fin.
 **Décision prise le 27 août : migrer vers [AniList](https://docs.anilist.co),
 directement.**
 
-✅ **Fait le 27 août 2026 (v1.6).** Les cinq phases sont livrées : le site lit
-AniList, Jikan reste câblé derrière `VITE_SOURCE_DONNEES=jikan`, et les dix
-parcours comme les trente passes d'accessibilité sont verts sur les deux
-sources.
+✅ **Fait le 27 août 2026 (v1.6).** Le site lit AniList.
+
+L'adaptateur Jikan a été **retiré le 28 août**, une fois la bascule éprouvée en
+production. Le garder « au cas où » revenait à maintenir, tester et documenter
+un chemin de code vers un service qui ferme — et à faire porter à chaque
+lecteur la question « laquelle des deux lit-on ? » pour une réponse qui ne
+changeait plus.
+
+Ce qu'il laisse derrière lui n'est pas rien : le **socle réseau** — cache,
+limiteur, déduplication, secours périmé — lui survit et sert AniList sans avoir
+été réécrit. C'est lui, et non l'adaptateur, qui rendra le prochain changement
+de source aussi peu coûteux que celui-ci.
 
 → **[Plan détaillé](./docs/plan-migration-anilist.md)** — cinq phases, chacune
 livrable, la bascule prouvée par mutation.
