@@ -9,6 +9,7 @@ export const CHANGELOG = [
       { type: 'ui',  label: 'Les saisons d’une série sont lues dans les liens déclarés par le catalogue, non plus devinées d’après les titres' },
       { type: 'ui',  label: 'Le menu des genres propose 19 entrées au lieu de 78 — celles que le nouveau catalogue reconnaît' },
       { type: 'feat', label: 'Chaque suggestion « Vous aimerez aussi » est jugée sur ses propres genres pour la censure' },
+      { type: 'fix', label: 'La popularité d’une fiche affiche de nouveau un rang, et non un nombre de membres' },
     ],
   },
   {

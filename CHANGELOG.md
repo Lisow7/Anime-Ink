@@ -13,6 +13,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 - Chaque suggestion « Vous aimerez aussi » est jugée sur ses propres genres pour la censure. Jusqu’ici elles héritaient du registre de la fiche ouverte, faute que l’ancienne source les fournisse
 
 ### Corrections
+- La popularité d’une fiche affiche de nouveau un rang. Le nouveau catalogue compte des membres là où le précédent donnait une place : la fiche annonçait « POPULARITÉ #464889 »
 - Une fiche que le catalogue ne connaît pas s’explique au lieu d’ouvrir une fenêtre vide
 - Un lien périmé n’allume plus le voyant « API indisponible » : une fiche introuvable n’est pas une panne
 
