@@ -3,9 +3,9 @@ import { catalogueDesGenres, nomAniListDepuisIdMal } from './anilist/genres'
 import { cleDeRequete, ttlPourCle } from './anilist/requetes'
 import { creerReseauAniList, quotaConnu } from './anilist/reseau'
 import { parcourirFranchise } from './anilist/franchise'
-import { createJikanClient, JikanError } from './jikan/client'
-import { createRateLimiter } from './jikan/rate-limiter'
-import { createCache } from './jikan/cache'
+import { creerClientReseau, ErreurApi } from './socle/client'
+import { createRateLimiter } from './socle/rate-limiter'
+import { createCache } from './socle/cache'
 import { signalerDonneePerimee } from './sante-api'
 
 /**
@@ -48,7 +48,7 @@ export function creerAdaptateurAniList({
   // tentatives ne s'écoule jamais et le test expire au lieu d'échouer.
   retries,
 } = {}) {
-  const client = createJikanClient({
+  const client = creerClientReseau({
     fetchImpl, limiter, cache, ttlFor: ttlPourCle,
     // Sans ce fil, une copie de secours serait resservie en silence : le pied
     // de page annoncerait des données fraîches alors qu'elles peuvent dater
@@ -275,4 +275,4 @@ export const getProchainsEpisodes = adaptateur.getProchainsEpisodes
 export const getRandomAnime = adaptateur.getRandomAnime
 export const clearApiCache = adaptateur.clearApiCache
 
-export { quotaConnu, JikanError }
+export { quotaConnu, ErreurApi }

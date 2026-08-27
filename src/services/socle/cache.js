@@ -100,7 +100,7 @@ export function createCache({ maxEntries = 200, graceMs = GRACE_PAR_DEFAUT } = {
      * La dernière réponse connue, périmée mais servie plutôt que rien.
      *
      * Réservée aux situations où le réseau a définitivement échoué : c'est le
-     * `stale-if-error` de la RFC 5861, et Jikan lui-même s'en sert — ses
+     * `stale-if-error` de la RFC 5861, dont les API publiques se servent — leurs
      * réponses portent `X-Cache-Status: STALE` pendant les pannes de
      * MyAnimeList. Une donnée d'hier vaut mieux qu'un écran vide.
      */

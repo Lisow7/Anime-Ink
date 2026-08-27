@@ -2,9 +2,9 @@
  * L'état de santé de la source de données, indépendant de laquelle il s'agit.
  *
  * Le voyant du pied de page et la mention « données du … » ne parlent pas de
- * Jikan ni d'AniList : ils disent à l'utilisateur si ce qu'il regarde est frais.
- * Cet état vivait dans `jikan.js`, ce qui le rendait inatteignable depuis
- * l'adaptateur AniList — le voyant serait resté sur « inconnu » à vie après la
+ * la source : ils disent à l'utilisateur si ce qu'il regarde est frais. Cet
+ * état vivait dans l'adaptateur historique, ce qui le rendait inatteignable
+ * depuis le suivant — le voyant serait resté sur « inconnu » à vie après la
  * bascule.
  *
  * Chaque adaptateur y verse ce qu'il observe ; le pied de page s'y abonne sans

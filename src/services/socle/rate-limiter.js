@@ -1,5 +1,5 @@
 /**
- * Seau à jetons calqué sur le comportement mesuré de l'API Jikan :
+ * Seau à jetons, calqué sur le comportement mesuré de l'API interrogée :
  * une rafale courte est tolérée, puis le débit soutenu retombe au rythme
  * de réapprovisionnement. Voir la spec du 2026-08-25 pour la mesure.
  */
