@@ -136,7 +136,7 @@ export default function AnimeDetail() {
           <div className="relative">
             <img
               id="jaquette-anime"
-              src={posterUrl(images, { large: true })}
+              src={posterUrl(images)}
               alt={title}
               width={192}
               height={288}
