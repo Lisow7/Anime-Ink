@@ -228,12 +228,29 @@ possible : **une seule surface reste en suspens**.
 fausse. Voir « La nature de la panne » ci-dessus — le paramètre n'est pas cassé,
 ses variantes ne sont simplement pas en cache.)*
 
-## Chantier proposé, non engagé
+## 🔴 Échéance : l'API Jikan ferme le 1er octobre 2026
 
-**Passer à AniList, garder Jikan en réserve** → [plan détaillé](./docs/plan-migration-anilist.md).
+Ce n'est pas une panne à attendre. L'arrêt de l'API publique a été annoncé sur
+le Discord de Jikan en juin et rapporté dans l'[issue #610](https://github.com/jikan-me/jikan-rest/issues/610) :
+`Jikan public API will be discontinued on October 1, 2026.`
 
-Jikan souffre depuis juillet 2026 d'une panne intermittente [connue et non
-résolue](https://github.com/jikan-me/jikan-rest/issues/610). AniList est
+**Le remède immédiat est mesuré et presque gratuit : [Tenrai](https://api.tenrai.org).**
+Ses réponses sont **identiques champ pour champ** à celles de Jikan, les six
+endpoints du site répondent `200` — y compris ceux qui échouent aujourd'hui —
+CORS ouvert, aucune clé. Changer la base d'URL suffirait.
+
+Deux réserves mesurées : `429` dès la **8ᵉ** requête rapide **sans en-tête de
+quota**, et une gouvernance opaque financée par dons — la même fragilité que
+Jikan. Tenrai éteint l'incendie, il ne supprime pas le risque.
+
+→ **[Plan détaillé](./docs/plan-migration-anilist.md)** : Tenrai avant octobre,
+AniList ensuite.
+
+## Chantier de fond, non engagé
+
+**Passer à AniList** → [même plan](./docs/plan-migration-anilist.md).
+
+AniList est
 utilisable depuis un site statique — CORS ouvert, aucune clé — et
 `Media(idMal:)` permet de retrouver un animé par son identifiant MyAnimeList,
 donc **les favoris et listes déjà stockés resteraient valides**.
