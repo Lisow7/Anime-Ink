@@ -161,7 +161,9 @@ aujourd'hui — les lire comme des manques urgents serait un contresens :
 La panne de Jikan est **partielle** : `/anime/{id}/full`, `/genres/anime` et
 `/anime/{id}/recommendations` répondent ; tous les endpoints à requête —
 `/anime?…`, `/top/anime`, et `filter=` sous toutes ses valeurs — restent en
-`504`. Ce qui pouvait être vérifié l'a donc été, le reste attend.
+`504`. Ce qui pouvait être vérifié l'a donc été — et il s'est avéré qu'on
+pouvait aller bien plus loin qu'attendre : **une seule surface reste en
+suspens**.
 
 - [x] **l'avertissement de la fiche, contre du vrai contenu explicite** (27 août
       2026). Sur `/anime/11617`, *High School DxD*, genre `Ecchi` : jaquette
@@ -169,10 +171,27 @@ La panne de Jikan est **partielle** : `/anime/{id}/full`, `/genres/anime` et
       « Afficher quand même » à `aria-expanded="false"`. **Le focus seul ne
       révèle rien** ; `Entrée` lève le flou et bascule le libellé en « Masquer la
       jaquette ». Titre et synopsis lisibles à toutes les étapes.
-- [ ] le floutage dans **la grille, les suggestions de recherche et la liste de
-      suivi** — il faut un catalogue chargé, donc `/anime?…` ou `/top/anime` ;
-- [ ] le floutage des **suggestions « Vous aimerez aussi »** — elles ne vivent
-      que dans la modale, qui ne s'ouvre qu'au clic sur une carte ;
+- [x] **cinq des six surfaces de floutage, en production** (27 août 2026), sans
+      attendre le catalogue. La manœuvre vaut d'être notée : **visiter une fiche
+      l'inscrit dans l'historique**, ce qui peuple l'onglet « Récents » avec de
+      vraies cartes sans qu'aucune requête de catalogue soit nécessaire. De là,
+      un clic ouvre la modale, et son bouton « Ma liste » alimente la liste de
+      suivi.
+
+      | Surface | mesure |
+      |---|---|
+      | carte de grille (`AnimeCard`) | `blur(12px)` |
+      | carte en vue liste (`AnimeListCard`) | `blur(8px)` |
+      | liste de suivi (`WatchlistTable`) | `blur(12px)`, dans ses deux dispositions |
+      | suggestions « Vous aimerez aussi » | `blur(10px)` sur les six |
+      | fiche détail | `blur(16px)` + avertissement |
+
+      Les six recommandations sont d'autant plus concluantes qu'**aucune ne porte
+      de genre** — Jikan ne les joint pas. C'est donc bien le repli sur le
+      registre de la fiche ouverte qui a joué, en conditions réelles.
+- [ ] le floutage des **suggestions de recherche** — seule surface encore non
+      vérifiée : elle exige `/anime?q=…`, c'est-à-dire la recherche elle-même.
+      Aucun contournement possible, contrairement aux précédentes ;
 - [ ] `/genres/anime?filter=explicit_genres` : toujours `504` le 27 août, alors
       que le même endpoint sans paramètre répond. **Le paramètre est donc cassé
       indépendamment de la panne générale** — ce qui conforte le choix de filtrer
