@@ -327,6 +327,46 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'les sorties de la semaine se groupent par jour',
+    async executer(page, base) {
+      await servir(page)
+      await page.addInitScript(() => {
+        try {
+          localStorage.setItem('anime-ink-cookie-consent', JSON.stringify({ preferences: true, userdata: true }))
+          // L'une diffuse encore, l'autre est terminée : seule la première a
+          // une sortie à annoncer.
+          localStorage.setItem('anime-ink-watchlist', JSON.stringify([
+            { mal_id: 2, title: 'Sousou no Frieren', watchStatus: 'watching', currentEpisode: 7, episodes: null, genres: [], images: {} },
+          ]))
+          localStorage.setItem('anime-ink-favorites', JSON.stringify([
+            { mal_id: 1, title: 'Cowboy Bebop', genres: [], images: {} },
+          ]))
+        } catch { /* stockage refusé */ }
+      })
+
+      await page.goto(`${base}profil`, { waitUntil: 'load' })
+      const section = page.locator('section', { has: page.getByRole('heading', { name: /cette semaine/i }) })
+      await section.waitFor({ timeout: 15_000 })
+      await section.getByText(/Frieren/).waitFor({ timeout: 15_000 })
+
+      const texte = (await section.innerText()).replace(/\s+/g, ' ')
+      verifier(/ép\. 9/.test(texte), `le numéro d'épisode manque : « ${texte.slice(0, 140)} »`)
+
+      // La série terminée n'a pas de prochaine diffusion : l'annoncer serait
+      // inventer une sortie.
+      verifier(
+        !/Cowboy Bebop/.test(texte),
+        `une série terminée figure au calendrier : « ${texte.slice(0, 160)} »`,
+      )
+
+      // Un en-tête de jour, sans quoi la vue n'est qu'une liste de plus.
+      verifier(
+        /(Aujourd|Demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)/i.test(texte),
+        `les sorties ne sont pas groupées par jour : « ${texte.slice(0, 160)} »`,
+      )
+    },
+  },
+  {
     nom: 'une sauvegarde se télécharge, et se restaure sans rien écraser',
     async executer(page, base) {
       await servir(page)

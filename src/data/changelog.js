@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.8'
+export const CURRENT_VERSION = '1.9'
 
 export const CHANGELOG = [
+  {
+    version: '1.9',
+    date: '28 août 2026',
+    changes: [
+      { type: 'feat', label: 'Une vue « Cette semaine » sur ton profil : les sorties à venir de tes séries, groupées par jour' },
+    ],
+  },
   {
     version: '1.8',
     date: '28 août 2026',
