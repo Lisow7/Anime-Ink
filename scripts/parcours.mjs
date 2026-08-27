@@ -13,6 +13,8 @@
  * Les réponses de l'API sont simulées : la CI ne doit dépendre d'aucun tiers, et
  * Jikan tombe trop souvent pour qu'un échec de sa part fasse échouer un build.
  */
+import { readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { preview } from 'vite'
 import { chromium } from 'playwright'
 import { SOURCE, cesserDeServir, servirSource } from './source-test.mjs'
@@ -325,6 +327,65 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'une sauvegarde se télécharge, et se restaure sans rien écraser',
+    async executer(page, base) {
+      await servir(page)
+      await page.addInitScript(() => {
+        try {
+          localStorage.setItem('anime-ink-cookie-consent', JSON.stringify({ preferences: true, userdata: true }))
+          localStorage.setItem('anime-ink-watchlist', JSON.stringify([
+            { mal_id: 2, title: 'Frieren', watchStatus: 'watching', currentEpisode: 12, episodes: null, genres: [], images: {} },
+          ]))
+        } catch { /* stockage refusé */ }
+      })
+
+      await page.goto(`${base}profil`, { waitUntil: 'load' })
+      const bloc = page.locator('section', { has: page.getByRole('heading', { name: /tes données/i }) })
+      await bloc.waitFor({ timeout: 15_000 })
+
+      const [fichier] = await Promise.all([
+        page.waitForEvent('download', { timeout: 15_000 }),
+        bloc.getByRole('button', { name: /télécharger/i }).click(),
+      ])
+      const chemin = await fichier.path()
+      verifier(Boolean(chemin), 'aucun fichier de sauvegarde n’a été produit')
+
+      // Le fichier ne doit pas emporter le consentement : le restaurer
+      // fabriquerait un accord que la personne n'a pas donné sur cette machine.
+      const contenu = JSON.parse(readFileSync(chemin, 'utf8'))
+      verifier(
+        !/consent/i.test(JSON.stringify(contenu)),
+        'la sauvegarde emporte le consentement aux cookies',
+      )
+      verifier(contenu.liste?.[0]?.currentEpisode === 12, 'la progression n’est pas dans la sauvegarde')
+
+      // Antidater la sauvegarde et la réimporter : la progression locale, plus
+      // avancée, doit survivre. C'est toute la promesse d'une restauration qui
+      // complète au lieu de remplacer.
+      const antidatee = join(dirname(chemin), 'antidatee.json')
+      writeFileSync(antidatee, JSON.stringify({
+        ...contenu,
+        liste: [{ ...contenu.liste[0], currentEpisode: 3 }, { mal_id: 999, title: 'Titre restauré', images: {} }],
+      }))
+
+      await bloc.locator('input[type="file"]').setInputFiles(antidatee)
+      await page.waitForTimeout(1500)
+
+      const restant = await page.evaluate(() => {
+        try { return JSON.parse(localStorage.getItem('anime-ink-watchlist') || '[]') } catch { return [] }
+      })
+      const frieren = restant.find(a => a.mal_id === 2)
+      verifier(
+        frieren?.currentEpisode === 12,
+        `une restauration a fait reculer la progression : épisode ${frieren?.currentEpisode} au lieu de 12`,
+      )
+      verifier(
+        restant.some(a => a.mal_id === 999),
+        'la restauration n’a pas ajouté ce qui manquait',
+      )
+    },
+  },
+  {
     // Le seul parcours qui parte d'un poste déjà habité. Tous les autres
     // démarrent d'un navigateur vierge, si bien qu'aucun ne verrait des
     // données écrites par une version antérieure du site — c'est-à-dire
@@ -390,7 +451,7 @@ try {
   for (const parcours of PARCOURS) {
     // Contexte neuf : les favoris et la bannière de consentement ne doivent pas
     // fuir d'un parcours à l'autre.
-    const contexte = await navigateur.newContext({ viewport: BUREAU })
+    const contexte = await navigateur.newContext({ viewport: BUREAU, acceptDownloads: true })
     const page = await contexte.newPage()
     try {
       await parcours.executer(page, base)

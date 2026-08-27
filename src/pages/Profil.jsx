@@ -6,6 +6,7 @@ import { WATCH_STATUS } from '../constants/anime'
 import { Link } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import OuReprendre from '../components/OuReprendre'
+import SauvegardeDonnees from '../components/SauvegardeDonnees'
 
 function StatCard({ label, value, sub }) {
   return (
@@ -186,6 +187,8 @@ export default function Profil() {
               </div>
             </section>
           )}
+
+          <SauvegardeDonnees />
 
           {/* Favoris récents */}
           {favorites.length > 0 && (
