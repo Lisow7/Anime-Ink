@@ -1,11 +1,11 @@
 import { animeDepuisAniList, paginationDepuisAniList, statutDepuisAniList } from './anilist/traduction'
 import { catalogueDesGenres, nomAniListDepuisIdMal } from './anilist/genres'
 import { cleDeRequete, ttlPourCle } from './anilist/requetes'
-import { creerReseauAniList, quotaConnu } from './anilist/reseau'
+import { creerReseauAniList } from './anilist/reseau'
 import { parcourirFranchise } from './anilist/franchise'
-import { createJikanClient, JikanError } from './jikan/client'
-import { createRateLimiter } from './jikan/rate-limiter'
-import { createCache } from './jikan/cache'
+import { creerClientReseau, ErreurApi } from './socle/client'
+import { createRateLimiter } from './socle/rate-limiter'
+import { createCache } from './socle/cache'
 import { signalerDonneePerimee } from './sante-api'
 
 /**
@@ -23,8 +23,9 @@ import { signalerDonneePerimee } from './sante-api'
  * refus, le compteur descendant de 29 à 25.
  *
  * D'où une capacité de 5 et un jeton toutes les deux secondes — 30 par minute.
- * Et, ce que Jikan ne permettait pas : `X-RateLimit-Remaining` est lu à chaque
- * réponse, pour ralentir **avant** le refus plutôt que le subir.
+ * `X-RateLimit-Remaining` est lu à chaque réponse, pour ralentir **avant** le
+ * refus plutôt que le subir — ce que l'API précédente ne permettait pas, faute
+ * d'exposer le moindre compteur.
  */
 
 const RAFALE = 5
@@ -47,7 +48,7 @@ export function creerAdaptateurAniList({
   // tentatives ne s'écoule jamais et le test expire au lieu d'échouer.
   retries,
 } = {}) {
-  const client = createJikanClient({
+  const client = creerClientReseau({
     fetchImpl, limiter, cache, ttlFor: ttlPourCle,
     // Sans ce fil, une copie de secours serait resservie en silence : le pied
     // de page annoncerait des données fraîches alors qu'elles peuvent dater
@@ -124,9 +125,9 @@ export function creerAdaptateurAniList({
   /**
    * Les recommandations — et c'est ici qu'AniList change la donne.
    *
-   * Ni Jikan ni Tenrai ne joignent les genres à une suggestion, ce qui
+   * L'API précédente ne joignait pas les genres à une suggestion, ce qui
    * obligeait à deviner son registre d'après la fiche ouverte. AniList les
-   * fournit, avec `isAdult`.
+   * fournit, avec `isAdult` : chaque suggestion est jugée pour elle-même.
    */
   async function getAnimeRecommendations(id, signal) {
     const data = await demander('recommandations', { idMal: Number(id) }, { signal })
@@ -274,4 +275,3 @@ export const getProchainsEpisodes = adaptateur.getProchainsEpisodes
 export const getRandomAnime = adaptateur.getRandomAnime
 export const clearApiCache = adaptateur.clearApiCache
 
-export { quotaConnu, JikanError }

@@ -1,21 +1,18 @@
-import { repondre, repondreAniList } from './a11y-fixtures.mjs'
+import { repondreAniList } from './a11y-fixtures.mjs'
 
 /**
  * Ce que les scripts de vérification doivent savoir de la source interrogée.
  *
- * Les parcours et le garde-fou d'accessibilité connaissaient `api.jikan.moe` :
+ * Les parcours et le garde-fou d'accessibilité connaissaient l'API en dur :
  * l'URL à intercepter, celle à compter, la clé sous laquelle une réponse est
  * mise en réserve. Autant de détails qui ne survivent pas à un changement de
- * source — et qui auraient fait échouer les parcours sur AniList pour des
- * raisons étrangères au code vérifié.
+ * source — c'est ce qui a failli faire échouer les parcours lors de la bascule,
+ * pour des raisons étrangères au code vérifié.
  *
- * Tout est rassemblé ici, avec une implémentation par source. Les scripts
- * décrivent des intentions — « une requête de catalogue », « la réserve du
- * catalogue » — et ignorent comment elles se traduisent.
- *
- * La source suit celle du build : `VITE_SOURCE_DONNEES=jikan` bascule les deux
- * ensemble. C'est ce qui permet de passer les mêmes parcours sur les deux et de
- * conclure — un écart accuse alors le contrat, pas le décor.
+ * Tout est rassemblé ici. Les scripts décrivent des intentions — « une requête
+ * de catalogue », « la réserve du catalogue » — et ignorent comment elles se
+ * traduisent. Le jour où la question d'une autre source se reposera, c'est le
+ * seul fichier des scripts à rouvrir.
  */
 
 /** GraphQL passe tout par une URL unique : l'opération se lit dans le corps. */
@@ -49,16 +46,7 @@ const ANILIST = {
   corps: request => repondreAniList(operationDe(request), JSON.parse(request.postData() ?? '{}').variables ?? {}),
 }
 
-const JIKAN = {
-  nom: 'jikan',
-  motifRoute: '**/api.jikan.moe/**',
-  estRequete: url => url.includes('api.jikan.moe'),
-  estRequeteCatalogue: request => /\/anime\?/.test(request.url()),
-  cleReserveCatalogue: 'anime-ink-cache:/anime?',
-  corps: request => repondre(request.url()),
-}
-
-export const SOURCE = process.env.VITE_SOURCE_DONNEES === 'jikan' ? JIKAN : ANILIST
+export const SOURCE = ANILIST
 
 /**
  * Installe le faux réseau sur la page.
@@ -90,20 +78,13 @@ export function cesserDeServir(page) {
 /**
  * Remplace les genres de chaque fiche de la réponse.
  *
- * Les deux formats diffèrent jusque dans leur façon de dire l'âge : Jikan le
- * déduit d'un genre, AniList porte un booléen. Imposer « Hentai » sans lever ce
- * booléen laisserait le floutage inerte sur AniList, et le parcours conclurait
- * à tort que la censure a échoué.
+ * AniList porte la mention d'âge dans un booléen dédié, en plus des genres :
+ * imposer « Hentai » sans lever `isAdult` laisserait le floutage inerte, et le
+ * parcours conclurait à tort que la censure a échoué.
  */
 function imposerGenres(corps, genres) {
   const noms = genres.map(g => g.name)
   const adulte = noms.some(n => n === 'Hentai' || n === 'Erotica')
-
-  if (SOURCE.nom === 'jikan') {
-    if (!corps?.data) return corps
-    const marquer = a => ({ ...a, genres })
-    return { ...corps, data: Array.isArray(corps.data) ? corps.data.map(marquer) : marquer(corps.data) }
-  }
 
   const marquer = m => (m ? { ...m, genres: noms, isAdult: adulte } : m)
   const page = corps?.data?.Page

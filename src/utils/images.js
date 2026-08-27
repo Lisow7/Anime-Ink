@@ -43,11 +43,12 @@ export function optimiser(url, largeur) {
 /**
  * URL de la jaquette d'un animé, en préférant le WebP.
  *
- * La source précédente servait les deux formats aux mêmes dimensions — vérifié
- * au pixel sur plusieurs paires — et le WebP pesait environ 40 % de moins. Le
- * repli sur le JPG reste indispensable : certaines fiches anciennes n'ont pas
- * la variante WebP renseignée, et les favoris enregistrés de longue date
- * portent des adresses de cette époque.
+ * L'ordre de préférence ne sert plus les données fraîches : AniList ne publie
+ * pas de WebP, et les deux entrées portent la même adresse. Il sert les
+ * **données enregistrées** — favoris, liste, historique — d'avant la bascule,
+ * où les deux formats existaient vraiment aux mêmes dimensions, le WebP pesant
+ * environ 40 % de moins. Le repli sur le JPG reste indispensable : certaines
+ * fiches anciennes n'ont pas la variante WebP renseignée.
  *
  * `largeur` demande une définition à l'optimiseur, quand il y en a un. Sans
  * lui, elle n'a aucun effet : l'image d'origine est servie telle quelle.

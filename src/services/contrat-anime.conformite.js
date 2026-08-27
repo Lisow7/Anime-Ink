@@ -12,9 +12,11 @@ import { getApiHealth, reinitialiserSante } from './sante-api'
  * La suite qu'un adaptateur doit passer pour être recevable.
  *
  * C'est ici que vit la valeur du contrat. Le décrire en prose n'engage à rien ;
- * une suite exécutable, appliquée à chaque source, oblige la seconde à rendre
- * ce que la première rendait. Sans elle, la bascule vers AniList se
- * vérifierait à l'œil, écran par écran.
+ * une suite exécutable oblige l'adaptateur à rendre ce que les écrans
+ * attendent. Elle a servi à prouver que la bascule d'août 2026 ne changeait
+ * rien pour eux — sans elle, la migration se serait vérifiée à l'œil, écran par
+ * écran — et elle garde ce rôle pour la seule source restante : une note
+ * ramenée sur cent ou un identifiant devenu chaîne y échouerait aussitôt.
  *
  * Elle ne teste **pas** le réseau, ni le cache, ni le débit : ceux-là ont leurs
  * propres tests. Elle ne regarde que la **forme de ce qui sort**.
@@ -163,8 +165,8 @@ export function verifierContrat(nom, { adaptateur, installerReseau, avantChaque 
       // Le pied de page ne parle pas de la source : il dit à l'utilisateur si
       // ce qu'il regarde est frais. Une source qui n'y verse rien laisse le
       // voyant sur « inconnu » à vie, sans qu'aucune erreur ne se produise —
-      // c'est exactement ce qui serait arrivé après la bascule, l'état vivant
-      // jusqu'ici dans le module Jikan.
+      // c'est exactement ce qui a failli arriver à la bascule, l'état vivant
+      // alors dans le module de l'ancienne source.
       reinitialiserSante()
       expect(getApiHealth().status).toBe('unknown')
 

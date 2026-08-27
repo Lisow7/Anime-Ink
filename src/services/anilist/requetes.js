@@ -133,7 +133,7 @@ const JOUR = 24 * HEURE
 /**
  * Durée de validité par opération.
  *
- * Reprend les durées éprouvées côté Jikan : une fiche bouge peu, une liste
+ * Reprend des durées éprouvées de longue date : une fiche bouge peu, une liste
  * davantage. Les genres n'y figurent pas — ils ne passent pas par le réseau.
  */
 export function ttlPourCle(cle) {

@@ -25,9 +25,10 @@ describe('limiteur à seau de jetons', () => {
     expect(passed).toEqual([0, 1, 2, 3, 4])
   })
 
-  // Garde-fou du plafond mesuré sur api.jikan.moe : 30 succès en 28 s, soit une
-  // rafale de ~3 puis ~1 jeton/s. 200 demandes ne doivent pas en servir plus de 63
-  // sur la première minute. Prouvé par mutation (cf. spec du 2026-08-25).
+  // Le mécanisme lui-même, sur des valeurs d'exemple : une rafale de 3 puis un
+  // jeton par seconde laisse passer 63 demandes en une minute, jamais 200. La
+  // configuration réellement en service vit dans l'adaptateur, et fait l'objet
+  // du cas suivant.
   it('ne sert que la rafale plus un jeton par seconde sur une minute', async () => {
     vi.useFakeTimers()
     const limiter = createRateLimiter({ capacity: 3, refillPerSecond: 1 })
@@ -42,6 +43,37 @@ describe('limiteur à seau de jetons', () => {
 
     await vi.advanceTimersByTimeAsync(60_000)
     expect(passed).toBe(63)
+  })
+
+  /**
+   * Le réglage en service, confronté au plafond annoncé par l'API.
+   *
+   * AniList applique 30 requêtes par minute — mesuré, sa documentation en
+   * annonce 90 et assume la réduction. Le réglage de l'adaptateur (rafale de 5,
+   * un jeton toutes les deux secondes) doit tenir sous ce plafond : le dépasser
+   * ne dégrade pas le service, il le fait refuser.
+   *
+   * Ce cas relie donc un mécanisme générique à une contrainte réelle. Si le
+   * réglage de l'adaptateur change, c'est ici qu'on doit s'en apercevoir.
+   */
+  it('tient sous les trente requêtes par minute de l’API', async () => {
+    vi.useFakeTimers()
+    const limiter = createRateLimiter({ capacity: 5, refillPerSecond: 0.5 })
+
+    let passed = 0
+    for (let i = 0; i < 200; i += 1) {
+      limiter.acquire().then(() => { passed += 1 })
+    }
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(passed).toBe(5)
+
+    await vi.advanceTimersByTimeAsync(60_000)
+    // La rafale initiale plus un jeton toutes les deux secondes : 5 + 30 = 35
+    // sur la toute première minute, puis 30 par minute en régime établi.
+    expect(passed).toBe(35)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(passed).toBe(65)
   })
 
   // Une horloge peut reculer (ajustement NTP, changement d'heure système). Si le

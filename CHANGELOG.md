@@ -5,6 +5,20 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.8] — 28 août 2026
+
+### Maintenance
+- **L'ancienne source de données est retirée du code.** Elle n'était plus interrogée depuis la v1.6 et ferme le 1ᵉʳ octobre : la garder câblée revenait à maintenir et tester un chemin vers un service éteint. Rien ne change à l'écran
+- Le socle réseau qu'elle avait apporté — cache, limiteur, secours pendant une panne — reste en place et sert la source actuelle
+- Les commentaires qui décrivaient un état révolu sont corrigés : l'un annonçait encore au futur une amélioration déjà livrée, deux messages d'erreur nommaient encore l'API disparue
+- Le socle réseau porte enfin son nom : il ne contenait rien de propre à l'ancienne source, et sert la nouvelle sans avoir été réécrit
+- La porte d'entrée des données n'expose plus que ce dont les écrans se servent — **et un garde-fou refuse désormais tout export sans appelant**, pour que la dérive ne revienne pas à la prochaine suppression
+- Le réglage du limiteur est confronté au plafond réel de l'API : le dépasser ne dégraderait pas le service, il le ferait refuser
+
+> Rien de visible dans ce lot : la version affichée reste `1.7`.
+
+---
+
 ## [1.7] — 27 août 2026
 
 ### Nouveautés

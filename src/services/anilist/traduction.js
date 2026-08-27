@@ -104,6 +104,19 @@ export function diffusionDepuisAniList(startDate, endDate) {
  * PNG — moins léger que le WebP de MyAnimeList, c'est un écart à mesurer avant
  * la bascule.
  */
+/**
+ * Les jaquettes, dans la forme que l'application consomme.
+ *
+ * `jpg` et `webp` reçoivent **la même adresse**, et ce n'est pas un oubli :
+ * AniList ne sert que du PNG — aucune variante WebP, aucune négociation de
+ * contenu, les trois vérifiés. Le format à deux entrées vient de l'API
+ * précédente, qui servait réellement les deux.
+ *
+ * Il est conservé parce que les favoris, la liste et l'historique **gardent ces
+ * objets sur l'appareil** : ceux enregistrés avant la bascule portent bien deux
+ * adresses distinctes, et `posterUrl` continue d'y préférer le WebP, plus léger
+ * d'environ 40 %. Aplatir la forme ici casserait leur lecture.
+ */
 export function imagesDepuisAniList(coverImage) {
   const grande = coverImage?.extraLarge ?? coverImage?.large ?? null
   const moyenne = coverImage?.large ?? coverImage?.medium ?? grande

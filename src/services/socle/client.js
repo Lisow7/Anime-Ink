@@ -1,10 +1,10 @@
-/** Statuts que Jikan ou MyAnimeList rendent de façon passagère. */
+/** Statuts qu'une API rend de façon passagère, et qui valent une reprise. */
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504])
 
-export class JikanError extends Error {
+export class ErreurApi extends Error {
   constructor(message, { status = null, retryAfter = null, cause } = {}) {
     super(message, { cause })
-    this.name = 'JikanError'
+    this.name = 'ErreurApi'
     this.status = status
     this.retryAfter = retryAfter
   }
@@ -40,7 +40,7 @@ function abortError() {
 /** Espace de noms des échecs mémorisés, distinct de celui des succès. */
 const FAILURE_KEY = 'échec:'
 
-export function createJikanClient({
+export function creerClientReseau({
   fetchImpl,
   limiter,
   cache,
@@ -81,9 +81,9 @@ export function createJikanClient({
         const secours = servirLaReserve(path)
         if (secours !== undefined) return secours
 
-        throw error instanceof JikanError
+        throw error instanceof ErreurApi
           ? error
-          : new JikanError('Impossible de joindre Jikan', { cause: error })
+          : new ErreurApi('Impossible de joindre l’API', { cause: error })
       }
 
       if (response.ok) {
@@ -100,7 +100,7 @@ export function createJikanClient({
 
       const failure = {
         status: response.status,
-        message: `Jikan a répondu avec le statut ${response.status}`,
+        message: `L’API a répondu avec le statut ${response.status}`,
         retryAfter: response.headers?.get?.('Retry-After') ?? null,
       }
 
@@ -122,13 +122,13 @@ export function createJikanClient({
         if (secours !== undefined) return secours
       }
 
-      throw new JikanError(failure.message, {
+      throw new ErreurApi(failure.message, {
         status: failure.status,
         retryAfter: failure.retryAfter,
       })
     }
 
-    throw new JikanError('Impossible de joindre Jikan')
+    throw new ErreurApi('Impossible de joindre l’API')
   }
 
   return {
@@ -148,7 +148,7 @@ export function createJikanClient({
 
         const failure = cache.get(FAILURE_KEY + path)
         if (failure !== undefined) {
-          return Promise.reject(new JikanError(failure.message, {
+          return Promise.reject(new ErreurApi(failure.message, {
             status: failure.status,
             retryAfter: failure.retryAfter,
           }))

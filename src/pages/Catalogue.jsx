@@ -118,7 +118,7 @@ export default function Catalogue() {
    * personne.
    *
    * Ils déclenchaient pourtant cette requête, et son échec les vidait : toutes
-   * les branches de rendu sont gardées par `!error`. Une panne de Jikan faisait
+   * les branches de rendu sont gardées par `!error`. Une panne de l'API faisait
    * donc disparaître la liste de suivi de son propriétaire, en plus de gaspiller
    * trois requêtes — l'appel et ses deux reprises — sur un budget d'une par
    * seconde.
