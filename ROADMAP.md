@@ -129,10 +129,26 @@ elles, ne relèvent pas de cette section : voir ci-dessous.
 
 ### Nécessite un autre hébergement
 
-Ces points supposent un déplacement, pas un développement :
+Ces points supposent un déplacement, pas un développement. Aucun n'est bloquant
+aujourd'hui — les lire comme des manques urgents serait un contresens :
 
-- [ ] vrais en-têtes `Content-Security-Policy` et `Permissions-Policy` — GitHub
-      Pages ne sert aucun en-tête personnalisé ;
+- [ ] **les quatre protections qui n'existent qu'en en-tête HTTP.** À ne pas lire
+      comme « le site n'a pas de CSP » : il en a une, en balise
+      `<meta http-equiv>` dans `index.html`, et elle couvre l'essentiel —
+      `default-src`, `script-src`, `connect-src`, `img-src`, `frame-src`,
+      `form-action`, `base-uri`, `object-src`, `upgrade-insecure-requests`.
+
+      Quatre choses lui échappent, et aucune n'est exprimable dans une balise :
+      `frame-ancestors` (empêcher qu'un tiers place le site dans une iframe),
+      `report-uri` (recevoir les violations), `sandbox`, et `Permissions-Policy`,
+      qui n'a aucune forme `<meta>`. Vérifié : la production ne sert que
+      `Strict-Transport-Security`, et GitHub Pages n'offre aucun moyen de
+      configurer les en-têtes — ni fichier `_headers`, ni `.htaccess`.
+
+      **Portée réelle** : le seul manque à conséquence concrète est
+      `frame-ancestors`. Sur un site sans compte, sans paiement ni action
+      destructrice, il n'y a rien à détourner par clickjacking — c'est une
+      protection de principe, pas un trou béant ;
 - [ ] proxy de cache en périphérie, et métriques de disponibilité ;
 - [ ] **métriques de terrain (LCP, CLS, INP)** — les mesurer chez le visiteur
       suppose de les recevoir quelque part. Le site n'a aucun back-end, et lui en
