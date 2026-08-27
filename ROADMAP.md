@@ -158,12 +158,33 @@ aujourd'hui — les lire comme des manques urgents serait un contresens :
 
 ## Vérifications en production
 
-La panne de Jikan est **partielle** : `/anime/{id}/full`, `/genres/anime` et
-`/anime/{id}/recommendations` répondent ; tous les endpoints à requête —
-`/anime?…`, `/top/anime`, et `filter=` sous toutes ses valeurs — restent en
-`504`. Ce qui pouvait être vérifié l'a donc été — et il s'est avéré qu'on
-pouvait aller bien plus loin qu'attendre : **une seule surface reste en
-suspens**.
+### La nature de la panne, mesurée
+
+Elle ne se répartit pas par endpoint, comme je l'ai d'abord cru, mais **par
+présence dans le cache de Jikan**. Deux requêtes vers le même endpoint, à la
+seconde près :
+
+| requête | réponse | `X-Cache-Status` |
+|---|---|---|
+| `/anime?q=naruto` — demandée 3 min plus tôt | **200** | `STALE` |
+| `/anime?q=zzqqxx-inexistant-1234` — jamais demandée | **504** | — |
+
+Jikan sert donc son cache **même périmé**, et échoue dès qu'il doit interroger
+MyAnimeList, qui refuse ses connexions. Ce qui répond n'est pas « ce qui marche »
+mais « ce qu'il a déjà ».
+
+**Cela invalide une conclusion écrite plus haut dans ce dépôt** : j'avais déduit
+du `504` sur `/genres/anime?filter=…`, alors que le même endpoint sans paramètre
+répondait, que **le paramètre était cassé**. C'est faux. La liste complète sort
+du cache ; les variantes filtrées n'y sont pas, voilà tout.
+
+Le choix de filtrer les genres explicites côté client **reste le bon**, mais pour
+une meilleure raison : dépendre d'une requête supplémentaire ajoute un point de
+défaillance, et cette panne le démontre — la liste complète survit, ses variantes
+non.
+
+Ce qui pouvait être vérifié l'a donc été, et bien au-delà de ce qu'on croyait
+possible : **une seule surface reste en suspens**.
 
 - [x] **l'avertissement de la fiche, contre du vrai contenu explicite** (27 août
       2026). Sur `/anime/11617`, *High School DxD*, genre `Ecchi` : jaquette
@@ -190,12 +211,14 @@ suspens**.
       de genre** — Jikan ne les joint pas. C'est donc bien le repli sur le
       registre de la fiche ouverte qui a joué, en conditions réelles.
 - [ ] le floutage des **suggestions de recherche** — seule surface encore non
-      vérifiée : elle exige `/anime?q=…`, c'est-à-dire la recherche elle-même.
-      Aucun contournement possible, contrairement aux précédentes ;
-- [ ] `/genres/anime?filter=explicit_genres` : toujours `504` le 27 août, alors
-      que le même endpoint sans paramètre répond. **Le paramètre est donc cassé
-      indépendamment de la panne générale** — ce qui conforte le choix de filtrer
-      les genres côté client plutôt que de s'y fier.
+      vérifiée. Elle exige que Jikan réponde à la requête exacte que la frappe
+      compose, or seules les recherches déjà en cache sortent. Il n'y a pas de
+      contournement : amorcer le cache demanderait que le scrape réussisse, ce
+      qui est précisément ce qui échoue.
+
+*(La ligne sur `filter=explicit_genres` a disparu d'ici : sa conclusion était
+fausse. Voir « La nature de la panne » ci-dessus — le paramètre n'est pas cassé,
+ses variantes ne sont simplement pas en cache.)*
 
 ## Limite assumée
 
