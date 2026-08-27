@@ -112,7 +112,23 @@ export default function Catalogue() {
     setSearchParams(next)
   }, [debouncedInput, searchParams, setSearchParams])
 
+  /**
+   * Seul l'onglet « catalogue » interroge l'API. Les trois autres — favoris,
+   * récents, liste de suivi — vivent dans le stockage local et n'ont besoin de
+   * personne.
+   *
+   * Ils déclenchaient pourtant cette requête, et son échec les vidait : toutes
+   * les branches de rendu sont gardées par `!error`. Une panne de Jikan faisait
+   * donc disparaître la liste de suivi de son propriétaire, en plus de gaspiller
+   * trois requêtes — l'appel et ses deux reprises — sur un budget d'une par
+   * seconde.
+   */
   useEffect(() => {
+    if (tab !== 'catalogue') {
+      setLoading(false)
+      setError(false)
+      return
+    }
     const controller = new AbortController()
     setLoading(true)
     setError(false)
@@ -162,7 +178,7 @@ export default function Catalogue() {
     }
     run()
     return () => controller.abort()
-  }, [query, genre, status, type, orderBy, letter, page, retryKey])
+  }, [tab, query, genre, status, type, orderBy, letter, page, retryKey])
 
   useEffect(() => {
     getGenres().then(data => { if (Array.isArray(data)) setGenres([...data].sort((a, b) => a.name.localeCompare(b.name))) })
@@ -237,6 +253,11 @@ export default function Catalogue() {
     : tab === 'liste' ? watchlist.length
     : (pagination.total ?? animes.length)
   const isEmpty = !loading && displayList.length === 0
+  // Une panne ne concerne que l'onglet qui interroge l'API. Sans cette
+  // distinction, les branches de rendu gardées par l'erreur videraient aussi les
+  // onglets locaux — le temps d'un rendu au moins, avant que l'effet ne remette
+  // le drapeau à zéro.
+  const erreurCatalogue = error && tab === 'catalogue'
 
   return (
     <main className="max-w-6xl px-4 sm:px-6 w-full mx-auto py-6 sm:py-10 flex flex-col gap-6 sm:gap-8 min-w-0">
@@ -430,7 +451,7 @@ export default function Catalogue() {
       )}
 
       {/* Erreur API */}
-      {tab === 'catalogue' && error && !loading && (
+      {erreurCatalogue && !loading && (
         <div role="alert" className="flex flex-col items-center gap-4 py-20 text-center">
           <span className="text-5xl" aria-hidden="true">⚠️</span>
           <p className="text-[var(--text-primary)] font-semibold text-lg">Impossible de charger les animés</p>
@@ -445,7 +466,7 @@ export default function Catalogue() {
       )}
 
       {/* Résultats */}
-      {!error && tab === 'catalogue' && loading ? (
+      {!erreurCatalogue && tab === 'catalogue' && loading ? (
         isGrid ? (
           <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {Array.from({ length: 24 }).map((_, i) => (
@@ -459,7 +480,7 @@ export default function Catalogue() {
             ))}
           </div>
         )
-      ) : !error && displayList.length === 0 ? (
+      ) : !erreurCatalogue && displayList.length === 0 ? (
         tab === 'favoris'
           ? (
             <div className="relative">
@@ -489,17 +510,17 @@ export default function Catalogue() {
           : tab === 'liste'
           ? <EmptyState query="" onReset={() => switchTab('catalogue')} emptyListe />
           : <EmptyState query={query} onReset={query ? clearSearch : resetFilters} />
-      ) : !error && tab === 'liste' ? (
+      ) : !erreurCatalogue && tab === 'liste' ? (
         <Suspense fallback={<div className="py-20 text-center text-[var(--text-muted)] text-sm">Chargement de ta liste…</div>}>
           <WatchlistTable list={displayList} />
         </Suspense>
-      ) : !error && isGrid ? (
+      ) : !erreurCatalogue && isGrid ? (
         <div className="grid grid-cols-2 min-[540px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {displayList.map((anime, index) => (
             <AnimeCard key={anime.mal_id} anime={anime} prioritaire={index < 5} />
           ))}
         </div>
-      ) : !error ? (
+      ) : !erreurCatalogue ? (
         <div className="flex flex-col gap-3">
           {displayList.map((anime) => (
             <AnimeListCard key={anime.mal_id} anime={anime} />

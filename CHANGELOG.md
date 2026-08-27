@@ -5,6 +5,19 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.4] — 27 août 2026
+
+### Corrections
+- Tes favoris, tes animés récents et ta liste de suivi ne disparaissent plus quand l’API est en panne : ils vivent sur ton appareil et n’avaient aucune raison d’attendre une réponse. Ces trois onglets déclenchaient pourtant une requête à chaque visite, dont l’échec vidait l’écran
+
+### Maintenance
+- Huit parcours utilisateur vérifiés à chaque pull request, dans un vrai navigateur : recherche, filtres et leur persistance dans l’URL, favoris avec et sans consentement, mode dégradé, censure. Les tests existants ne couvraient que la couche réseau et les utilitaires — aucun ne regardait ce que les pages font
+- Un budget de poids refuse les régressions de bundle : 100,7 ko au démarrage, 138,7 ko au total, plafonds serrés à 3 %. La performance gagnée en v1.2 ne pouvait jusqu’ici être reperdue sans que rien ne le signale
+- La règle de numérotation des versions est écrite dans le README : quelle version porte un commit, quand la version affichée bouge, et l’avertissement qu’avant la 1.2 la convention était l’inverse
+- Feuille de route rapatriée dans le dépôt et relue dans le code : deux points s’y annonçaient livrés sans l’être, et les instruire a suffi à les régler — l’un était sans objet, l’autre est un arbitrage et non une tâche
+
+---
+
 ## [1.3] — 26 août 2026
 
 ### Corrections

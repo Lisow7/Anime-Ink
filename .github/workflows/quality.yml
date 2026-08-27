@@ -31,8 +31,17 @@ jobs:
       - run: npm test
       - run: npm audit --audit-level=high
       - run: npm run build
+      # Mesuré juste après le build, avant d'installer un navigateur : une
+      # régression de poids n'a pas besoin de Chromium pour être vue, et échouer
+      # tôt économise deux minutes.
+      - run: node scripts/budget.mjs
       # Le garde-fou d'accessibilité a besoin d'un vrai navigateur : sous jsdom,
       # axe ne calcule aucune mise en page et serait aveugle aux contrastes comme
       # aux tailles de cible, c'est-à-dire à ce qu'il doit justement surveiller.
       - run: npx playwright install --with-deps chromium
       - run: node scripts/a11y.mjs
+      # Les parcours vérifient ce que les pages FONT, là où le garde-fou
+      # d'accessibilité vérifie seulement ce qu'elles montrent. Les tests
+      # unitaires ne couvrent que la couche réseau et les utilitaires : neutraliser
+      # le floutage d'une carte les laisse tous verts, et fait échouer un parcours.
+      - run: node scripts/parcours.mjs
