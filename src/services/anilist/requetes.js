@@ -63,6 +63,27 @@ export const OPERATIONS = {
     }`,
   },
   /**
+   * Le prochain épisode d'une liste de titres, en **une seule** requête.
+   *
+   * Demander série par série coûterait un appel par ligne de la liste de suivi,
+   * sur un budget de trente par minute : une liste de dix titres consommerait
+   * un tiers du quota à chaque visite. `idMal_in` les prend toutes ensemble.
+   *
+   * Un identifiant sans correspondance est simplement absent de la réponse,
+   * sans erreur — l'appelant doit donc travailler par correspondance, jamais
+   * par position.
+   */
+  prochainsEpisodes: {
+    query: `query ($ids: [Int], $perPage: Int) {
+      Page(page: 1, perPage: $perPage) {
+        media(idMal_in: $ids, type: ANIME) {
+          idMal status episodes
+          nextAiringEpisode { episode airingAt }
+        }
+      }
+    }`,
+  },
+  /**
    * Les relations d'un titre — de quoi reconstituer une franchise.
    *
    * Volontairement dépourvue de `CHAMPS_MEDIA` : le parcours d'une franchise
@@ -121,5 +142,8 @@ export function ttlPourCle(cle) {
   // pour la journée épargne un appel par saison à chaque ouverture de fiche.
   if (operation === 'media' || operation === 'recommandations' || operation === 'relations') return JOUR
   if (operation === 'recherche' || operation === 'classement' || operation === 'catalogue') return HEURE
+  // Une date de diffusion se rapproche d'heure en heure : la garder un jour
+  // ferait afficher « dans 3 jours » le jour même de la sortie.
+  if (operation === 'prochainsEpisodes') return HEURE
   return 0
 }

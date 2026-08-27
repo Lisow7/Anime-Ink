@@ -66,6 +66,7 @@ export const {
   getAnimeRecommendations,
   getAnimeSeasons,
   getGenres,
+  getProchainsEpisodes,
   getRandomAnime,
   getTopAnime,
   searchAnime,

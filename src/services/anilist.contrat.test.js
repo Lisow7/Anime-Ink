@@ -7,7 +7,7 @@ import { creerAdaptateurAniList } from './anilist'
  * un jeton toutes les deux secondes — pour ne rien prouver de plus.
  */
 const adaptateur = creerAdaptateurAniList({ limiter: { acquire: () => Promise.resolve() } })
-const { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations, getAnimeSeasons, getAnimeFranchise } = adaptateur
+const { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations, getAnimeSeasons, getAnimeFranchise, getProchainsEpisodes } = adaptateur
 
 /**
  * Le nouvel adaptateur, soumis au contrat — **la même suite que Jikan**.
@@ -68,7 +68,7 @@ function installerReseau(cas) {
 }
 
 verifierContrat('AniList', {
-  adaptateur: { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations, getAnimeSeasons, getAnimeFranchise },
+  adaptateur: { getAnimeById, getTopAnime, searchAnime, getGenres, getAnimeRecommendations, getAnimeSeasons, getAnimeFranchise, getProchainsEpisodes },
   installerReseau,
   // Le cache est propre à cet adaptateur : sans purge, un cas recevrait la
   // réponse installée par le précédent.

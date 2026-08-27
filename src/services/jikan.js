@@ -166,6 +166,20 @@ export async function getGenres() {
   }
 }
 
+/**
+ * Le prochain épisode de plusieurs séries — que cette source ne sait pas dire.
+ *
+ * Jikan expose bien un calendrier hebdomadaire, mais rien qui rattache **un
+ * numéro d'épisode et sa date** à un titre donné. Rendre une carte vide plutôt
+ * que d'échouer laisse l'écran s'afficher sans dates, ce qui est exactement le
+ * comportement voulu : la fonction est une capacité, pas une promesse du
+ * contrat commun — et une capacité qu'une source n'a pas se déclare, elle ne se
+ * simule pas.
+ */
+export async function getProchainsEpisodes() {
+  return new Map()
+}
+
 export async function getRandomAnime() {
   const data = await requestJson('/random/anime')
   return data.data
