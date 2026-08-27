@@ -10,6 +10,7 @@ export const CHANGELOG = [
       { type: 'ui',  label: 'Le menu des genres propose 19 entrées au lieu de 78 — celles que le nouveau catalogue reconnaît' },
       { type: 'feat', label: 'Chaque suggestion « Vous aimerez aussi » est jugée sur ses propres genres pour la censure' },
       { type: 'fix', label: 'La popularité d’une fiche affiche de nouveau un rang, et non un nombre de membres' },
+      { type: 'fix', label: 'L’adresse canonique des pages ne double plus le nom du site' },
       { type: 'perf', label: 'Une fiche télécharge 137 ko de jaquette au lieu de 478 — elle chargeait une image 2,4 fois plus grande que son affichage' },
     ],
   },
