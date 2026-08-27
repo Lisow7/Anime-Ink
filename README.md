@@ -148,6 +148,30 @@ Types : `feat`, `fix`, `perf`, `ui`, `docs`, `ci`, `refactor`
 | `1.x` | Petites mises à jour, corrections, améliorations |
 | `2.0` | Grosse mise à jour — nouvelle feature majeure |
 
+### Quelle version porte un commit
+
+**Celle dans laquelle le changement sortira**, c'est-à-dire la version en
+préparation — pas celle qui tourne en production. Un commit poussé au lendemain
+de la mise en ligne de la `1.3` porte donc `v1.4`.
+
+Concrètement, après chaque mise en production :
+
+1. le premier lot ouvre une entrée `## [X.Y] — en préparation` dans
+   `CHANGELOG.md`, et les commits portent `type(vX.Y): titre` ;
+2. `CURRENT_VERSION` (`src/data/changelog.js`), affiché en pied de page, **ne
+   bouge que si le lot contient quelque chose de constatable par un visiteur**.
+   Un lot de maintenance, de tests ou de documentation n'entraîne pas de bump :
+   la version affichée reste celle de la production, puisque c'est elle que le
+   visiteur utilise ;
+3. à la mise en production, un commit `chore(vX.Y): release X.Y` remplace
+   « en préparation » par la date, et la PR `dev → main` suit.
+
+> **Attention en lisant `git log`** : jusqu'à la `1.2`, les commits portaient la
+> version **courante** et non celle en préparation — les correctifs qui composent
+> la `1.2` sont étiquetés `v1.1`. La convention ci-dessus s'applique depuis. Si
+> l'ancienne vous convient mieux, c'est cette section qu'il faut changer, pas les
+> commits.
+
 Voir [CHANGELOG.md](./CHANGELOG.md) pour l'historique complet, et
 [ROADMAP.md](./ROADMAP.md) pour ce qui est livré, ce qui reste et ce qui
 demanderait un autre hébergement.
