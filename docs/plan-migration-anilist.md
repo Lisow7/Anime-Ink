@@ -150,7 +150,7 @@ Deux décisions à connaître avant la phase 2 :
   aussi aux tests — `jikan.js` construit son client en dur. Le rendre injectable
   relève de la phase 3.
 
-### 2 — L'adaptateur AniList
+### 2 — L'adaptateur AniList ✅ *(fait le 27 août 2026)*
 
 Une requête GraphQL par besoin, traduite vers le contrat : score ramené sur 10,
 statuts convertis, durée et dates normalisées, `isAdult` remonté tel quel.
@@ -158,6 +158,31 @@ statuts convertis, durée et dates normalisées, `isAdult` remonté tel quel.
 *Fini quand* : ses tests unitaires passent sur des réponses réelles capturées, y
 compris les cas tordus — animé sans épisodes connus, sans date de fin, sans
 studio.
+
+**Fait.** La traduction vit à part, en fonctions pures — `anilist/traduction.js`
+— éprouvées sur une réponse réelle capturée le 27 août : 15 tests, dont les
+trois cas tordus exigés. L'adaptateur passe **la même suite de conformité que
+Jikan**, et un essai contre la vraie API confirme que le score revient sous 10
+et que les recommandations arrivent.
+
+Prouvée par mutation : conversion du score retirée, la suite sort en *« expected
+86 to be less than or equal to 10 »*.
+
+Trois choses apprises en chemin :
+
+- **AniList ne rend que des noms de genres.** Le contrat veut des identifiants,
+  et les prendre chez MyAnimeList garde valides les URL déjà partagées et les
+  favoris enregistrés. Croisement fait : **18 noms sur 19 coïncident** au
+  caractère près. Le dernier — « Thriller » — n'a pas disparu : MyAnimeList l'a
+  renommé **« Suspense »**, identifiant `41` inchangé ;
+- **la description d'AniList contient du HTML.** L'application n'injecte jamais
+  de HTML — `dangerouslySetInnerHTML` n'apparaît nulle part — donc ce n'est pas
+  une faille, mais sans nettoyage un visiteur lirait « `<br>` », et la balise de
+  description de la page porterait le même bruit ;
+- 🔴 **les images viennent de `s4.anilist.co`**, non de `cdn.myanimelist.net`.
+  **La CSP devra l'autoriser** en phase 5, sinon aucune jaquette ne s'affichera.
+  AniList sert du PNG là où MyAnimeList servait du WebP : l'écart de poids est à
+  mesurer avant la bascule.
 
 ### 3 — Le débit et le cache
 
