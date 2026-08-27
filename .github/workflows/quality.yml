@@ -36,3 +36,8 @@ jobs:
       # aux tailles de cible, c'est-à-dire à ce qu'il doit justement surveiller.
       - run: npx playwright install --with-deps chromium
       - run: node scripts/a11y.mjs
+      # Les parcours vérifient ce que les pages FONT, là où le garde-fou
+      # d'accessibilité vérifie seulement ce qu'elles montrent. Les tests
+      # unitaires ne couvrent que la couche réseau et les utilitaires : neutraliser
+      # le floutage d'une carte les laisse tous verts, et fait échouer un parcours.
+      - run: node scripts/parcours.mjs

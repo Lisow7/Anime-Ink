@@ -10,7 +10,8 @@
     "test": "vitest run",
     "check": "npm run lint && npm run test && npm run build",
     "preview": "vite preview",
-    "a11y": "npm run build && node scripts/a11y.mjs"
+    "a11y": "npm run build && node scripts/a11y.mjs",
+    "parcours": "npm run build && node scripts/parcours.mjs"
   },
   "engines": {
     "node": ">=20.19.0"
