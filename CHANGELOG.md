@@ -5,7 +5,7 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
-## [1.5] — en préparation
+## [1.5] — 27 août 2026
 
 ### Corrections
 - Une panne de l’API ne vide plus un écran déjà consulté : la dernière réponse connue est resservie plutôt que rien, pendant vingt-quatre heures au plus. Jusqu’ici, la donnée était effacée à l’expiration — au moment précis où elle allait servir
