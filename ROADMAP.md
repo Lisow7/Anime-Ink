@@ -158,6 +158,43 @@ aujourd'hui — les lire comme des manques urgents serait un contresens :
       destructrice, il n'y a rien à détourner par clickjacking — c'est une
       protection de principe, pas un trou béant ;
 - [ ] proxy de cache en périphérie, et métriques de disponibilité ;
+- [ ] **convertir les jaquettes dans un format moderne.** Mesuré le 27 août 2026,
+      même titre, même définition affichée : MyAnimeList servait 13 ko en WebP là
+      où AniList sert 140 ko en PNG. Un catalogue coûte ainsi **environ 1,2 Mo
+      d'images** contre à peu près 340 ko auparavant — pendant que le site
+      lui-même en pèse 103.
+
+      Trois choses vérifiées, qui ferment les portes de sortie faciles : AniList
+      ne publie **aucune variante `.webp`** (404), n'applique **aucune
+      négociation de contenu** (un en-tête `Accept: image/webp` renvoie le même
+      PNG), et ses trois définitions sont toutes en PNG. Le levier des
+      dimensions, lui, **a été tiré** — la fiche est passée de 478 à 137 ko en
+      cessant de charger du 460 pixels dans un cadre de 192.
+
+      Ce qui reste suppose de **transformer l'image**, donc une étape entre le
+      catalogue et le visiteur : un hôte capable de le faire, ou un service tiers
+      dans le chemin de chaque jaquette. ⛔ **La seconde voie est écartée en
+      l'état** : le site vient d'être frappé par la fermeture d'un service tiers
+      gratuit, et un intermédiaire lent dégraderait toutes les images sans même
+      déclencher de repli — une erreur se rattrape, une lenteur non ;
+- [ ] **les routes profondes répondent HTTP 404.** Vérifié en production :
+      `/catalogue` et `/anime/1` renvoient un `404`, et la page s'affiche quand
+      même — c'est le mécanisme SPA de GitHub Pages, qui sert `public/404.html`
+      pour toute route qu'il ne connaît pas. Le visiteur ne voit rien ; un
+      moteur de recherche, si.
+
+      La [documentation de Google](https://developers.google.com/crawling/docs/troubleshooting/http-status-codes)
+      ne laisse pas de place au doute : *« Newly encountered 404 pages aren't
+      processed »*, et une page déjà connue est **retirée de l'index**. Toutes
+      les pages du site sauf l'accueil sont donc concernées, alors même qu'elles
+      portent des métadonnées et des données structurées — un travail fait pour
+      rien tant que l'hébergement répond `404`.
+
+      ⚠️ **Ce n'est pas une régression** — le mécanisme est là depuis le commit
+      `93d764f`, bien avant le passage à AniList. Le remède n'est pas un
+      développement mais un hôte qui sache réécrire une route vers `index.html`
+      **en gardant un `200`** : n'importe quel hébergement statique moderne le
+      fait, GitHub Pages ne le permet pas ;
 - [ ] **métriques de terrain (LCP, CLS, INP)** — les mesurer chez le visiteur
       suppose de les recevoir quelque part. Le site n'a aucun back-end, et lui en
       donner un pour ce seul usage serait disproportionné. En attendant, la

@@ -217,7 +217,7 @@ export default function AnimeModal() {
             {/* Hero */}
             <div className="flex flex-col min-[500px]:flex-row gap-4 min-[500px]:gap-6">
               <img
-                src={posterUrl(anime.images, { large: true })}
+                src={posterUrl(anime.images)}
                 alt={anime.title}
                 className="w-28 min-[500px]:w-36 sm:w-40 shrink-0 rounded-xl object-cover self-start mx-auto min-[500px]:mx-0"
               />
