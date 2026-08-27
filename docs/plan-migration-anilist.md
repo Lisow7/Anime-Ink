@@ -1,7 +1,70 @@
-# Passer à AniList, garder Jikan en réserve
+# Quitter Jikan : Tenrai d'abord, AniList ensuite
 
-> Plan, pas exécution. Écrit le 27 août 2026, après mesure des deux API.
+> Plan, pas exécution. Écrit le 27 août 2026, après mesure des trois API.
 > Rien n'est engagé tant qu'il n'est pas validé.
+
+## 🔴 L'échéance qui commande tout
+
+**L'API publique de Jikan ferme le 1er octobre 2026.** Annoncé sur leur Discord
+en juin, rapporté dans l'[issue #610](https://github.com/jikan-me/jikan-rest/issues/610) :
+
+> `Jikan public API will be discontinued on October 1, 2026.`
+
+Les 504 qui nous occupent depuis des jours ne sont donc pas une panne à attendre :
+c'est un service en fin de vie. **Il reste cinq semaines.** Le dépôt le confirme
+en creux — dernier commit le 14 juin, dernière version publiée en novembre 2024,
+et l'issue porte encore le label `needs triage` un mois et demi après son
+ouverture.
+
+Ce plan se lit donc en deux temps : **ce qu'il faut faire avant octobre**, et ce
+qui reste souhaitable après.
+
+## Temps 1 — Tenrai, parce que c'est presque gratuit
+
+Deux commentateurs de l'issue #610 ont basculé sur **Tenrai** en signalant que
+« c'est juste une URL à changer ». **Vérifié — ils ont raison.**
+
+Sur `/anime/1/full`, les deux réponses sont **identiques champ pour champ** :
+même titre, même score `8.75`, même statut `Finished Airing`, même durée
+`"24 min per ep"`, mêmes genres, même structure d'images, même chaîne de
+diffusion. Et les six endpoints que le site utilise répondent **200**, y compris
+`/anime?q=` et `/top/anime` — ceux-là mêmes qui échouent chez Jikan.
+
+| | valeur |
+|---|---|
+| base | `https://api.tenrai.org/v1` |
+| CORS | `access-control-allow-origin: *` |
+| clé | aucune |
+| compatibilité annoncée | 95 % des endpoints de Jikan v4 |
+
+**Ce que ça coûte** : changer une constante d'URL, revérifier les parcours, et
+mettre à jour l'attribution. Rien de plus, à ce stade de la mesure.
+
+### Ce qu'il faut savoir avant de s'y fier
+
+- **Le débit est strict et aveugle.** Mesuré : `429` dès la **8ᵉ** requête rapide,
+  et **aucun en-tête** `X-RateLimit-*` ni `Retry-After` — exactement l'angle mort
+  de Jikan. Notre limiteur devra être recalibré empiriquement, comme il l'a été
+  pour Jikan.
+- **La gouvernance est opaque.** Le site dit « built by engineers », sans nommer
+  personne, et le financement repose sur Patreon. C'est **la même fragilité
+  structurelle que Jikan**, dont on constate aujourd'hui l'issue.
+- Servi derrière Cloudflare, avec `Cache-Control: public, max-age=14400`.
+
+Autrement dit : Tenrai éteint l'incendie, il ne supprime pas le risque.
+
+## Temps 2 — AniList, parce que le risque, lui, demeure
+
+AniList n'est pas un service communautaire de plus : c'est l'API d'une plateforme
+établie, avec des millions d'utilisateurs et un modèle qui ne repose pas sur des
+dons. Passer de Jikan à Tenrai, c'est changer de cheval ; passer à AniList, c'est
+changer de monture.
+
+**Et l'épisode qu'on vient de vivre est l'argument décisif pour le contrat
+interne** : une source tierce peut disparaître avec cinq semaines de préavis
+glanées dans le commentaire d'une issue. Ce qui coûte cher, ce n'est pas de
+changer d'API — c'est d'avoir une application qui épouse la forme de celle qu'on
+quitte.
 
 ## La question posée : une API ou deux ?
 
@@ -88,8 +151,16 @@ besoin de deviner le registre d'une suggestion d'après la fiche ouverte.
 
 ## Les phases
 
-Chacune se termine sur un état livrable et vérifiable. Aucune ne casse la
-précédente.
+**Phase 0 — Tenrai, avant le 1er octobre.** Changer la base d'URL, recalibrer le
+limiteur sur le débit mesuré, revérifier les neuf parcours, mettre à jour
+l'attribution. C'est la seule phase qui a une échéance, et elle est indépendante
+de tout le reste : elle se fait avec ou sans la suite.
+
+*Fini quand* : les neuf parcours et le garde-fou d'accessibilité passent sur
+Tenrai, et une rafale ne déclenche plus de `429`.
+
+Les phases suivantes n'ont pas d'échéance. Chacune se termine sur un état
+livrable et vérifiable ; aucune ne casse la précédente.
 
 ### 1 — Le contrat interne
 
@@ -167,3 +238,16 @@ serviront pour l'autre.
 Interroger les deux sources en parallèle pour comparer ou compléter. Ce serait
 doubler le trafic pour produire des données hybrides, incohérentes et
 impossibles à mettre en cache proprement.
+
+Attendre que Jikan se rétablisse. Elle ne se rétablira pas : elle ferme.
+
+## En résumé
+
+| | quand | coût | ce que ça règle |
+|---|---|---|---|
+| **Tenrai** | **avant le 1er octobre** | une URL, un limiteur recalibré | la panne **et** la fermeture |
+| contrat interne | ensuite | moyen | rend le prochain changement bon marché |
+| **AniList** | ensuite | réécriture de la couche réseau | la dépendance à un service communautaire, `isAdult` natif, quota lisible |
+
+Le premier est urgent et presque gratuit. Les deux autres sont des choix de fond,
+que l'épisode Jikan rend simplement plus faciles à justifier.
