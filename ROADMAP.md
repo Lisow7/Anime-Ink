@@ -116,9 +116,17 @@ réelles, et il ne faut pas le croire tel.
 
 ### Expérience
 
-- [ ] progression par épisode et page « Où reprendre ? » — s'appuie sur la liste
-      de suivi qui existe déjà, aucune infrastructure nouvelle ;
-- [ ] calendrier des sorties ;
+- [x] ~~progression par épisode~~ — **déjà livrée**, et depuis un moment : la
+      liste de suivi retient l'épisode et la saison atteints, avec report d'une
+      saison à l'autre. La ligne annonçait comme à faire ce qui tournait déjà.
+- [x] ~~page « Où reprendre ? »~~ — livrée en v1.7, sur le Profil : les séries
+      déclarées en cours, l'épisode atteint, et **la date du prochain épisode**
+      quand la source la connaît. Une seule requête pour toute la liste
+      (`idMal_in`), là où un appel par série aurait coûté un tiers du quota
+      d'une minute à chaque visite ;
+- [ ] calendrier des sorties — **une bonne partie du chemin est faite** : le
+      champ `nextAiringEpisode` est déjà interrogé, il reste à en faire une vue
+      par semaine plutôt qu'une liste par série ;
 - [ ] import/export JSON des favoris et de la liste ;
 - [ ] filtres par année, studio, saison, durée ;
 - [ ] statistiques personnelles, sans traçage ;

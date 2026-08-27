@@ -25,6 +25,9 @@ function operationDe(request) {
     // La requête porte son nom d'opération nulle part ailleurs que dans sa
     // forme : on le retrouve par les champs racine que le document interroge.
     const query = corps.query ?? ''
+    // Avant les autres : cette requête porte aussi `Page(` et serait prise
+    // pour un catalogue, qui rendrait des fiches sans date de diffusion.
+    if (/idMal_in/.test(query)) return 'prochainsEpisodes'
     if (/recommendations\s*\(/.test(query)) return 'recommandations'
     if (/relations\s*\{/.test(query)) return 'relations'
     if (/Media\s*\(/.test(query)) return 'media'

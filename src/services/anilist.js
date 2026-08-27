@@ -1,4 +1,4 @@
-import { animeDepuisAniList, paginationDepuisAniList } from './anilist/traduction'
+import { animeDepuisAniList, paginationDepuisAniList, statutDepuisAniList } from './anilist/traduction'
 import { catalogueDesGenres, nomAniListDepuisIdMal } from './anilist/genres'
 import { cleDeRequete, ttlPourCle } from './anilist/requetes'
 import { creerReseauAniList, quotaConnu } from './anilist/reseau'
@@ -29,6 +29,9 @@ import { signalerDonneePerimee } from './sante-api'
 
 const RAFALE = 5
 const JETONS_PAR_SECONDE = 0.5
+
+/** Ce qu'une requête groupée peut porter — `perPage` plafonne à 50 chez AniList. */
+const MAX_PAR_REQUETE = 50
 
 /**
  * Fabrique un adaptateur. Les briques sont injectables — les tests ont besoin
@@ -179,6 +182,60 @@ export function creerAdaptateurAniList({
     }))
   }
 
+  /**
+   * Le prochain épisode de plusieurs séries, par identifiant.
+   *
+   * Rend une `Map` et non un objet ordinaire : les clés d'un objet sont
+   * toujours des **chaînes**, si bien que `resultat[anime.mal_id]` marcherait
+   * par coïncidence et `Object.keys()` rendrait des `'21'` au lieu de `21`. Une
+   * `Map` garde le type de la clé, et les identifiants restent des nombres
+   * partout — c'est déjà ce que le contrat exige des fiches.
+   *
+   * Une série terminée n'a pas de prochain épisode : elle figure dans la carte
+   * avec `prochain: null`. L'absence d'entrée signifie autre chose — la source
+   * ne connaît pas cet identifiant — et l'appelant doit pouvoir distinguer les
+   * deux.
+   */
+  async function getProchainsEpisodes(ids, signal) {
+    // `Number(null)` vaut 0, et `Number.isFinite(0)` est vrai : filtrer sur la
+    // seule finitude laisserait passer un identifiant `0` pour chaque valeur
+    // vide de la liste. Un identifiant MyAnimeList est un entier strictement
+    // positif — c'est ce qu'on exige.
+    const demandes = [...new Set((ids ?? []).map(Number).filter(n => Number.isInteger(n) && n > 0))]
+    if (demandes.length === 0) return new Map()
+
+    // Trié : sans cela, deux visites qui listent les mêmes séries dans un ordre
+    // différent occuperaient deux entrées de cache pour la même réponse.
+    const retenus = demandes.sort((a, b) => a - b).slice(0, MAX_PAR_REQUETE)
+    if (demandes.length > retenus.length) {
+      // Un plafond muet ferait croire que les séries écartées n'ont pas de
+      // prochain épisode, alors qu'on ne l'a simplement pas demandé.
+      console.warn(
+        `[anime-ink] ${demandes.length} séries suivies, ${retenus.length} interrogées : `
+        + `au-delà de ${MAX_PAR_REQUETE}, les suivantes n'affichent pas leur prochain épisode.`,
+      )
+    }
+
+    const data = await demander('prochainsEpisodes', { ids: retenus, perPage: MAX_PAR_REQUETE }, { signal })
+
+    const carte = new Map()
+    for (const media of data?.data?.Page?.media ?? []) {
+      if (!Number.isFinite(media?.idMal)) continue
+      const suivant = media.nextAiringEpisode
+      carte.set(media.idMal, {
+        mal_id: media.idMal,
+        diffusion: statutDepuisAniList(media.status),
+        episodes: Number.isFinite(media.episodes) ? media.episodes : null,
+        prochain: suivant && Number.isFinite(suivant.airingAt)
+          // L'API compte en secondes, JavaScript en millisecondes : oublier ce
+          // facteur mille situerait toutes les sorties en 1970.
+          ? { numero: suivant.episode, dateISO: new Date(suivant.airingAt * 1000).toISOString() }
+          : null,
+      })
+    }
+    return carte
+  }
+
   async function getRandomAnime() {
     // AniList n'a pas d'endpoint aléatoire : une page au hasard parmi les mieux
     // notées en tient lieu, sans prétendre à l'équivalence.
@@ -196,6 +253,7 @@ export function creerAdaptateurAniList({
     getAnimeRecommendations,
     getAnimeFranchise,
     getAnimeSeasons,
+    getProchainsEpisodes,
     getRandomAnime,
     clearApiCache: () => cache.clear(),
   }
@@ -212,6 +270,7 @@ export const getGenres = adaptateur.getGenres
 export const getAnimeRecommendations = adaptateur.getAnimeRecommendations
 export const getAnimeFranchise = adaptateur.getAnimeFranchise
 export const getAnimeSeasons = adaptateur.getAnimeSeasons
+export const getProchainsEpisodes = adaptateur.getProchainsEpisodes
 export const getRandomAnime = adaptateur.getRandomAnime
 export const clearApiCache = adaptateur.clearApiCache
 

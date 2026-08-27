@@ -278,6 +278,70 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'la section « Reprendre » montre la progression, avec ou sans date',
+    async executer(page, base) {
+      // Deux séries suivies : une qui diffuse encore, une terminée. La seconde
+      // est le cas courant d'une liste de suivi — et celui qu'un jeu composé
+      // uniquement de séries en cours n'éprouverait jamais.
+      const SUIVIS = [
+        { mal_id: 2, title: 'Sousou no Frieren', watchStatus: 'watching', currentEpisode: 7, episodes: null, genres: [], images: {} },
+        { mal_id: 1, title: 'Cowboy Bebop', watchStatus: 'watching', currentEpisode: 3, episodes: 26, genres: [], images: {} },
+      ]
+
+      await servir(page)
+      await page.addInitScript(liste => {
+        try {
+          localStorage.setItem('anime-ink-watchlist', JSON.stringify(liste))
+          localStorage.setItem('anime-ink-cookie-consent', JSON.stringify({ preferences: true, userdata: true }))
+        } catch { /* stockage refusé */ }
+      }, SUIVIS)
+
+      await page.goto(`${base}profil`, { waitUntil: 'load' })
+      const section = page.locator('section', { has: page.getByRole('heading', { name: /reprendre/i }) })
+      await section.waitFor({ timeout: 15_000 })
+
+      // La progression vient du stockage local et s'affiche aussitôt ; les
+      // dates arrivent par le réseau, donc plus tard. Lire le texte dès que la
+      // section paraît revient à mesurer une course — elle se gagne sur une
+      // machine rapide et se perd en intégration continue.
+      if (SOURCE.nom === 'anilist') {
+        await section.getByText(/Épisode 9/).waitFor({ timeout: 15_000 })
+      } else {
+        // Rien n'arrivera : on laisse passer le temps qu'une date aurait mis,
+        // sans quoi on constaterait son absence avant même qu'elle ait pu
+        // paraître.
+        await page.waitForTimeout(4000)
+      }
+
+      const texte = (await section.innerText()).replace(/\s+/g, ' ')
+
+      // La progression vient du stockage local : elle doit s'afficher quoi
+      // qu'il arrive au réseau.
+      verifier(/Cowboy Bebop/.test(texte), `« Reprendre » n'affiche pas la série suivie : « ${texte.slice(0, 120)} »`)
+      verifier(/Épisode 3 sur 26/.test(texte), `la progression d'une série terminée manque : « ${texte.slice(0, 160)} »`)
+
+      // La date, elle, dépend de ce que la source sait faire — c'est une
+      // capacité, pas une promesse du contrat commun. AniList date les
+      // épisodes ; l'API historique ne le sait pas, et la section doit alors
+      // s'afficher SANS dates plutôt que de ne pas s'afficher.
+      if (SOURCE.nom === 'anilist') {
+        verifier(
+          /Épisode 9/.test(texte),
+          `la date du prochain épisode n'apparaît pas pour une série en diffusion : « ${texte.slice(0, 160)} »`,
+        )
+        verifier(
+          !/Cowboy Bebop[^É]*Épisode 3 sur 26 Épisode \d/.test(texte),
+          `une série terminée annonce un prochain épisode : « ${texte.slice(0, 200)} »`,
+        )
+      } else {
+        verifier(
+          !/Épisode \d+ (aujourd|demain|dans |le )/.test(texte),
+          `une source qui ne sait pas dater les épisodes en annonce quand même : « ${texte.slice(0, 160)} »`,
+        )
+      }
+    },
+  },
+  {
     // Le seul parcours qui parte d'un poste déjà habité. Tous les autres
     // démarrent d'un navigateur vierge, si bien qu'aucun ne verrait des
     // données écrites par une version antérieure du site — c'est-à-dire

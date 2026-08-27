@@ -137,6 +137,28 @@ export function verifierContrat(nom, { adaptateur, installerReseau, avantChaque 
       expect(Array.isArray(franchise.others)).toBe(true)
     })
 
+    it('rend une carte des prochains épisodes, même sans rien savoir', async () => {
+      installerReseau('anime')
+      const carte = await adaptateur.getProchainsEpisodes([1, 2])
+
+      // Ce n'est PAS une promesse du contrat commun : une source peut ne pas
+      // savoir dater les épisodes. Ce qui est exigé, c'est la FORME — une carte
+      // consultable, jamais `undefined`, pour que l'écran s'affiche sans dates
+      // au lieu de tomber.
+      expect(carte).toBeInstanceOf(Map)
+      // Les identifiants restent des nombres : un objet ordinaire les aurait
+      // convertis en chaînes, et la recherche par `mal_id` aurait échoué.
+      for (const cle of carte.keys()) expect(typeof cle).toBe('number')
+    })
+
+    it('ne réclame rien pour une liste vide', async () => {
+      installerReseau('anime')
+      const carte = await adaptateur.getProchainsEpisodes([])
+
+      // Une liste de suivi vide ne doit pas consommer une requête sur trente.
+      expect(carte.size).toBe(0)
+    })
+
     it('alimente le voyant de santé', async () => {
       // Le pied de page ne parle pas de la source : il dit à l'utilisateur si
       // ce qu'il regarde est frais. Une source qui n'y verse rien laisse le

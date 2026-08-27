@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.6'
+export const CURRENT_VERSION = '1.7'
 
 export const CHANGELOG = [
+  {
+    version: '1.7',
+    date: '27 août 2026',
+    changes: [
+      { type: 'feat', label: 'Une section « Reprendre » sur ton profil : tes séries en cours, l’épisode où tu t’es arrêté, et quand sort le suivant' },
+    ],
+  },
   {
     version: '1.6',
     date: '27 août 2026',

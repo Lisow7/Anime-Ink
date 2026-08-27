@@ -107,6 +107,20 @@ const SCENARIOS = [
   // La fiche n'était visitée qu'avec une œuvre tout public : le voile, le
   // palier d'âge et le bouton de révélation échappaient à l'analyse.
   {
+    // Une section faite de dates et de compteurs sur fond coloré : exactement
+    // là où le contraste et les libellés se perdent.
+    nom: 'profil, section « Reprendre » garnie',
+    route: 'profil',
+    stockage: {
+      'anime-ink-cookie-consent': { preferences: true, userdata: true },
+      'anime-ink-watchlist': [
+        { mal_id: 2, title: 'Sousou no Frieren', watchStatus: 'watching', currentEpisode: 7, episodes: null, genres: [], images: {} },
+        { mal_id: 1, title: 'Cowboy Bebop', watchStatus: 'watching', currentEpisode: 3, episodes: 26, genres: [], images: {} },
+      ],
+    },
+    temoin: 'main section button',
+  },
+  {
     nom: 'fiche pour public averti, censure active',
     route: 'anime/1',
     genresImposes: [{ mal_id: 12, name: 'Hentai' }],
@@ -122,6 +136,20 @@ async function analyser(page, base, scenario) {
   // d'échec entrent dans le champ du garde-fou. Ils en étaient absents : ils
   // n'existent que lorsque l'API tombe, et l'API ne tombait jamais ici.
   await servirSource(page, { enPanne: scenario.enPanne, genresImposes: scenario.genresImposes })
+
+  // Certains écrans n'existent que si l'appareil porte déjà des données : la
+  // liste de suivi, les favoris, l'historique. Sans les semer avant le premier
+  // rendu, l'analyse porterait sur un état vide et déclarerait « conforme »
+  // sans avoir vu la section visée.
+  if (scenario.stockage) {
+    await page.addInitScript(entrees => {
+      try {
+        for (const [cle, valeur] of Object.entries(entrees)) {
+          localStorage.setItem(cle, JSON.stringify(valeur))
+        }
+      } catch { /* stockage refusé */ }
+    }, scenario.stockage)
+  }
 
   await page.goto(`${base}${scenario.route}`, { waitUntil: 'load' })
   await page.waitForTimeout(STABILISATION_MS)

@@ -5,6 +5,18 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.7] — 27 août 2026
+
+### Nouveautés
+- **Une section « Reprendre » sur ton profil.** Tes séries déclarées en cours, l’épisode où tu t’es arrêté, et la date du prochain épisode quand elle est connue — « épisode 9 dans 3 jours, le 30 août ». Une série terminée garde sa progression, sans date inventée
+- Toute la liste tient en **une seule requête**, quel qu’en soit le nombre de titres
+
+### Maintenance
+- Le plafond de poids passe de 104 à 105 ko, et pas davantage : à 107, la régression que ce garde-fou existe pour attraper — une page entière revenue dans le fichier de démarrage — repassait sans un mot
+- Onze parcours et trente-deux passes d’accessibilité, dont la nouvelle section en thème clair et sombre
+
+---
+
 ## [1.6] — 27 août 2026
 
 ### Nouveautés
