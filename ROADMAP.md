@@ -228,11 +228,29 @@ publicité ni monétisation ; et l'adresse change (`lisow7.github.io/Anime-Ink/`
 `basename` du routeur, `ORIGINE` dans `useSEO.js`, et les liens déjà partagés —
 GitHub Pages peut rester en place pour rediriger.
 
-⛔ **Rien n'en est préparé, volontairement.** Le passage par `/_vercel/image` ne
-peut pas être éprouvé sans un déploiement Vercel : l'écrire à l'avance
-reviendrait à livrer un second chemin de code que rien n'exécute, dans un dépôt
-qui prouve ses garde-fous par mutation. C'est **une session dédiée**, pas un
-préalable à poser dans un coin.
+✅ **Fait, et mesuré sur un déploiement réel** (27 août 2026) — le dépôt sait se
+construire pour les deux hôtes, `VERCEL=1` tranchant au build. Le site public
+reste GitHub Pages tant que la bascule n'est pas décidée.
+
+| | GitHub Pages | Vercel |
+|---|---|---|
+| Catalogue, jaquettes | 1 084 ko · PNG/JPEG | **228 ko · WebP** |
+| Fiche, jaquette | 138 ko | **15 ko** |
+| `/catalogue`, `/anime/1` | `404` | **`200`** |
+| Adresse inconnue | `404` | `404` |
+| `frame-ancestors`, `Permissions-Policy` | absents | **posés** |
+| Erreurs console | un `404` | aucune |
+
+⚠️ **Le gain avait un symétrique à éviter.** Une réécriture attrape-tout
+(`/(.*)` → `index.html`) rend `200` pour **toute** adresse, y compris inventée :
+c'est le *soft 404* que la documentation déconseille, et qui aurait fait passer
+n'importe quelle URL pour une page valide. Seules les cinq routes réelles sont
+donc réécrites ; le reste tombe sur une vraie page `404`.
+
+Le `404.html` diffère aussi selon l'hôte : GitHub Pages a besoin de son script
+de redirection — c'est lui qui fait tenir la navigation profonde — quand Vercel
+doit servir une page franche. Le laisser des deux côtés aurait renvoyé une
+adresse invalide en boucle vers l'application.
 
 - [ ] **métriques de terrain (LCP, CLS, INP)** — les mesurer chez le visiteur
       suppose de les recevoir quelque part. Le site n'a aucun back-end, et lui en
