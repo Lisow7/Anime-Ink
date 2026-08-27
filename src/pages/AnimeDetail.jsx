@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
-import { getAnimeById } from '../services/anime'
+import { ATTRIBUTION, getAnimeById } from '../services/anime'
 import { useHistory } from '../context/HistoryContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { classifyAdultContent } from '../constants/ageFilter'
@@ -85,7 +85,7 @@ export default function AnimeDetail() {
             Impossible de charger cette fiche
           </p>
           <p className="text-[var(--text-muted)] text-sm">
-            L&apos;API Jikan est momentanément indisponible. Réessaie dans quelques instants.
+            L&apos;API {ATTRIBUTION.nom} est momentanément indisponible. Réessaie dans quelques instants.
           </p>
           <button
             onClick={() => { contournerAuProchainAppel.current = true; setUnavailable(false); setRetryKey(k => k + 1) }}

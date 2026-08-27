@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useSEO } from '../hooks/useSEO'
 import { useCookieConsent } from '../context/CookieContext'
+import { ATTRIBUTION } from '../services/anime'
 
 export default function MentionsLegales() {
   useSEO({ title: 'Mentions légales', description: 'Mentions légales du site Anime-Ink : éditeur, données personnelles, RGPD, gestion des cookies et propriété intellectuelle.' })
@@ -37,17 +38,16 @@ export default function MentionsLegales() {
           Anime-Ink est une application web monopage (SPA) entièrement côté client, sans compte utilisateur, sans base de données propre et sans collecte de données personnelles sur un serveur.
         </p>
         <p>
-          Toutes les données affichées (titres, synopsis, images, scores…) proviennent de l'API publique{' '}
-          <a href="https://jikan.moe" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] underline">Jikan v4</a>,
-          un wrapper non officiel de <a href="https://myanimelist.net" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] underline">MyAnimeList</a>.
-          Anime-Ink n'est affilié ni à Jikan ni à MyAnimeList.
+          Toutes les données affichées (titres, synopsis, images, scores…) proviennent de l&apos;API publique{' '}
+          <a href={ATTRIBUTION.url} target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] underline">{ATTRIBUTION.nom}</a>,
+          {' '}{ATTRIBUTION.description}. Anime-Ink n&apos;est affilié à aucune de ces plateformes.
         </p>
       </Section>
 
       <Section title="Propriété intellectuelle">
         <p>
           Les illustrations, affiches et informations relatives aux animés sont la propriété de leurs ayants droit respectifs (studios, éditeurs, auteurs).
-          Leur affichage sur ce site s'effectue via l'API Jikan dans un cadre strictement informatif et non commercial.
+          Leur affichage sur ce site s&apos;effectue via l&apos;API {ATTRIBUTION.nom} dans un cadre strictement informatif et non commercial.
         </p>
         <p>
           Le code source de l'application est la propriété de son auteur. Toute reproduction ou utilisation à des fins commerciales est interdite sans accord préalable.
@@ -132,7 +132,7 @@ export default function MentionsLegales() {
 
       <Section title="Limitation de responsabilité">
         <p>
-          L'éditeur ne peut être tenu responsable des erreurs, omissions ou indisponibilités des données fournies par l'API Jikan. Les informations affichées sont susceptibles d'être inexactes ou incomplètes.
+          L&apos;éditeur ne peut être tenu responsable des erreurs, omissions ou indisponibilités des données fournies par l&apos;API {ATTRIBUTION.nom}. Les informations affichées sont susceptibles d'être inexactes ou incomplètes.
         </p>
         <p>
           L'accès au site peut être interrompu à tout moment sans préavis, notamment en cas d'indisponibilité de l'API tierce.

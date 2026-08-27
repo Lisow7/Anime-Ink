@@ -32,10 +32,31 @@ import * as source from 'source-donnees'
 /* global __SOURCE_DONNEES__ */
 export const NOM_SOURCE = typeof __SOURCE_DONNEES__ === 'string' ? __SOURCE_DONNEES__ : 'anilist'
 
-/** Ce que le pied de page et les mentions légales doivent citer. */
+/**
+ * Ce que l'interface doit citer : pied de page, mentions légales, messages de
+ * panne, et le lien qui renvoie à la fiche d'origine.
+ *
+ * Rassemblé ici parce que ces mentions étaient éparpillées dans huit écrans, et
+ * qu'une bascule les aurait laissées derrière : le site aurait nommé une source
+ * qu'il n'interroge plus.
+ *
+ * `couleur` habille le lien externe de la fiche — celle de chaque marque.
+ */
 export const ATTRIBUTION = {
-  anilist: { nom: 'AniList', url: 'https://anilist.co' },
-  jikan: { nom: 'Jikan', url: 'https://jikan.moe' },
+  anilist: {
+    nom: 'AniList',
+    url: 'https://anilist.co',
+    couleur: '#02a9ff',
+    description: 'une base de données communautaire ouverte',
+    debit: '30 requêtes par minute',
+  },
+  jikan: {
+    nom: 'Jikan',
+    url: 'https://jikan.moe',
+    couleur: '#2e51a2',
+    description: 'un wrapper non officiel de MyAnimeList',
+    debit: '3 requêtes par seconde',
+  },
 }[NOM_SOURCE]
 
 export const {
