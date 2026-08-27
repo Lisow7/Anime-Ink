@@ -5,6 +5,15 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.6] — en préparation
+
+### Maintenance
+- Le contrat que l’application attend d’une source de données est écrit, et une suite de conformité vérifie qu’un adaptateur le remplit — première étape du passage à AniList, sans que rien ne change encore pour un visiteur
+
+> Rien de visible dans ce lot : la version affichée reste `1.5`.
+
+---
+
 ## [1.5] — 27 août 2026
 
 ### Corrections
