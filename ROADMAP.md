@@ -64,6 +64,12 @@
 Lighthouse 100, LCP 1,7 s, CLS 0. Jaquettes en WebP, bundle découpé, `preconnect`
 corrigés.
 
+**Un budget de poids tient l'acquis** : 100,7 ko au démarrage et 138,7 ko au
+total, en gzip, avec des plafonds à 3 % au-dessus. Vérifié à chaque pull request
+avant même l'installation du navigateur. Les marges sont serrées à dessein — un
+premier réglage à 10 % laissait passer sans un mot le retour d'une route entière
+dans le chunk d'entrée.
+
 ## Annoncé à tort comme livré — à faire, ou à retirer
 
 - [ ] **Servir la dernière réponse valide pendant une panne.** L'ancienne liste
@@ -92,7 +98,8 @@ tout le travail.
 
 ### Qualité
 
-- [ ] budgets Core Web Vitals et poids des bundles en intégration continue ;
+- [ ] budgets Core Web Vitals — le **poids** est tenu (voir plus haut), les
+      métriques de terrain (LCP, CLS) restent à instrumenter ;
 - [ ] valider les réponses de l'API contre des schémas versionnés.
 
 ### Nécessite un autre hébergement
