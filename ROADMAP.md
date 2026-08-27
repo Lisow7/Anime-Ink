@@ -70,18 +70,39 @@ avant même l'installation du navigateur. Les marges sont serrées à dessein �
 premier réglage à 10 % laissait passer sans un mot le retour d'une route entière
 dans le chunk d'entrée.
 
-## Annoncé à tort comme livré — à faire, ou à retirer
+## Annoncé à tort comme livré — instruit, et tranché
 
-- [ ] **Servir la dernière réponse valide pendant une panne.** L'ancienne liste
-      l'annonçait ; le cache supprime au contraire l'entrée dès son expiration
-      (`cache.js`). Seuls les genres et les traductions ont un filet. Un mode
-      « périmé plutôt que rien » reste à écrire.
-- [ ] **Détecter une erreur Jikan dans une réponse `200`.** Rien ne le fait : le
-      client ne regarde que `response.ok`.
+Ces deux lignes venaient de l'ancienne liste. Aucune n'est devenue une tâche :
+les instruire a suffi à les régler.
 
-À noter : la prise en charge de `Retry-After` existe bien dans le code, mais
-**Jikan n'envoie jamais cet en-tête** (mesuré sur un vrai `429`). Le repli fait
-tout le travail.
+**« Détecter une erreur Jikan dans une réponse `200` » — sans objet.** Deux
+raisons plutôt qu'une. D'abord, le cas n'a pas pu être démontré : sollicitée
+avec un identifiant absurde, une limite non numérique et une page négative,
+l'API répond avec un code d'erreur, jamais `200`. Ensuite, quand bien même il
+surviendrait, **tous les appelants s'en protègent déjà** — `data.data ?? []`,
+`Array.isArray(json.data) ? json.data : []`, `data?.relations ?? []`. Un corps
+inattendu dégrade en liste vide, et la fiche bascule sur sa page « introuvable ».
+Écrire une détection ajouterait un chemin de code pour un cas que le contrat
+absorbe.
+
+**« Servir la dernière réponse valide pendant une panne » — arbitrage, pas
+tâche.** Le constat tient : `cache.js` supprime l'entrée dès son expiration, il
+n'existe aucun mode « périmé plutôt que rien ». Mais le gain serait mince. Le
+cache vit en `sessionStorage` : il meurt avec l'onglet. Servir du périmé
+n'aiderait donc que dans une session ouverte depuis plus d'une heure — pas dans
+le cas qui fait mal, l'arrivée sur un site dont l'API est tombée, où le cache est
+vide de toute façon.
+
+Le rendre utile supposerait `localStorage`, que le projet refuse délibérément :
+ce quota de 5 Mo porte les favoris, la liste de suivi et l'historique, données
+irremplaçables qu'un cache jetable n'a pas à mettre en péril. **C'est donc un
+choix entre confort hors-ligne et protection des données de l'utilisateur**, à
+poser comme tel le jour où on le reprendra — pas une ligne à cocher.
+
+**Enfin, une nuance sur `Retry-After`** : sa prise en charge existe bien dans le
+code, mais **Jikan n'envoie jamais cet en-tête** (mesuré sur un vrai `429`). Le
+repli fait tout le travail. Ce chemin n'a donc jamais été éprouvé en conditions
+réelles, et il ne faut pas le croire tel.
 
 ## Reste à faire
 
@@ -93,22 +114,31 @@ tout le travail.
 - [ ] import/export JSON des favoris et de la liste ;
 - [ ] filtres par année, studio, saison, durée ;
 - [ ] statistiques personnelles, sans traçage ;
-- [ ] comparaison de plusieurs animés ;
-- [ ] afficher la date de la dernière donnée valide en mode dégradé.
+- [ ] comparaison de plusieurs animés.
+
+*(« Afficher la date de la dernière donnée valide en mode dégradé » a disparu de
+cette liste : elle supposait qu'une donnée périmée soit servie, ce que la section
+précédente écarte. Sans elle, il n'y a aucune date à montrer.)*
 
 ### Qualité
 
-- [ ] budgets Core Web Vitals — le **poids** est tenu (voir plus haut), les
-      métriques de terrain (LCP, CLS) restent à instrumenter ;
 - [ ] valider les réponses de l'API contre des schémas versionnés.
+
+Le **poids** des bundles est tenu (voir plus haut). Les métriques de terrain,
+elles, ne relèvent pas de cette section : voir ci-dessous.
 
 ### Nécessite un autre hébergement
 
-GitHub Pages ne sert pas d'en-têtes personnalisés. Ces deux points supposent un
-déplacement, pas un développement :
+Ces points supposent un déplacement, pas un développement :
 
-- [ ] vrais en-têtes `Content-Security-Policy` et `Permissions-Policy` ;
-- [ ] proxy de cache en périphérie, et métriques de disponibilité.
+- [ ] vrais en-têtes `Content-Security-Policy` et `Permissions-Policy` — GitHub
+      Pages ne sert aucun en-tête personnalisé ;
+- [ ] proxy de cache en périphérie, et métriques de disponibilité ;
+- [ ] **métriques de terrain (LCP, CLS, INP)** — les mesurer chez le visiteur
+      suppose de les recevoir quelque part. Le site n'a aucun back-end, et lui en
+      donner un pour ce seul usage serait disproportionné. En attendant, la
+      performance se surveille par le **poids** en intégration continue et par
+      Lighthouse en laboratoire.
 
 ## Vérifications en attente
 
