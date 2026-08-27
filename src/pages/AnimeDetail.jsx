@@ -32,7 +32,6 @@ export default function AnimeDetail() {
     description: anime?.synopsis
       ? anime.synopsis.replace(/\[Written by.*?\]/g, '').trim().slice(0, 160)
       : undefined,
-    canonical: `https://lisow7.github.io/Anime-Ink/anime/${id}`,
     ogImage: anime?.images?.jpg?.large_image_url,
   })
 

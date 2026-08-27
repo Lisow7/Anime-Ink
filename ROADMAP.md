@@ -195,6 +195,45 @@ aujourd'hui — les lire comme des manques urgents serait un contresens :
       développement mais un hôte qui sache réécrire une route vers `index.html`
       **en gardant un `200`** : n'importe quel hébergement statique moderne le
       fait, GitHub Pages ne le permet pas ;
+### Ce que coûterait le déplacement, chiffré
+
+Les quatre points ci-dessus tiennent tous au même fait : **GitHub Pages ne sert
+que des fichiers**. Ni en-tête configurable, ni réécriture, ni transformation
+d'image. Instruit le 27 août 2026, sur documentation à jour :
+
+| | GitHub Pages | Vercel *Hobby* | Cloudflare Pages | Netlify *gratuit* |
+|---|---|---|---|---|
+| Réécriture SPA en `200` | ❌ | ✅ | ✅ | ✅ |
+| En-têtes HTTP | ❌ | ✅ | ✅ | ✅ |
+| Conversion WebP | ❌ | ✅ | 💰 20 $/mois | ❔ crédits |
+| Prix | 0 € | **0 €** | 0 € | 0 € |
+
+**Vercel en offre Hobby couvre les trois, gratuitement**, par un seul fichier
+`vercel.json` — [la documentation](https://vercel.com/docs/project-configuration/vercel-json)
+donne les trois clés nécessaires :
+
+- `rewrites` : `[{ "source": "/(.*)", "destination": "/index.html" }]`, le motif
+  SPA documenté, qui **garde un `200`** ;
+- `headers` : de quoi poser `frame-ancestors` et `Permissions-Policy`, seuls
+  absents de la balise `<meta>` ;
+- `images` : `remotePatterns` autorisant `s4.anilist.co` et
+  `formats: ["image/webp"]`, servi par `/_vercel/image?url=…&w=…&q=…`.
+  **5 000 transformations par mois**, mises en cache après le premier appel —
+  le catalogue en consomme environ mille une fois pour toutes.
+
+⚠️ **Deux conditions à connaître** : l'offre Hobby est réservée à un usage
+personnel **non commercial**, ce que le site respecte tant qu'il ne porte ni
+publicité ni monétisation ; et l'adresse change (`lisow7.github.io/Anime-Ink/`
+→ `anime-ink.vercel.app`), ce qui touche `base` dans `vite.config.js`, le
+`basename` du routeur, `ORIGINE` dans `useSEO.js`, et les liens déjà partagés —
+GitHub Pages peut rester en place pour rediriger.
+
+⛔ **Rien n'en est préparé, volontairement.** Le passage par `/_vercel/image` ne
+peut pas être éprouvé sans un déploiement Vercel : l'écrire à l'avance
+reviendrait à livrer un second chemin de code que rien n'exécute, dans un dépôt
+qui prouve ses garde-fous par mutation. C'est **une session dédiée**, pas un
+préalable à poser dans un coin.
+
 - [ ] **métriques de terrain (LCP, CLS, INP)** — les mesurer chez le visiteur
       suppose de les recevoir quelque part. Le site n'a aucun back-end, et lui en
       donner un pour ce seul usage serait disproportionné. En attendant, la
