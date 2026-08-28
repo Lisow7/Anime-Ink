@@ -167,7 +167,17 @@ réelles, et il ne faut pas le croire tel.
       à partir de ce qui y est déjà enregistré. Seuls les favoris et la liste
       comptent : l'historique dit ce qu'on a ouvert, souvent par curiosité, et
       le compter prendrait un coup d'œil pour un goût ;
-- [ ] comparaison de plusieurs animés.
+- [x] ~~comparaison de plusieurs animés~~ — livrée en v1.14, sur `/comparer`.
+      Le choix se fait parmi les favoris, la liste et l'historique : **aucune
+      requête**, tout est déjà sur l'appareil — la page fonctionne donc même si
+      la source est en panne. Comparer des titres inconnus supposerait une
+      recherche, donc du réseau, donc un autre écran ; ce n'est pas le besoin
+      courant, on hésite entre des séries qu'on a repérées.
+
+      Une comparaison ne juxtapose pas : elle **désigne**. La meilleure note et
+      la série la plus courte sont mises en avant — sauf en cas d'égalité, où
+      distinguer l'un serait arbitraire — et les **genres communs** sont
+      dégagés, ce qu'aucune fiche prise isolément ne montre.
 
 *(« Afficher la date de la dernière donnée valide en mode dégradé » a disparu de
 cette liste : elle supposait qu'une donnée périmée soit servie, ce que la section

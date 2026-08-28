@@ -16,6 +16,10 @@
     {
       "source": "/mentions-legales",
       "destination": "/index.html"
+    },
+    {
+      "source": "/comparer",
+      "destination": "/index.html"
     }
   ],
   "headers": [

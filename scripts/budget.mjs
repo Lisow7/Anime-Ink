@@ -22,7 +22,7 @@ import { gzipSync } from 'node:zlib'
 const ASSETS = 'dist/assets'
 
 /**
- * Mesuré au 28 août 2026 : 104,3 ko au démarrage, 145,8 ko au total.
+ * Mesuré au 28 août 2026 : 104,8 ko au démarrage, 148,6 ko au total.
  *
  * Les marges sont de l'ordre de 3 %, et ce n'est pas de la coquetterie : un
  * premier réglage à 10 % laissait passer, sans un mot, le retour d'une route
@@ -46,9 +46,11 @@ const ASSETS = 'dist/assets'
  * ## Les deux plafonds ne font pas le même travail
  *
  * Le **démarrage** est le garde-fou strict : il mesure ce que télécharge
- * *chaque* visiteur, et cette quantité n'a aucune raison de croître avec les
- * fonctionnalités — une page ajoutée est chargée à la demande. Une hausse y est
- * donc suspecte par nature, et sa marge reste étroite.
+ * *chaque* visiteur. Une page ajoutée étant chargée à la demande, il ne croît
+ * presque pas — mais « presque » n'est pas « pas du tout », et l'affirmer
+ * serait faux : déclarer une route coûte son import différé et sa ligne dans le
+ * routeur, mesuré à environ 0,3 ko. Une hausse plus forte, elle, reste
+ * suspecte, et la marge le reste aussi.
  *
  * Le **total** mesure la somme, y compris ce que peu de gens chargent. Il croît
  * légitimement à chaque écran ajouté : un plafond fixe sur une valeur qui monte
@@ -59,11 +61,17 @@ const ASSETS = 'dist/assets'
  * Relevé de 146 à 148 ko le 28 août : « Tes goûts » portait le mesuré à
  * 145,8 ko, soit 0,2 ko de marge. Une dépendance légère importée en dur — +0,8
  * ko, mesuré — n'y sera plus attrapée ; si elle entre au **démarrage**, en
- * revanche, le plafond de 105 ko l'arrête, et c'est là que ça compte.
+ * revanche, le plafond l'arrête, et c'est là que ça compte.
+ *
+ * Relevés le même jour à 106 et 151 ko pour la page « Comparer » : une route de
+ * plus au démarrage (104,8 ko mesuré) et un écran de plus au total (148,6 ko).
+ * **Re-prouvé après coup**, car c'est là que le relâchement se glisse : la
+ * mutation de référence — une page remise dans le fichier d'entrée — sort
+ * toujours en dépassement.
  */
 const PLAFONDS = {
-  demarrage: 105 * 1024,
-  total: 148 * 1024,
+  demarrage: 106 * 1024,
+  total: 151 * 1024,
 }
 
 const gz = chemin => gzipSync(readFileSync(chemin)).length
