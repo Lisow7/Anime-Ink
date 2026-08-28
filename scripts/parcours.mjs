@@ -241,6 +241,33 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'la censure floute jusque dans les suggestions de recherche',
+    async executer(page, base) {
+      await servir(page, { genresImposes: HENTAI })
+      await page.goto(base, { waitUntil: 'load' })
+      await page.getByRole('combobox', { name: /rechercher/i }).fill('Cowboy')
+
+      const vignette = page.locator('#suggestions-recherche li img').first()
+      await vignette.waitFor({ timeout: 15_000 })
+
+      // La dernière des six surfaces de floutage à n'avoir jamais été vérifiée :
+      // l'API précédente ne répondait qu'aux requêtes déjà en cache, et celle
+      // que compose une frappe n'y était jamais. Rien ne s'y oppose désormais.
+      const filtre = await vignette.evaluate(el => getComputedStyle(el).filter)
+      verifier(
+        filtre.includes('blur'),
+        `censure active, une suggestion explicite n'est pas floutée (filtre : ${filtre})`,
+      )
+
+      // Et le registre est annoncé, pas seulement masqué.
+      const texte = (await page.locator('#suggestions-recherche').innerText()).replace(/\s+/g, ' ')
+      verifier(
+        /18|adulte|hentai/i.test(texte),
+        `rien n'avertit du contenu dans les suggestions : « ${texte.slice(0, 120)} »`,
+      )
+    },
+  },
+  {
     nom: 'la censure floute le contenu explicite, et la lever le dévoile',
     async executer(page, base) {
       await servir(page, { genresImposes: HENTAI })
