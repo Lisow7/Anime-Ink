@@ -54,8 +54,13 @@ export const ANIMES = [
   base(2, 'Sousou no Frieren', { status: 'Currently Airing', airing: true, episodes: null }),
   base(3, 'Contenu adulte', { genres: [{ mal_id: 12, name: 'Hentai' }] }),
   base(4, 'Steins;Gate', { relations: [{ relation: 'Prequel', entry: [{ mal_id: 1, type: 'anime', name: 'Cowboy Bebop' }] }] }),
-  base(5, 'Fullmetal Alchemist'),
   base(6, 'Monster'),
+  // Deux entrées d'une même franchise, placées **dans les six premières** : le
+  // regroupement les réunit en une seule carte. Sans ce doublon au bon endroit,
+  // un découpage fait AVANT le regroupement passerait inaperçu — c'est pourtant
+  // lui qui laissait une case vide dans la grille des mieux notés.
+  base(7, 'Monster Season 2'),
+  base(5, 'Fullmetal Alchemist'),
 ]
 
 const PAGINATION = {

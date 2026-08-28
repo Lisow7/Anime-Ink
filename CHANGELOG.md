@@ -5,6 +5,15 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.11] — 28 août 2026
+
+### Corrections
+- **Survoler une carte ne t’emmène plus hors du site.** La vignette laissait place à une bande-annonce, et un clic partait sur YouTube — personne ne demande à quitter un catalogue en promenant sa souris. La bande-annonce reste là où on la cherche : sur la fiche de l’animé
+- **La grille des mieux notés ne laisse plus de case vide.** Les entrées d’une même franchise sont réunies en une carte ; comme le découpage à six se faisait *avant* ce regroupement, il n’en restait parfois que cinq dans une grille taillée pour six
+- **L’onglet « Ma liste » est visible même quand elle est vide.** Il n’apparaissait qu’une fois la liste remplie : suivre une série était donc impossible à découvrir pour qui ne connaissait pas déjà la fonction. L’écran vide explique maintenant comment ajouter
+
+---
+
 ## [1.10] — 28 août 2026
 
 ### Nouveautés
