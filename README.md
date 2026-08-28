@@ -2,7 +2,7 @@
 
 Application web de découverte et de suivi d'animés, construite avec React 19 et l'API publique Jikan v4 (MyAnimeList).
 
-🌐 **Site en ligne :** [lisow7.github.io/Anime-Ink](https://lisow7.github.io/Anime-Ink/)
+🌐 **Site en ligne :** [anime-ink-blond.vercel.app](https://anime-ink-blond.vercel.app/)
 
 ---
 
@@ -31,7 +31,7 @@ Application web de découverte et de suivi d'animés, construite avec React 19 e
 | Vite | Bundler + serveur de développement |
 | Tailwind CSS v4 | Styles utilitaires |
 | AniList (GraphQL) | Données animés — `VITE_SOURCE_DONNEES=jikan` rebascule sur l'API historique |
-| GitHub Pages | Hébergement statique |
+| Vercel | Hébergement — réécrit les routes en `200`, convertit les jaquettes en WebP, sert les en-têtes de sécurité |
 | GitHub Actions | CI/CD — déploiement automatique |
 
 ---

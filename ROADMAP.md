@@ -305,9 +305,26 @@ les liens déjà partagés — GitHub Pages peut rester en place pour rediriger.
 **Chaque changement d'adresse coûte en référencement** : si un nom de domaine
 propre est envisagé, mieux vaut le prendre avant et ne changer qu'une fois.
 
-✅ **Fait, et mesuré sur un déploiement réel** (27 août 2026) — le dépôt sait se
-construire pour les deux hôtes, `VERCEL=1` tranchant au build. Le site public
-reste GitHub Pages tant que la bascule n'est pas décidée.
+✅ **Fait, et basculé le 28 août 2026.** Le site public est désormais
+**https://anime-ink-blond.vercel.app** ; GitHub Pages n'héberge plus rien et
+**redirige**, en gardant le chemin, la requête et l'ancre — un lien partagé vers
+`/anime/1` arrive toujours à destination.
+
+⚠️ **Cette redirection n'est pas un `301`.** Un hébergement de fichiers ne peut
+pas en émettre : c'est une balise `refresh` doublée d'un script, que les moteurs
+tiennent pour un signal plus faible. Le coût est ici presque nul — les routes
+profondes répondaient `404` depuis toujours, donc rien n'était indexé à
+transmettre — mais il fallait le dire plutôt que de laisser croire à une
+redirection propre.
+
+🔁 **Réversible en une ligne** : les étapes de construction restent dans le
+workflow de Pages, qui vérifient toujours que le site compile. Remettre
+`path: dist` à la place de `path: redirection` y rétablit l'hébergement.
+
+💡 **Un nom de domaine reste possible et ne coûtera rien en travail** :
+l'origine des adresses canoniques est déterminée au build par l'hôte lui-même,
+si bien qu'aucune ligne de code ne sera à changer. `anime-ink.vercel.app` est
+déjà pris par un autre projet.
 
 | | GitHub Pages | Vercel |
 |---|---|---|
