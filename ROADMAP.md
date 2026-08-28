@@ -229,6 +229,23 @@ plus.)*
       tout ; ce n'est plus une impossibilité mais un arbitrage — un point de
       collecte à écrire, à surveiller et à protéger du bruit, pour un site sans
       compte ni paiement.
+- [ ] **le décalage de mise en page d'une fiche** — mesuré le 28 août sur la
+      production : **0,23 sur écran large, 0,63 sur mobile**, quand 0,1 est la
+      limite du tolérable. La cause est connue et n'a rien d'obscur : l'écran
+      d'attente est plus court que la fiche, si bien que l'arrivée des données
+      pousse tout ce qui suit.
+
+      Deux corrections ont déjà été apportées et mesurées — un squelette qui
+      reproduit la structure entière (368 → 508 pixels) et une hauteur d'écran
+      réservée (0,45 → 0,23 sur large). ⚠️ **Cette dernière dégrade légèrement
+      le mobile** (0,63 contre 0,61) : elle a été retenue sur l'arbitrage, pas
+      par principe.
+
+      Ce qui reste demande de **ne plus remplacer le squelette par la fiche**,
+      mais de remplir une structure déjà en place — une refonte du rendu de la
+      page, pas un réglage. À faire de front, avec une mesure avant et après sur
+      les deux tailles d'écran.
+
 - [ ] **métriques de terrain (LCP, CLS, INP)** — également **possibles**
       désormais, l'hébergeur proposant sa propre mesure. Le frein a changé de
       nature : c'est le **poids** qui décide, le script de mesure s'ajoutant à

@@ -13,6 +13,7 @@ import { infoItem } from '../utils/anime'
 import { posterUrl } from '../utils/images'
 import { safeYoutubeEmbed } from '../utils/urls'
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog'
+import BandeAnnonce from './BandeAnnonce'
 
 export default function AnimeModal() {
   const { animeId, openModal, closeModal } = useModal()
@@ -424,18 +425,7 @@ export default function AnimeModal() {
                 return (
                   <div className="flex flex-col gap-3">
                     <h3 className="text-[var(--text-primary)] font-semibold">Bande-annonce</h3>
-                    <div className="aspect-video rounded-xl overflow-hidden bg-[var(--bg-surface)]">
-                      <iframe
-                        src={embedUrl}
-                        title={`Trailer ${anime.title}`}
-                        className="w-full h-full"
-                        loading="lazy"
-                        referrerPolicy="strict-origin-when-cross-origin"
-                        sandbox="allow-scripts allow-same-origin allow-presentation"
-                        allow="encrypted-media; picture-in-picture; fullscreen"
-                        allowFullScreen
-                      />
-                    </div>
+                    <BandeAnnonce embedUrl={embedUrl} youtubeId={anime.trailer?.youtube_id} titre={anime.title} />
                   </div>
                 )
               } catch { return null }
