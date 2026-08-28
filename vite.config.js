@@ -112,10 +112,56 @@ const inlineCssPlugin = {
   },
 }
 
+/**
+ * Sur Vercel, la page servie ne porte ni script inline ni politique en `<meta>`.
+ *
+ * ## Pourquoi retirer le script
+ *
+ * `script-src` acceptait `'unsafe-inline'`, ce qui revient à autoriser
+ * n'importe quel script injecté dans la page — la protection principale de la
+ * politique, annulée. Un seul élément l'exigeait : le décodeur d'adresses de
+ * GitHub Pages, vérifié en servant le build avec `script-src 'self'` (une seule
+ * violation, toujours la même ; le bloc `application/ld+json` n'est pas soumis
+ * à cette directive, contrairement à ce qu'on pourrait croire).
+ *
+ * Vercel réécrit les routes et ne produit jamais l'adresse que ce script
+ * décode. Le retirer **là-bas seulement** supprime la dernière raison
+ * d'`'unsafe-inline'` sans toucher au retour à GitHub Pages que `deploy.yml`
+ * garde ouvert : hors Vercel, le script reste.
+ *
+ * ## Pourquoi retirer la balise `<meta>`
+ *
+ * Une politique en `<meta>` **ignore** `report-uri`, `report-to` et
+ * `frame-ancestors` — c'est d'ailleurs pourquoi `frame-ancestors` était déjà
+ * servi à part, et pourquoi deux politiques se superposaient. Sur Vercel, la
+ * seule politique est celle de `vercel.json`, entière.
+ *
+ * Hors Vercel, la balise reste : un hébergement de fichiers statiques ne sait
+ * pas émettre d'en-tête, et une politique amoindrie y vaut mieux qu'aucune.
+ *
+ * ⚠️ `style-src` garde `'unsafe-inline'`, et c'est délibéré : `inlineCssPlugin`
+ * remplace la feuille de style par un bloc `<style>`, et React pose des styles
+ * calculés — le floutage des jaquettes réservées en dépend.
+ */
+const cspSansScriptInline = {
+  name: 'csp-sans-script-inline',
+  apply: 'build',
+  enforce: 'post',
+  transformIndexHtml: {
+    order: 'post',
+    handler(html) {
+      if (!surVercel) return html
+      return html
+        .replace(/<script data-hote="github-pages">[\s\S]*?<\/script>/, '')
+        .replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '')
+    },
+  },
+}
+
 export default defineConfig({
   // GitHub Pages sert le site sous le nom du dépôt ; Vercel le sert à la racine.
   base: surVercel ? '/' : '/Anime-Ink/',
-  plugins: [react(), tailwindcss(), inlineCssPlugin, page404Vercel],
+  plugins: [react(), tailwindcss(), inlineCssPlugin, page404Vercel, cspSansScriptInline],
   define: {
     __ORIGINE_SITE__: JSON.stringify(origineSite),
     __OPTIMISE_IMAGES__: JSON.stringify(optimiseLesImages),
