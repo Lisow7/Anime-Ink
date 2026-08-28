@@ -5,6 +5,15 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.17] — 28 août 2026
+
+### Corrections
+- **Les pages ne sautent plus au chargement.** L’écran d’attente n’occupait que 40 % de la hauteur : le pied de page restait visible, puis se faisait repousser dès l’arrivée du contenu. Il occupe désormais la fenêtre, et le décalage disparaît — catalogue **0,198 → 0,010**, profil **0,007**, accueil **0,003**, mentions légales **0**
+
+> La fiche d’un animé reste en retrait (0,19 sur écran large) : elle a son propre écran d’attente, donc une transition de plus. Consigné dans la feuille de route.
+
+---
+
 ## [1.16] — 28 août 2026
 
 ### Corrections

@@ -48,8 +48,21 @@ function ModaleAnimeALaDemande() {
   )
 }
 
+/**
+ * L'attente d'une page occupe l'écran, et ce n'est pas une coquetterie.
+ *
+ * À 40 % de la hauteur, le pied de page restait **visible** pendant le
+ * chargement, puis se faisait repousser hors du champ dès l'arrivée du
+ * contenu. Ce déplacement comptait pour l'essentiel du décalage de mise en
+ * page mesuré le 28 août : 0,188 sur les 0,198 du catalogue, 0,205 sur les
+ * 0,215 en mobile.
+ *
+ * En occupant la fenêtre, l'attente met le pied de page hors du champ dès le
+ * départ — il n'a donc plus à en sortir. La correction vaut pour **toutes** les
+ * pages, l'attente étant commune à la navigation.
+ */
 const PageFallback = () => (
-  <div className="flex-1 flex items-center justify-center min-h-[40vh]">
+  <div className="flex-1 flex items-center justify-center min-h-screen">
     <div className="w-6 h-6 border-2 border-[#22c55e] border-t-transparent rounded-full animate-spin" />
   </div>
 )
