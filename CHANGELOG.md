@@ -5,6 +5,15 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.16] — 28 août 2026
+
+### Maintenance
+- **Le site a déménagé** : l’adresse publique devient `anime-ink-blond.vercel.app`. Les anciens liens continuent de fonctionner — ils redirigent en gardant le chemin. Les pages répondent enfin `200` au lieu de `404`, les jaquettes arrivent en WebP, et les protections que la balise `<meta>` ne pouvait pas porter sont servies
+- **Le floutage des suggestions de recherche est enfin vérifié** — la sixième et dernière surface. L’obstacle n’avait jamais été le code : l’ancienne source ne répondait qu’aux requêtes déjà en cache, or celle que compose une frappe n’y était jamais
+- La feuille de route est reprise après le déménagement : la moitié de ce que la section « Nécessite un autre hébergement » listait est réglée, `sandbox` en est écarté — cette directive sert à brider du contenu tiers, pas ses propres pages — et deux points changent de nature, d’impossibles à arbitrables
+
+---
+
 ## [1.15] — 28 août 2026
 
 ### Nouveautés
