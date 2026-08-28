@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.9'
+export const CURRENT_VERSION = '1.10'
 
 export const CHANGELOG = [
+  {
+    version: '1.10',
+    date: '28 août 2026',
+    changes: [
+      { type: 'feat', label: 'Filtre le catalogue par saison et par année — « l’été 2026 », par exemple' },
+    ],
+  },
   {
     version: '1.9',
     date: '28 août 2026',
