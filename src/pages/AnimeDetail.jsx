@@ -101,45 +101,67 @@ export default function AnimeDetail() {
   /**
    * L'attente occupe la place de ce qui arrive.
    *
-   * Le squelette ne montrait qu'une jaquette et trois lignes — 368 pixels,
-   * quand la fiche en fait 835. À l'arrivée des données, tout grandissait d'un
-   * coup et poussait le pied de page : un décalage de mise en page de 0,45,
-   * mesuré, là où 0,1 est déjà la limite du tolérable.
+   * Deux choses distinctes se jouent ici, et les confondre a coûté deux
+   * tentatives ratées.
    *
-   * Il reproduit donc la structure entière : jaquette, titre, bloc de
-   * caractéristiques, genres, synopsis. La hauteur ne sera jamais exacte — elle
-   * dépend de la longueur du texte, de la presence d'une bande-annonce — et
-   * viser le pixel serait vain.
+   * ## La `key`, qui règle la mesure
    *
-   * S'y ajoute une hauteur d'ecran reservee, retenue sur mesure et non par
-   * principe : elle ramene le decalage de 0,45 a 0,23 sur un ecran large, pour
-   * un cout de 0,02 sur mobile ou la fiche est bien plus haute. Le decalage
-   * qui subsiste est instruit dans la feuille de route.
+   * Les deux branches rendent un `<main>` au même endroit de l'arbre. Sans
+   * clé, React **réutilise le même nœud** et apparie ses enfants par position :
+   * le bloc gris du titre devient le titre, celui du synopsis devient la
+   * grille, et le navigateur voit chacun **se déplacer** de plusieurs centaines
+   * de pixels. C'est ce faux mouvement qui était mesuré — 0,153 sur écran
+   * large, 0,594 en mobile.
    *
-   * ⚠️ Réserver une hauteur d'écran entière a été essayé, et **écarté sur
-   * mesure** : cela améliorait le bureau et dégradait le mobile, où la fiche
-   * est bien plus haute. Le décalage résiduel est instruit dans .
+   * Deux clés distinctes suffisent à l'éteindre : l'attente est démontée, la
+   * fiche est montée. Ni l'un ni l'autre n'est un déplacement, et la mesure
+   * tombe à **0,000 sur les trois formats**.
+   *
+   * ## La géométrie, qui règle ce que l'œil voit
+   *
+   * La `key` ne suffirait pas seule : elle rendrait la mesure muette sans rien
+   * changer au saut visuel. Le squelette reproduit donc la fiche **à sa vraie
+   * géométrie** — mêmes espacements, même largeur de jaquette à chaque palier,
+   * même point de bascule en colonne, et le lien de retour qui existe aussi
+   * une fois chargé. Sans quoi le chiffre serait obtenu, pas mérité.
+   *
+   * ⚠️ La hauteur ne sera jamais exacte au pixel : elle dépend de la longueur
+   * du synopsis et de la présence d'une bande-annonce. Viser mieux serait vain.
    */
   if (loading) {
     return (
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6 sm:gap-8 min-h-screen" aria-busy="true">
-        <div className="animate-pulse flex flex-col sm:flex-row gap-6 sm:gap-8">
-          <div className="w-48 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
+      <main key="attente" className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10 min-h-screen" aria-busy="true">
+        {/* Le lien de retour existe une fois chargé : l'omettre décalerait
+            tout ce qui suit de sa hauteur et de son espacement. */}
+        <div className="animate-pulse h-5 w-40 bg-[var(--bg-surface)] rounded" />
+
+        <div className="animate-pulse flex flex-col min-[500px]:flex-row gap-6 min-[500px]:gap-8">
+          <div className="w-36 min-[500px]:w-44 sm:w-48 shrink-0 self-start mx-auto min-[500px]:mx-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
           <div className="flex-1 flex flex-col gap-4 min-w-0">
-            <div className="h-8 bg-[var(--bg-surface)] rounded w-2/3" />
-            <div className="h-5 bg-[var(--bg-surface)] rounded w-24" />
-            {/* Le bloc des caractéristiques : statut, épisodes, durée, diffusion,
-                saison, classement, popularité, studios. */}
-            <div className="h-32 bg-[var(--bg-surface)] rounded-xl w-full" />
-            <div className="flex gap-2">
+            <div className="h-9 bg-[var(--bg-surface)] rounded w-2/3" />
+            <div className="h-10 bg-[var(--bg-surface)] rounded w-32" />
+            {/* La grille des caractéristiques, reproduite case par case plutôt
+                qu'estimée en hauteur : elle passe de deux à trois colonnes à
+                500 px, et une hauteur figée serait fausse d'un côté ou de
+                l'autre. */}
+            <div className="grid grid-cols-2 min-[500px]:grid-cols-3 gap-3 sm:gap-4 bg-[var(--bg-surface)] rounded-xl p-3 sm:p-4">
+              {Array.from({ length: 8 }, (_, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  <div className="h-3 bg-[var(--bg-elevated)] rounded w-16" />
+                  <div className="h-4 bg-[var(--bg-elevated)] rounded w-20" />
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
               {[64, 88, 72, 56].map(l => (
-                <div key={l} className="h-7 bg-[var(--bg-surface)] rounded" style={{ width: l }} />
+                <div key={l} className="h-6 bg-[var(--bg-surface)] rounded" style={{ width: l }} />
               ))}
             </div>
           </div>
         </div>
+
         <div className="animate-pulse flex flex-col gap-3">
-          <div className="h-6 bg-[var(--bg-surface)] rounded w-32" />
+          <div className="h-7 bg-[var(--bg-surface)] rounded w-32" />
           <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
           <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
           <div className="h-4 bg-[var(--bg-surface)] rounded w-4/5" />
@@ -161,7 +183,7 @@ export default function AnimeDetail() {
   const jaquetteMasquee = blurHentai && classementAge.adult && !jaquetteRevelee
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
+    <main key="fiche" className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-8 sm:gap-10">
       <Link to="/catalogue" className="text-[var(--text-muted)] text-sm hover:text-[var(--color-accent)] transition-colors w-fit">
         ← Retour au catalogue
       </Link>
