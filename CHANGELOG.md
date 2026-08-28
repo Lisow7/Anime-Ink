@@ -5,6 +5,14 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.10] — 28 août 2026
+
+### Maintenance
+- **Une veille hebdomadaire confronte la source de données à ce que le site attend.** Les jeux de test étant figés, rien n’aurait signalé qu’AniList change un champ : les tests seraient passés pendant que l’écran se vidait. Le contrôle interroge la vraie API, hors de la CI pour ne pas faire dépendre les fusions d’un service extérieur, et ouvre une issue en cas de rupture
+- Rien de visible : la version affichée reste `1.9`
+
+---
+
 ## [1.9] — 28 août 2026
 
 ### Nouveautés

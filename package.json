@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "a11y": "npm run build && node scripts/a11y.mjs",
     "parcours": "npm run build && node scripts/parcours.mjs",
-    "budget": "npm run build && node scripts/budget.mjs"
+    "budget": "npm run build && node scripts/budget.mjs",
+    "veille": "node scripts/veille-contrat.mjs"
   },
   "engines": {
     "node": ">=20.19.0"
