@@ -327,6 +327,54 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'un filtre de saison entre dans l’URL et survit au rechargement',
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(`${base}catalogue`, { waitUntil: 'load' })
+
+      const saison = page.locator('select[aria-label="Filtrer par saison"]')
+      await saison.waitFor({ timeout: 15_000 })
+      await saison.selectOption('ete')
+      const annee = page.locator('select[aria-label="Filtrer par année"]')
+      await annee.selectOption('2026')
+      await page.waitForTimeout(1500)
+
+      // L'URL est ce qui se partage et se met en signet : un filtre qui n'y
+      // figure pas est perdu au premier rechargement.
+      const url = new URL(page.url())
+      verifier(url.searchParams.get('saison') === 'ete', `la saison n'est pas dans l'URL : ${page.url()}`)
+      verifier(url.searchParams.get('annee') === '2026', `l'année n'est pas dans l'URL : ${page.url()}`)
+
+      await page.reload({ waitUntil: 'load' })
+      await saison.waitFor({ timeout: 15_000 })
+      verifier(
+        await saison.inputValue() === 'ete',
+        'le menu de saison ne reprend pas la valeur portée par l’URL',
+      )
+      verifier(
+        await annee.inputValue() === '2026',
+        'le menu d’année ne reprend pas la valeur portée par l’URL',
+      )
+
+      // Et le filtre doit atteindre la source, sinon il ne fait qu'orner l'URL.
+      const envoyees = []
+      const noter = r => {
+        if (!SOURCE.estRequete(r.url())) return
+        try { envoyees.push(JSON.parse(r.postData() ?? '{}').variables ?? {}) } catch { /* corps illisible */ }
+      }
+      page.on('request', noter)
+      await page.evaluate(() => { try { sessionStorage.clear() } catch { /* refusé */ } })
+      await page.reload({ waitUntil: 'load' })
+      await page.waitForTimeout(4000)
+      page.off('request', noter)
+
+      verifier(
+        envoyees.some(v => v.season === 'SUMMER' && v.seasonYear === 2026),
+        `la saison n'atteint pas la source : ${JSON.stringify(envoyees).slice(0, 200)}`,
+      )
+    },
+  },
+  {
     nom: 'les sorties de la semaine se groupent par jour',
     async executer(page, base) {
       await servir(page)

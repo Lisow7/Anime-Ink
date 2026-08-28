@@ -18,6 +18,18 @@ import { readStorage, writeStorage } from '../utils/storage'
 // WatchlistTable est le seul consommateur de @dnd-kit (3 paquets) et n'apparaît
 // que sur l'onglet « Ma liste ». Importé statiquement, il pesait sur tous ceux
 // qui ne l'ouvrent jamais : les trois quarts du poids du chunk Catalogue.
+/**
+ * Les années proposées, de la prochaine à 1960.
+ *
+ * L'année à venir figure au menu : les saisons s'annoncent avant de sortir, et
+ * c'est souvent ce qui intéresse le plus. En deçà de 1960, il n'y a plus de
+ * catalogue à parcourir.
+ */
+const ANNEES = Array.from(
+  { length: new Date().getFullYear() + 1 - 1960 + 1 },
+  (_, i) => new Date().getFullYear() + 1 - i,
+)
+
 const WatchlistTable = lazy(() => import('../components/WatchlistTable'))
 // Le survol de l'onglet amorce le téléchargement : sans cela, ouvrir sa liste
 // enchaînerait deux chunks l'un après l'autre, soit un aller-retour de plus
@@ -95,6 +107,8 @@ export default function Catalogue() {
   const type = searchParams.get('type') || ''
   const orderBy = searchParams.get('orderBy') || 'title'
   const letter = searchParams.get('letter') || ''
+  const saison = searchParams.get('saison') || ''
+  const annee = searchParams.get('annee') || ''
   const page = parseInt(searchParams.get('page') || '1')
 
   const [previousQuery, setPreviousQuery] = useState(query)
@@ -147,7 +161,7 @@ export default function Catalogue() {
           // Une reprise demandée par l'utilisateur contourne l'échec mémorisé,
           // sinon le bouton « Réessayer » paraîtrait mort pendant 30 secondes.
           const result = await getAnimeByFilter(
-            { genre, status, type, orderBy, letter, page },
+            { genre, status, type, orderBy, letter, saison, annee, page },
             controller.signal,
             { bypassCache },
           )
@@ -178,7 +192,7 @@ export default function Catalogue() {
     }
     run()
     return () => controller.abort()
-  }, [tab, query, genre, status, type, orderBy, letter, page, retryKey])
+  }, [tab, query, genre, status, type, orderBy, letter, saison, annee, page, retryKey])
 
   useEffect(() => {
     getGenres().then(data => { if (Array.isArray(data)) setGenres([...data].sort((a, b) => a.name.localeCompare(b.name))) })
@@ -399,6 +413,23 @@ export default function Catalogue() {
               <option value="airing">En cours</option>
               <option value="complete">Terminé</option>
               <option value="upcoming">À venir</option>
+            </select>
+
+            <select value={saison} onChange={(e) => updateParam('saison', e.target.value)}
+              aria-label="Filtrer par saison"
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              <option value="">Toutes les saisons</option>
+              <option value="hiver">Hiver</option>
+              <option value="printemps">Printemps</option>
+              <option value="ete">Été</option>
+              <option value="automne">Automne</option>
+            </select>
+
+            <select value={annee} onChange={(e) => updateParam('annee', e.target.value)}
+              aria-label="Filtrer par année"
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              <option value="">Toutes les années</option>
+              {ANNEES.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}

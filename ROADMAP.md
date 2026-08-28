@@ -142,7 +142,16 @@ réelles, et il ne faut pas le croire tel.
       progression. Le consentement, lui, n'est ni exporté ni restauré — le
       remettre depuis un fichier fabriquerait un accord que la personne n'a pas
       donné sur cette machine ;
-- [ ] filtres par année, studio, saison, durée ;
+- [x] ~~filtres par saison et par année~~ — livrés en v1.10. Le couple est le
+      mode de navigation naturel de l'animation : on parle de « la saison d'été
+      2026 ». Les valeurs vivent dans l'URL en français (`?saison=ete&annee=2026`)
+      — ce sont elles qui se partagent — et la traduction vers la source se fait
+      dans l'adaptateur. Une saison inconnue ou une année fantaisiste est
+      **ignorée** plutôt que transmise : la transmettre ferait refuser la
+      requête entière, et le catalogue afficherait une erreur là où il devrait
+      simplement ne pas filtrer.
+- [ ] filtres par studio et par durée — moins évidents : le studio suppose une
+      liste ou une saisie libre, et la durée un découpage arbitraire ;
 - [ ] statistiques personnelles, sans traçage ;
 - [ ] comparaison de plusieurs animés.
 

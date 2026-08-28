@@ -89,10 +89,17 @@ export function creerAdaptateurAniList({
    * table fait le chemin inverse ; un identifiant sans équivalent est ignoré
    * plutôt que de vider la page sans explication.
    */
-  async function getAnimeByFilter({ genre, status, type, orderBy, letter, page = 1 } = {}, signal, options = {}) {
+  async function getAnimeByFilter({ genre, status, type, orderBy, letter, saison, annee, page = 1 } = {}, signal, options = {}) {
     const TRIS = { title: 'TITLE_ROMAJI', score: 'SCORE_DESC', start_date: 'START_DATE_DESC', episodes: 'EPISODES_DESC' }
     const STATUTS = { airing: 'RELEASING', complete: 'FINISHED', upcoming: 'NOT_YET_RELEASED' }
     const FORMATS = { tv: 'TV', movie: 'MOVIE', ova: 'OVA', ona: 'ONA', special: 'SPECIAL' }
+    const SAISONS = { hiver: 'WINTER', printemps: 'SPRING', ete: 'SUMMER', automne: 'FALL' }
+
+    // Une année hors du domaine de l'animation n'est pas une erreur de la
+    // source mais une adresse bricolée : l'ignorer vaut mieux que de renvoyer
+    // une page vide sans explication.
+    const anneeValide = Number.isInteger(Number(annee))
+      && Number(annee) >= 1960 && Number(annee) <= new Date().getFullYear() + 2
 
     const data = await demander('catalogue', {
       page: Number(page) || 1,
@@ -103,6 +110,8 @@ export function creerAdaptateurAniList({
       // AniList n'a pas de filtre « commence par » : la lettre passe par la
       // recherche, seule approximation disponible.
       search: letter || undefined,
+      season: SAISONS[saison] ?? undefined,
+      seasonYear: anneeValide ? Number(annee) : undefined,
     }, { signal, ...options })
 
     return {
