@@ -152,7 +152,13 @@ réelles, et il ne faut pas le croire tel.
       simplement ne pas filtrer.
 - [ ] filtres par studio et par durée — moins évidents : le studio suppose une
       liste ou une saisie libre, et la durée un découpage arbitraire ;
-- [ ] statistiques personnelles, sans traçage ;
+- [x] ~~statistiques personnelles, sans traçage~~ — livrées en v1.12 : « Tes
+      goûts », les genres et les époques que tes choix dessinent. Le profil
+      comptait déjà — combien de favoris, combien d'heures — mais ne disait
+      rien. **Aucune requête, aucun envoi** : tout se calcule dans le navigateur
+      à partir de ce qui y est déjà enregistré. Seuls les favoris et la liste
+      comptent : l'historique dit ce qu'on a ouvert, souvent par curiosité, et
+      le compter prendrait un coup d'œil pour un goût ;
 - [ ] comparaison de plusieurs animés.
 
 *(« Afficher la date de la dernière donnée valide en mode dégradé » a disparu de

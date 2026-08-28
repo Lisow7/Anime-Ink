@@ -22,7 +22,7 @@ import { gzipSync } from 'node:zlib'
 const ASSETS = 'dist/assets'
 
 /**
- * Mesuré au 27 août 2026 : 103,9 ko au démarrage, 142,6 ko au total.
+ * Mesuré au 28 août 2026 : 104,3 ko au démarrage, 145,8 ko au total.
  *
  * Les marges sont de l'ordre de 3 %, et ce n'est pas de la coquetterie : un
  * premier réglage à 10 % laissait passer, sans un mot, le retour d'une route
@@ -42,10 +42,28 @@ const ASSETS = 'dist/assets'
  * La règle, donc : **le plafond se règle sur la plus petite régression qu'on
  * veut attraper**, jamais sur une fraction confortable du mesuré. Et il ne se
  * relève qu'avec la mesure qui le justifie, dans le commit qui l'accompagne.
+ *
+ * ## Les deux plafonds ne font pas le même travail
+ *
+ * Le **démarrage** est le garde-fou strict : il mesure ce que télécharge
+ * *chaque* visiteur, et cette quantité n'a aucune raison de croître avec les
+ * fonctionnalités — une page ajoutée est chargée à la demande. Une hausse y est
+ * donc suspecte par nature, et sa marge reste étroite.
+ *
+ * Le **total** mesure la somme, y compris ce que peu de gens chargent. Il croît
+ * légitimement à chaque écran ajouté : un plafond fixe sur une valeur qui monte
+ * est condamné à devenir soit inutile, soit bloquant. Son rôle est d'attraper
+ * une dérive d'ensemble — une dépendance conséquente, une police, une image
+ * embarquée — et il se relève quand un lot le justifie, avec sa mesure.
+ *
+ * Relevé de 146 à 148 ko le 28 août : « Tes goûts » portait le mesuré à
+ * 145,8 ko, soit 0,2 ko de marge. Une dépendance légère importée en dur — +0,8
+ * ko, mesuré — n'y sera plus attrapée ; si elle entre au **démarrage**, en
+ * revanche, le plafond de 105 ko l'arrête, et c'est là que ça compte.
  */
 const PLAFONDS = {
   demarrage: 105 * 1024,
-  total: 146 * 1024,
+  total: 148 * 1024,
 }
 
 const gz = chemin => gzipSync(readFileSync(chemin)).length
