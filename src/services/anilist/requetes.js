@@ -48,10 +48,10 @@ export const OPERATIONS = {
     }`,
   },
   catalogue: {
-    query: `query ($page: Int, $sort: [MediaSort], $genre: String, $status: MediaStatus, $format: MediaFormat, $search: String, $season: MediaSeason, $seasonYear: Int) {
+    query: `query ($page: Int, $sort: [MediaSort], $genre: String, $status: MediaStatus, $format: MediaFormat, $search: String, $season: MediaSeason, $seasonYear: Int, $dureeMin: Int, $dureeMax: Int) {
       Page(page: $page, perPage: 24) {
         ${PAGE_INFO}
-        media(type: ANIME, sort: $sort, genre: $genre, status: $status, format: $format, search: $search, season: $season, seasonYear: $seasonYear) { ${CHAMPS_MEDIA} }
+        media(type: ANIME, sort: $sort, genre: $genre, status: $status, format: $format, search: $search, season: $season, seasonYear: $seasonYear, duration_greater: $dureeMin, duration_lesser: $dureeMax) { ${CHAMPS_MEDIA} }
       }
     }`,
   },
