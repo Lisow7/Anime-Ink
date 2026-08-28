@@ -229,11 +229,19 @@ plus.)*
       tout ; ce n'est plus une impossibilité mais un arbitrage — un point de
       collecte à écrire, à surveiller et à protéger du bruit, pour un site sans
       compte ni paiement.
-- [ ] **le décalage de mise en page d'une fiche** — mesuré le 28 août sur la
-      production : **0,23 sur écran large, 0,63 sur mobile**, quand 0,1 est la
-      limite du tolérable. La cause est connue et n'a rien d'obscur : l'écran
-      d'attente est plus court que la fiche, si bien que l'arrivée des données
-      pousse tout ce qui suit.
+- [ ] **le décalage de mise en page d'une fiche** — le reste après correction :
+      **0,19 sur écran large, 0,60 sur mobile**, quand 0,1 est la limite du
+      tolérable.
+
+      ✅ **La cause principale, commune à tout le site, est réglée** :
+      l'écran d'attente de la navigation n'occupait que 40 % de la hauteur, si
+      bien que le pied de page restait **visible** puis se faisait repousser
+      hors du champ à l'arrivée du contenu. Il occupe désormais la fenêtre.
+      Résultat mesuré : catalogue **0,198 → 0,010**, profil **0,007**, accueil
+      **0,003**, mentions légales **0**.
+
+      La fiche reste à part parce qu'elle a **son propre** écran d'attente, donc
+      une transition de plus — et c'est cette seconde substitution qui subsiste.
 
       Deux corrections ont déjà été apportées et mesurées — un squelette qui
       reproduit la structure entière (368 → 508 pixels) et une hauteur d'écran

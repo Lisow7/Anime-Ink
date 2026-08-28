@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.16'
+export const CURRENT_VERSION = '1.17'
 
 export const CHANGELOG = [
+  {
+    version: '1.17',
+    date: '28 août 2026',
+    changes: [
+      { type: 'fix', label: 'Les pages ne sautent plus au chargement — le pied de page ne remonte plus sous tes yeux' },
+    ],
+  },
   {
     version: '1.16',
     date: '28 août 2026',
