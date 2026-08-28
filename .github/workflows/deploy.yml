@@ -1,5 +1,18 @@
 name: Deploy to GitHub Pages
 
+# GitHub Pages ne sert plus le site : il **redirige** vers Vercel, où le site
+# vit depuis le 28 août 2026. La raison tient en une ligne : Pages ne sait pas
+# réécrire une route, si bien que `/catalogue`, `/profil` et les fiches
+# répondaient `404` — visibles pour un visiteur grâce au script de repli, mais
+# ignorées des moteurs de recherche.
+#
+# ## Revenir en arrière
+#
+# Les étapes de construction sont **conservées volontairement** : elles
+# vérifient que le site compile toujours, et surtout elles permettent de
+# reprendre l'hébergement ici en une ligne. Pour cela, remettre `path: dist` à
+# la place de `path: redirection` ci-dessous, et redéployer.
+
 on:
   push:
     branches: [main]
@@ -26,9 +39,11 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # Le site est construit — donc vérifié — mais ce sont les pages de
+      # redirection qui partent. Remettre `dist` ici rétablit l'hébergement.
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: dist
+          path: redirection
 
   deploy:
     needs: build

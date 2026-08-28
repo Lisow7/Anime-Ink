@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anime-Ink a déménagé</title>
+<!-- Une balise `refresh` double le script : elle agit même si JavaScript est
+     désactivé, et c'est le seul signal de redirection qu'un hébergement de
+     fichiers statiques puisse émettre. -->
+<meta http-equiv="refresh" content="0; url=https://anime-ink-blond.vercel.app/">
+<link rel="canonical" href="https://anime-ink-blond.vercel.app/">
+<meta name="robots" content="noindex, follow">
+<style>
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0f1115;
+         color:#e8eaed; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; text-align:center; padding:1.5rem }
+  a { color:#22c55e }
+</style>
+</head>
+<body>
+  <main>
+    <p>Anime-Ink a déménagé.</p>
+    <p><a href="https://anime-ink-blond.vercel.app/">Continuer vers le site</a></p>
+  </main>
+  <script>
+    var CIBLE = 'https://anime-ink-blond.vercel.app'
+    var PREFIXE = '/Anime-Ink'
+
+    // Le chemin doit survivre : arriver sur /Anime-Ink/catalogue et atterrir à
+    // la racine du nouveau site perdrait le lien partagé. Le préfixe du dépôt
+    // est retiré, le reste est transmis tel quel — requête et ancre comprises.
+    var chemin = window.location.pathname
+    if (chemin.indexOf(PREFIXE) === 0) chemin = chemin.slice(PREFIXE.length)
+    if (chemin.charAt(0) !== '/') chemin = '/' + chemin
+
+    var destination = CIBLE + chemin + window.location.search + window.location.hash
+
+    // Garde-fou contre la boucle : si la cible pointait par erreur vers cet
+    // hébergement, mieux vaut ne rien faire qu'enfermer le visiteur.
+    if (destination.indexOf(window.location.host) === -1) {
+      window.location.replace(destination)
+    }
+  </script>
+</body>
+</html>
