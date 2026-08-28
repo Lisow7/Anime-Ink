@@ -5,6 +5,18 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.19] — 29 août 2026
+
+### Corrections
+- **Le pied de page ne remonte plus sur les pages courtes.** Le décalage joue dans les deux sens : une page plus **courte** que son écran d’attente fait remonter le pied dans le champ au lieu de l’en faire sortir. Il remontait de 234 pixels sur une fiche brève, sur l’écran d’erreur et sur une comparaison vide. Le plancher est désormais posé une seule fois sur le conteneur commun — comparaison **0,041 → 0,000**, écran d’erreur **0,058 → 0,000** en mobile
+
+### Coulisses
+- **Le contrôle d’accessibilité visite enfin le mobile.** Il déclarait deux formats depuis toujours et n’en visitait qu’un : le contexte était ouvert sans dimensions. **40 → 80 passes, 0 violation** — le format mobile n’a rien révélé, mais il n’était pas regardé
+- **ESLint analyse les scripts.** Le motif ne couvrait que `.js` et `.jsx` : les six scripts de garde-fou sont en `.mjs` et n’étaient **jamais** analysés. C’est ce qui laissait passer les deux défauts ci-dessus, plus un vestige de l’ancienne source
+- **Le banc de mesure gagne deux cas courts et un cliquet à 0,03** : les défauts trouvés valaient 0,031 et 0,058, tous deux **sous** la limite de 0,1 — un banc réglé sur la seule limite tolérable les affichait en vert
+
+---
+
 ## [1.18] — 29 août 2026
 
 ### Corrections

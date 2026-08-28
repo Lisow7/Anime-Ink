@@ -254,6 +254,14 @@ plus.)*
       titre, et le navigateur comptait un déplacement là où il n'y avait qu'une
       substitution. Deux `key` distinctes l'éteignent.
 
+      **Et il joue dans les deux sens** — trouvé le 29 août en cherchant ce que
+      les mesures ne couvraient pas. Une page plus **courte** que son écran
+      d'attente fait **remonter** le pied de page dans le champ : 234 pixels sur
+      une fiche brève, sur l'écran d'erreur et sur une comparaison vide. Aucune
+      des pages mesurées ne pouvait le montrer, toutes dépassant la hauteur
+      d'écran. Le plancher est désormais posé **une seule fois** sur le
+      conteneur commun, et le banc porte les deux cas courts.
+
       🥇 **La leçon, qui vaut au-delà de ce défaut** : les rectangles rapportés
       par l'API sont **coupés à la fenêtre**. Un `MAIN` « de 835 à 835 pixels »
       ne dit pas que rien n'a grandi — relevé à la main, il passait de 900 à

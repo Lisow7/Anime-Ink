@@ -62,7 +62,7 @@ function ModaleAnimeALaDemande() {
  * pages, l'attente étant commune à la navigation.
  */
 const PageFallback = () => (
-  <div className="flex-1 flex items-center justify-center min-h-screen">
+  <div className="flex-1 flex items-center justify-center">
     <div className="w-6 h-6 border-2 border-[#22c55e] border-t-transparent rounded-full animate-spin" />
   </div>
 )
@@ -90,7 +90,7 @@ export default function App() {
             Aller au contenu
           </a>
           <Navbar />
-          <div id="contenu" tabIndex={-1} className="flex-1 flex flex-col focus:outline-none">
+          <div id="contenu" tabIndex={-1} className="flex-1 flex flex-col min-h-screen focus:outline-none">
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Home />} />

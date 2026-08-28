@@ -31,8 +31,27 @@ const AXE = require.resolve('axe-core/axe.min.js')
 
 const THEMES = ['light', 'dark']
 const NORMES = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
-const BUREAU = { width: 1280, height: 900 }
-const MOBILE = { width: 390, height: 844 }
+/**
+ * Les deux formats, et il a fallu qu'ESLint le dise.
+ *
+ * Ces deux constantes existaient depuis toujours — **sans être utilisées**. Le
+ * contexte était ouvert sans `viewport`, si bien que toutes les passes
+ * tournaient à la taille par défaut de Playwright, et que le mobile n'était
+ * jamais visité. Le fichier annonçait une intention que le code ne tenait pas.
+ *
+ * Personne ne l'avait vu parce que `scripts/` est en `.mjs`, et que le motif
+ * d'ESLint ne couvrait que `.js` et `.jsx` : ces fichiers n'étaient pas
+ * analysés du tout. Corrigé le 29 août 2026, ce qui a fait tomber la constante
+ * inutilisée dès la première exécution.
+ *
+ * Le format compte ici plus qu'ailleurs : la barre de navigation se replie, les
+ * grilles changent de colonnes, et des éléments cachés au bureau deviennent
+ * visibles. Un contraste tenu sur un écran large ne prouve rien sur l'autre.
+ */
+const FORMATS = [
+  ['bureau', { width: 1280, height: 900 }],
+  ['mobile', { width: 390, height: 844 }],
+]
 const STABILISATION_MS = 2500
 
 const clic = selecteur => async (page) => {
@@ -268,7 +287,8 @@ let passes = 0
 let echecPreparation = false
 
 try {
-  for (const theme of THEMES) {
+  for (const [format, viewport] of FORMATS) {
+   for (const theme of THEMES) {
     for (const scenario of SCENARIOS) {
       // Contexte neuf par scénario : la bannière de consentement et le cache de
       // session ne doivent pas fuir d'un scénario à l'autre.
@@ -276,9 +296,9 @@ try {
       // utilisateur. Basculer la classe à la main était fragile : l'application
       // réapplique son propre thème dès que le consentement change, et écrasait
       // la bascule — les deux passes finissaient alors en clair sans le dire.
-      const contexte = await navigateur.newContext({ colorScheme: theme })
+      const contexte = await navigateur.newContext({ colorScheme: theme, viewport })
       const page = await contexte.newPage()
-      const nom = `${theme} · ${scenario.nom}`
+      const nom = `${format} · ${theme} · ${scenario.nom}`
 
       try {
         const violations = await analyser(page, base, scenario)
@@ -305,6 +325,7 @@ try {
         await contexte.close()
       }
     }
+   }
   }
 } finally {
   await navigateur.close()

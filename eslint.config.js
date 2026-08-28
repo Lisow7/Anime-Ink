@@ -37,6 +37,31 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
   {
+    /**
+     * Les scripts de garde-fou, qu'ESLint ne voyait pas.
+     *
+     * Le motif ci-dessus ne couvre que `.js` et `.jsx` : les six scripts de
+     * `scripts/` sont en `.mjs` et n'étaient donc **jamais analysés**. Le
+     * défaut n'est pas théorique — une variable renommée à moitié a traversé un
+     * `npm run lint` vert et n'a été trouvée qu'à l'exécution, le 29 août.
+     *
+     * C'est le pire endroit où laisser un angle mort : ces fichiers sont
+     * précisément ceux qui gardent les autres. Un garde-fou qui s'interrompt
+     * sur une faute de frappe ne garde rien, et il s'interrompt en annonçant
+     * une panne plutôt qu'un défaut.
+     *
+     * `varsIgnorePattern` est volontairement absent ici, à la différence du
+     * bloc principal : une constante en majuscules laissée sans emploi dans un
+     * script de mesure est le signe d'un seuil qu'on a cessé d'appliquer.
+     */
+    files: ['**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+    },
+  },
+  {
     files: ['src/context/**/*.{js,jsx}'],
     rules: {
       // Les modules de contexte exportent volontairement le Provider et son hook associé.
