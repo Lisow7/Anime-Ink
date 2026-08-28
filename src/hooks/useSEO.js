@@ -11,8 +11,12 @@ const DEFAULT_DESC  = "Recherche, explore et découvre des milliers d'animés. C
  * réel dans les moteurs de recherche ; la seconde mentirait le jour d'un
  * changement d'hébergement — c'est exactement ce genre de recopie qui avait
  * doublé le préfixe.
+ *
+ * Le repli n'est qu'un filet : la constante est toujours définie au build. Il
+ * nomme malgré tout l'adresse réelle du site, car rattraper vers un hôte qui
+ * ne fait plus que rediriger ne rattraperait rien.
  */
-const ORIGINE = typeof __ORIGINE_SITE__ === 'string' ? __ORIGINE_SITE__ : 'https://lisow7.github.io'
+const ORIGINE = typeof __ORIGINE_SITE__ === 'string' ? __ORIGINE_SITE__ : 'https://anime-ink-blond.vercel.app'
 
 /**
  * L'adresse canonique d'un chemin.

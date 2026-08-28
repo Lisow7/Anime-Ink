@@ -206,70 +206,54 @@ précédente écarte. Sans elle, il n'y a aucune date à montrer.)*
 Le **poids** des bundles est tenu (voir plus haut). Les métriques de terrain,
 elles, ne relèvent pas de cette section : voir ci-dessous.
 
-### Nécessite un autre hébergement
+### Ce que l'hébergement permet, et ce qu'il ne permet toujours pas
 
-Ces points supposent un déplacement, pas un développement. Aucun n'est bloquant
-aujourd'hui — les lire comme des manques urgents serait un contresens :
+*(Cette section s'intitulait « Nécessite un autre hébergement ». Le déplacement
+a eu lieu le 28 août 2026 : la moitié de ce qu'elle listait est réglé, et la
+laisser en l'état aurait fait porter au lecteur des limites qui n'existent
+plus.)*
 
-- [ ] **les quatre protections qui n'existent qu'en en-tête HTTP.** À ne pas lire
-      comme « le site n'a pas de CSP » : il en a une, en balise
-      `<meta http-equiv>` dans `index.html`, et elle couvre l'essentiel —
-      `default-src`, `script-src`, `connect-src`, `img-src`, `frame-src`,
-      `form-action`, `base-uri`, `object-src`, `upgrade-insecure-requests`.
+**Réglé par le déplacement** — mesuré sur la production, pas déduit :
 
-      Quatre choses lui échappent, et aucune n'est exprimable dans une balise :
-      `frame-ancestors` (empêcher qu'un tiers place le site dans une iframe),
-      `report-uri` (recevoir les violations), `sandbox`, et `Permissions-Policy`,
-      qui n'a aucune forme `<meta>`. Vérifié : la production ne sert que
-      `Strict-Transport-Security`, et GitHub Pages n'offre aucun moyen de
-      configurer les en-têtes — ni fichier `_headers`, ni `.htaccess`.
+- ✅ les routes profondes répondent `200`, une adresse inventée garde son `404` ;
+- ✅ les jaquettes sont converties en WebP : 228 ko de catalogue au lieu de
+  1 084, 15 ko de fiche au lieu de 478 ;
+- ✅ `frame-ancestors` et `Permissions-Policy` sont servis en en-tête, ce qu'une
+  balise `<meta>` ignore.
 
-      **Portée réelle** : le seul manque à conséquence concrète est
-      `frame-ancestors`. Sur un site sans compte, sans paiement ni action
-      destructrice, il n'y a rien à détourner par clickjacking — c'est une
-      protection de principe, pas un trou béant ;
-- [ ] proxy de cache en périphérie, et métriques de disponibilité ;
-- [ ] **convertir les jaquettes dans un format moderne.** Mesuré le 27 août 2026,
-      même titre, même définition affichée : MyAnimeList servait 13 ko en WebP là
-      où AniList sert 140 ko en PNG. Un catalogue coûte ainsi **environ 1,2 Mo
-      d'images** contre à peu près 340 ko auparavant — pendant que le site
-      lui-même en pèse 103.
+**Ce qui reste, et pourquoi :**
 
-      Trois choses vérifiées, qui ferment les portes de sortie faciles : AniList
-      ne publie **aucune variante `.webp`** (404), n'applique **aucune
-      négociation de contenu** (un en-tête `Accept: image/webp` renvoie le même
-      PNG), et ses trois définitions sont toutes en PNG. Le levier des
-      dimensions, lui, **a été tiré** — la fiche est passée de 478 à 137 ko en
-      cessant de charger du 460 pixels dans un cadre de 192.
+- [ ] **`report-uri` / `report-to`** — recevoir les violations de la politique de
+      sécurité suppose une adresse qui les collecte. C'est désormais **possible**
+      (l'hébergement sait exécuter des fonctions), là où ce ne l'était pas du
+      tout ; ce n'est plus une impossibilité mais un arbitrage — un point de
+      collecte à écrire, à surveiller et à protéger du bruit, pour un site sans
+      compte ni paiement.
+- [ ] **métriques de terrain (LCP, CLS, INP)** — également **possibles**
+      désormais, l'hébergeur proposant sa propre mesure. Le frein a changé de
+      nature : c'est le **poids** qui décide, le script de mesure s'ajoutant à
+      ce que chaque visiteur télécharge, et le budget de démarrage n'a que
+      0,9 ko de marge. À reprendre le jour où il y aura du trafic à mesurer —
+      une métrique de terrain sans visiteurs ne mesure rien.
 
-      Ce qui reste suppose de **transformer l'image**, donc une étape entre le
-      catalogue et le visiteur : un hôte capable de le faire, ou un service tiers
-      dans le chemin de chaque jaquette. ⛔ **La seconde voie est écartée en
-      l'état** : le site vient d'être frappé par la fermeture d'un service tiers
-      gratuit, et un intermédiaire lent dégraderait toutes les images sans même
-      déclencher de repli — une erreur se rattrape, une lenteur non ;
-- [ ] **les routes profondes répondent HTTP 404.** Vérifié en production :
-      `/catalogue` et `/anime/1` renvoient un `404`, et la page s'affiche quand
-      même — c'est le mécanisme SPA de GitHub Pages, qui sert `public/404.html`
-      pour toute route qu'il ne connaît pas. Le visiteur ne voit rien ; un
-      moteur de recherche, si.
+**Écarté, et non plus « à faire » :**
 
-      La [documentation de Google](https://developers.google.com/crawling/docs/troubleshooting/http-status-codes)
-      ne laisse pas de place au doute : *« Newly encountered 404 pages aren't
-      processed »*, et une page déjà connue est **retirée de l'index**. Toutes
-      les pages du site sauf l'accueil sont donc concernées, alors même qu'elles
-      portent des métadonnées et des données structurées — un travail fait pour
-      rien tant que l'hébergement répond `404`.
+- ⛔ **`sandbox`** — cette directive existe pour brider du contenu **tiers**
+      qu'on embarque. L'appliquer à ses propres pages les casserait, ou
+      exigerait `allow-scripts allow-same-origin`, ce qui la vide de son sens.
+      Elle figurait dans la liste des quatre protections manquantes par
+      symétrie, jamais parce qu'elle servait à quelque chose ici.
+- ⛔ **proxy de cache en périphérie** — l'hébergement en fournit un
+      (`X-Vercel-Cache: HIT`, vérifié). L'item était écrit pour un hébergeur qui
+      n'en avait pas.
 
-      ⚠️ **Ce n'est pas une régression** — le mécanisme est là depuis le commit
-      `93d764f`, bien avant le passage à AniList. Le remède n'est pas un
-      développement mais un hôte qui sache réécrire une route vers `index.html`
-      **en gardant un `200`** : n'importe quel hébergement statique moderne le
-      fait, GitHub Pages ne le permet pas ;
-### Ce que coûterait le déplacement, chiffré
+### Ce qu'a coûté le déplacement, et ce qu'il a rapporté
 
-Les quatre points ci-dessus tiennent tous au même fait : **GitHub Pages ne sert
-que des fichiers**. Ni en-tête configurable, ni réécriture, ni transformation
+*(Compte rendu. Le déplacement a eu lieu le 28 août 2026 ; ce qui suit était
+l'instruction qui l'a décidé, conservée parce qu'elle porte les mesures.)*
+
+Les limites d'alors tenaient toutes au même fait : **GitHub Pages ne sert que
+des fichiers**. Ni en-tête configurable, ni réécriture, ni transformation
 d'image. Instruit le 27 août 2026, sur documentation à jour :
 
 | | GitHub Pages | Vercel | Cloudflare Pages | Netlify *gratuit* |
@@ -346,12 +330,6 @@ de redirection — c'est lui qui fait tenir la navigation profonde — quand Ver
 doit servir une page franche. Le laisser des deux côtés aurait renvoyé une
 adresse invalide en boucle vers l'application.
 
-- [ ] **métriques de terrain (LCP, CLS, INP)** — les mesurer chez le visiteur
-      suppose de les recevoir quelque part. Le site n'a aucun back-end, et lui en
-      donner un pour ce seul usage serait disproportionné. En attendant, la
-      performance se surveille par le **poids** en intégration continue et par
-      Lighthouse en laboratoire.
-
 ## Vérifications en production
 
 ### La nature de la panne, mesurée
@@ -406,11 +384,14 @@ possible : **une seule surface reste en suspens**.
       Les six recommandations sont d'autant plus concluantes qu'**aucune ne porte
       de genre** — Jikan ne les joint pas. C'est donc bien le repli sur le
       registre de la fiche ouverte qui a joué, en conditions réelles.
-- [ ] le floutage des **suggestions de recherche** — seule surface encore non
-      vérifiée. Elle exige que Jikan réponde à la requête exacte que la frappe
-      compose, or seules les recherches déjà en cache sortent. Il n'y a pas de
-      contournement : amorcer le cache demanderait que le scrape réussisse, ce
-      qui est précisément ce qui échoue.
+- [x] ~~le floutage des **suggestions de recherche**~~ — **vérifié le 28 août**,
+      et c'est le changement de source qui l'a rendu possible. L'obstacle
+      n'était pas le code : l'API précédente ne répondait qu'aux requêtes déjà
+      dans son cache, or celle que compose une frappe n'y était jamais. Rien ne
+      s'y oppose plus, et un parcours l'éprouve désormais — vignette floutée et
+      registre annoncé, prouvé en retirant le floutage.
+
+      Les **six** surfaces de floutage sont donc couvertes.
 
 *(La ligne sur `filter=explicit_genres` a disparu d'ici : sa conclusion était
 fausse. Voir « La nature de la panne » ci-dessus — le paramètre n'est pas cassé,

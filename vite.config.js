@@ -22,9 +22,12 @@ import tailwindcss from '@tailwindcss/vite'
  */
 const surVercel = Boolean(process.env.VERCEL)
 const domaineVercel = process.env.VERCEL_PROJECT_PRODUCTION_URL
+// Hors Vercel, l'adresse du site reste celle du site : depuis le déplacement du
+// 28 août 2026, l'ancien hébergement ne fait plus que rediriger, et annoncer
+// ses adresses comme canoniques désignerait une page qui renvoie ailleurs.
 const origineSite = surVercel && domaineVercel
   ? `https://${domaineVercel}`
-  : 'https://lisow7.github.io'
+  : 'https://anime-ink-blond.vercel.app'
 
 /**
  * L'optimisation d'images n'existe que chez Vercel.
