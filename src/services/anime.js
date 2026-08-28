@@ -20,6 +20,7 @@
 export {
   getAnimeById,
   getAnimeByFilter,
+  getAnimeByStudio,
   getAnimeFranchise,
   getAnimeRecommendations,
   getAnimeSeasons,

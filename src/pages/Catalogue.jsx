@@ -11,7 +11,7 @@ import { useWatchlist } from '../context/WatchlistContext'
 import { useAgeFilter } from '../context/AgeFilterContext'
 import { WATCH_STATUS } from '../constants/anime'
 import { ADULT_GENRES } from '../constants/ageFilter'
-import { ATTRIBUTION, searchAnime, getAnimeByFilter, getGenres } from '../services/anime'
+import { ATTRIBUTION, searchAnime, getAnimeByFilter, getAnimeByStudio, getGenres } from '../services/anime'
 import { groupAnime } from '../utils/groupAnime'
 import { readStorage, writeStorage } from '../utils/storage'
 
@@ -110,6 +110,7 @@ export default function Catalogue() {
   const saison = searchParams.get('saison') || ''
   const annee = searchParams.get('annee') || ''
   const duree = searchParams.get('duree') || ''
+  const studio = searchParams.get('studio') || ''
   const page = parseInt(searchParams.get('page') || '1')
 
   const [previousQuery, setPreviousQuery] = useState(query)
@@ -158,6 +159,18 @@ export default function Catalogue() {
           if (controller.signal.aborted) return
           setAnimes(data)
           setPagination({ current: 1, last: 1, total: data.length })
+        } else if (studio) {
+          // La source ne sait pas filtrer son catalogue par studio : c'est une
+          // requête d'un autre genre, qui ignore les autres critères. L'écran
+          // le dit plutôt que de les appliquer en silence.
+          const result = await getAnimeByStudio(studio, page, controller.signal, { bypassCache })
+          if (controller.signal.aborted) return
+          setAnimes(dedup(result.data ?? []))
+          setPagination({
+            current: result.pagination?.current_page ?? 1,
+            last: result.pagination?.last_visible_page ?? 1,
+            total: result.pagination?.items?.total ?? result.data?.length ?? 0,
+          })
         } else {
           // Une reprise demandée par l'utilisateur contourne l'échec mémorisé,
           // sinon le bouton « Réessayer » paraîtrait mort pendant 30 secondes.
@@ -193,7 +206,7 @@ export default function Catalogue() {
     }
     run()
     return () => controller.abort()
-  }, [tab, query, genre, status, type, orderBy, letter, saison, annee, duree, page, retryKey])
+  }, [tab, query, genre, status, type, orderBy, letter, saison, annee, duree, studio, page, retryKey])
 
   useEffect(() => {
     getGenres().then(data => { if (Array.isArray(data)) setGenres([...data].sort((a, b) => a.name.localeCompare(b.name))) })
@@ -397,16 +410,16 @@ export default function Catalogue() {
 
           {/* Filtres dropdowns */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <select value={genre} onChange={(e) => updateParam('genre', e.target.value)}
+            <select value={genre} onChange={(e) => updateParam('genre', e.target.value)} disabled={Boolean(studio)}
               aria-label="Filtrer par genre"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">Tous les genres</option>
               {genresProposes.map((g) => <option key={g.mal_id} value={g.mal_id}>{g.name}</option>)}
             </select>
 
-            <select value={type} onChange={(e) => updateParam('type', e.target.value)}
+            <select value={type} onChange={(e) => updateParam('type', e.target.value)} disabled={Boolean(studio)}
               aria-label="Filtrer par type"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">Tous les types</option>
               <option value="tv">Série TV</option>
               <option value="movie">Film</option>
@@ -415,18 +428,18 @@ export default function Catalogue() {
               <option value="special">Spécial</option>
             </select>
 
-            <select value={status} onChange={(e) => updateParam('status', e.target.value)}
+            <select value={status} onChange={(e) => updateParam('status', e.target.value)} disabled={Boolean(studio)}
               aria-label="Filtrer par statut"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">Tous les statuts</option>
               <option value="airing">En cours</option>
               <option value="complete">Terminé</option>
               <option value="upcoming">À venir</option>
             </select>
 
-            <select value={saison} onChange={(e) => updateParam('saison', e.target.value)}
+            <select value={saison} onChange={(e) => updateParam('saison', e.target.value)} disabled={Boolean(studio)}
               aria-label="Filtrer par saison"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">Toutes les saisons</option>
               <option value="hiver">Hiver</option>
               <option value="printemps">Printemps</option>
@@ -434,16 +447,16 @@ export default function Catalogue() {
               <option value="automne">Automne</option>
             </select>
 
-            <select value={annee} onChange={(e) => updateParam('annee', e.target.value)}
+            <select value={annee} onChange={(e) => updateParam('annee', e.target.value)} disabled={Boolean(studio)}
               aria-label="Filtrer par année"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">Toutes les années</option>
               {ANNEES.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
 
-            <select value={duree} onChange={(e) => updateParam('duree', e.target.value)}
+            <select value={duree} onChange={(e) => updateParam('duree', e.target.value)} disabled={Boolean(studio)}
               aria-label="Filtrer par durée"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">Toutes les durées</option>
               <option value="court">Court — moins de 10 min</option>
               <option value="standard">Standard — 10 à 40 min</option>
@@ -452,13 +465,54 @@ export default function Catalogue() {
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}
               aria-label="Trier par"
-              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="score">Meilleure note</option>
               <option value="title">Alphabétique</option>
               <option value="start_date">Date de sortie</option>
               <option value="episodes">Nombre d'épisodes</option>
             </select>
           </div>
+
+          {/* Le studio est une recherche à part : la source ne sait pas filtrer
+              son catalogue par studio, il faut le lui demander autrement. Un
+              champ libre plutôt qu'un menu — il y a des centaines de studios, et
+              en dresser la liste coûterait une requête pour rien. */}
+          <form
+            onSubmit={(e) => { e.preventDefault(); updateParam('studio', new FormData(e.target).get('studio')?.toString().trim() ?? '') }}
+            className="flex flex-wrap items-center gap-2"
+          >
+            <label htmlFor="filtre-studio" className="text-[var(--text-muted)] text-xs">Studio</label>
+            <input
+              id="filtre-studio"
+              name="studio"
+              type="search"
+              defaultValue={studio}
+              key={studio}
+              placeholder="Bones, Kyoto Animation…"
+              className="bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] min-w-0 flex-1 sm:flex-none sm:w-56"
+            />
+            <button type="submit" className="px-3 py-2 bg-[#15803d] hover:bg-[#166534] text-white text-xs font-semibold rounded-lg transition-colors">
+              Chercher
+            </button>
+            {studio && (
+              <button
+                type="button"
+                onClick={() => updateParam('studio', '')}
+                className="px-3 py-2 border border-[var(--border-color)] hover:border-[var(--color-accent)] text-[var(--text-muted)] text-xs rounded-lg transition-colors"
+              >
+                Effacer
+              </button>
+            )}
+          </form>
+
+          {studio && (
+            /* Dire pourquoi les autres menus sont éteints vaut mieux que de les
+               laisser grisés sans explication. */
+            <p role="status" className="text-[var(--text-muted)] text-xs">
+              Les œuvres du studio <strong className="text-[var(--text-primary)]">{studio}</strong>.
+              Les autres filtres ne s&apos;appliquent pas à cette recherche.
+            </p>
+          )}
 
           {/* Compteur */}
           {!loading && animes.length > 0 && (

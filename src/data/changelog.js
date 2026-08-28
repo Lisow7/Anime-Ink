@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.14'
+export const CURRENT_VERSION = '1.15'
 
 export const CHANGELOG = [
+  {
+    version: '1.15',
+    date: '28 août 2026',
+    changes: [
+      { type: 'feat', label: 'Cherche les animés d’un studio : Bones, Kyoto Animation, MAPPA…' },
+    ],
+  },
   {
     version: '1.14',
     date: '28 août 2026',

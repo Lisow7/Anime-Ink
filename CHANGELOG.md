@@ -5,6 +5,15 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.15] — 28 août 2026
+
+### Nouveautés
+- **Cherche les animés d’un studio** — Bones, Kyoto Animation, MAPPA… Un champ libre plutôt qu’un menu : il y a des centaines de studios, et en dresser la liste coûterait une requête pour rien
+- La recherche ne retient que les œuvres **produites** par le studio, pas celles auxquelles il a seulement prêté la main
+- Les autres filtres sont éteints pendant une recherche de studio, et l’écran dit pourquoi : c’est une requête d’un autre genre, pas un critère de plus. Les laisser actifs sans effet aurait été trompeur
+
+---
+
 ## [1.14] — 28 août 2026
 
 ### Nouveautés

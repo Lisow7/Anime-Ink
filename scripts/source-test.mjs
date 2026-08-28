@@ -25,6 +25,11 @@ function operationDe(request) {
     // Avant les autres : cette requête porte aussi `Page(` et serait prise
     // pour un catalogue, qui rendrait des fiches sans date de diffusion.
     if (/idMal_in/.test(query)) return 'prochainsEpisodes'
+    // `studios(search:` et non `studios(` : les champs d'un média portent déjà
+    // `studios(isMain: true)`, si bien qu'un motif trop large prendrait TOUTES
+    // les requêtes pour une recherche de studio — et le faux réseau rendrait
+    // partout la mauvaise forme.
+    if (/studios\s*\(\s*search/.test(query)) return 'parStudio'
     if (/recommendations\s*\(/.test(query)) return 'recommandations'
     if (/relations\s*\{/.test(query)) return 'relations'
     if (/Media\s*\(/.test(query)) return 'media'
