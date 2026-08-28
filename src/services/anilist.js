@@ -89,11 +89,25 @@ export function creerAdaptateurAniList({
    * table fait le chemin inverse ; un identifiant sans équivalent est ignoré
    * plutôt que de vider la page sans explication.
    */
-  async function getAnimeByFilter({ genre, status, type, orderBy, letter, saison, annee, page = 1 } = {}, signal, options = {}) {
+  async function getAnimeByFilter({ genre, status, type, orderBy, letter, saison, annee, duree, page = 1 } = {}, signal, options = {}) {
     const TRIS = { title: 'TITLE_ROMAJI', score: 'SCORE_DESC', start_date: 'START_DATE_DESC', episodes: 'EPISODES_DESC' }
     const STATUTS = { airing: 'RELEASING', complete: 'FINISHED', upcoming: 'NOT_YET_RELEASED' }
     const FORMATS = { tv: 'TV', movie: 'MOVIE', ova: 'OVA', ona: 'ONA', special: 'SPECIAL' }
     const SAISONS = { hiver: 'WINTER', printemps: 'SPRING', ete: 'SUMMER', automne: 'FALL' }
+
+    /**
+     * Des tranches plutôt qu'un nombre de minutes.
+     *
+     * Personne ne cherche « les animés de 22 minutes » ; on cherche un format —
+     * une série courte qu'on regarde entre deux choses, un épisode classique,
+     * un film. Les bornes sont exclusives des deux côtés chez AniList, d'où le
+     * décalage d'une minute.
+     */
+    const DUREES = {
+      court: { dureeMax: 11 },            // moins de 10 minutes
+      standard: { dureeMin: 9, dureeMax: 41 },
+      long: { dureeMin: 39 },             // films et épisodes doubles
+    }
 
     // Une année hors du domaine de l'animation n'est pas une erreur de la
     // source mais une adresse bricolée : l'ignorer vaut mieux que de renvoyer
@@ -111,6 +125,7 @@ export function creerAdaptateurAniList({
       // recherche, seule approximation disponible.
       search: letter || undefined,
       season: SAISONS[saison] ?? undefined,
+      ...(DUREES[duree] ?? {}),
       seasonYear: anneeValide ? Number(annee) : undefined,
     }, { signal, ...options })
 

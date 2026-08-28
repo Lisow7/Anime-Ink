@@ -74,6 +74,29 @@ describe('filtres de saison et d’année', () => {
     expect(variablesEnvoyees().seasonYear).toBe(prochaine)
   })
 
+  it.each([
+    ['court', { dureeMax: 11 }],
+    ['standard', { dureeMin: 9, dureeMax: 41 }],
+    ['long', { dureeMin: 39 }],
+  ])('traduit la tranche « %s » en bornes de minutes', async (tranche, attendu) => {
+    const { getAnimeByFilter } = creerAdaptateurAniList({ limiter: passeTout })
+    await getAnimeByFilter({ duree: tranche })
+
+    // On ne cherche pas « les animés de 22 minutes » mais un format : une série
+    // courte, un épisode classique, un film. L'URL porte donc la tranche, et
+    // l'adaptateur la convertit en bornes.
+    expect(variablesEnvoyees()).toMatchObject(attendu)
+  })
+
+  it('ignore une tranche de durée inconnue', async () => {
+    const { getAnimeByFilter } = creerAdaptateurAniList({ limiter: passeTout })
+    await getAnimeByFilter({ duree: 'interminable' })
+
+    const envoyees = variablesEnvoyees()
+    expect(envoyees.dureeMin).toBeUndefined()
+    expect(envoyees.dureeMax).toBeUndefined()
+  })
+
   it('n’impose rien quand aucun des deux n’est demandé', async () => {
     const { getAnimeByFilter } = creerAdaptateurAniList({ limiter: passeTout })
     await getAnimeByFilter({ genre: 1 })
