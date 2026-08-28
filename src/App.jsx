@@ -16,6 +16,7 @@ import ScrollToTop from './components/ScrollToTop'
 const Catalogue     = lazy(() => import('./pages/Catalogue'))
 const AnimeDetail   = lazy(() => import('./pages/AnimeDetail'))
 const Profil        = lazy(() => import('./pages/Profil'))
+const Comparer      = lazy(() => import('./pages/Comparer'))
 const MentionsLegales = lazy(() => import('./pages/MentionsLegales'))
 const NotFound      = lazy(() => import('./pages/NotFound'))
 
@@ -83,6 +84,7 @@ export default function App() {
               <Route path="/catalogue" element={<Catalogue />} />
               <Route path="/anime/:id" element={<AnimeDetail />} />
               <Route path="/profil" element={<Profil />} />
+              <Route path="/comparer" element={<Comparer />} />
               <Route path="/mentions-legales" element={<MentionsLegales />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

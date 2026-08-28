@@ -167,6 +167,17 @@ export default function Profil() {
 
           <TesGouts />
 
+          {/* Un lien depuis le profil : c'est là que vivent les animés qu'on a
+              repérés, donc là qu'on hésite entre deux d'entre eux. */}
+          {(favorites.length > 0 || watchlist.length > 0 || history.length > 0) && (
+            <Link
+              to="/comparer"
+              className="self-start px-4 py-2 border border-[var(--border-color)] hover:border-[var(--color-accent)] text-[var(--text-primary)] text-sm font-semibold rounded-lg transition-colors"
+            >
+              Comparer des animés →
+            </Link>
+          )}
+
           {/* Ma liste par statut */}
           {watchlist.length > 0 && (
             <section className="flex flex-col gap-4">
