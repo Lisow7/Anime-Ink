@@ -7,6 +7,10 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ## [1.10] — 28 août 2026
 
+### Nouveautés
+- **Filtre le catalogue par saison et par année.** « L’été 2026 », « l’automne 2019 » — c’est ainsi qu’on parle des animés, et c’est maintenant ainsi qu’on peut les chercher. Les deux filtres entrent dans l’adresse : un lien vers une saison se partage et se met en signet
+- L’année à venir figure au menu : les saisons s’annoncent avant de sortir
+
 ### Maintenance
 - **Une veille hebdomadaire confronte la source de données à ce que le site attend.** Les jeux de test étant figés, rien n’aurait signalé qu’AniList change un champ : les tests seraient passés pendant que l’écran se vidait. Le contrôle interroge la vraie API, hors de la CI pour ne pas faire dépendre les fusions d’un service extérieur, et ouvre une issue en cas de rupture
 - Rien de visible : la version affichée reste `1.9`
