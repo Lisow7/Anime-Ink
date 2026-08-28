@@ -16,15 +16,11 @@ function AnimeCard({ anime, prioritaire = false }) {
   const { openModal } = useModal()
   const { history } = useHistory()
   const { blurHentai } = useAgeFilter()
-  const { mal_id, title, images, score, episodes, airing, status, trailer, genres } = anime
+  const { mal_id, title, images, score, episodes, airing, status, genres } = anime
   const { adult, hentai: isHentai, badge: ageBadge } = classifyAdultContent(genres)
   const blurred = blurHentai && adult
   const fav = isFavorite(mal_id)
   const seen = history.some(a => a.mal_id === mal_id)
-  const youtubeId = trailer?.youtube_id
-  const thumbUrl = youtubeId
-    ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
-    : null
 
   return (
     <div className="relative group h-full">
@@ -42,7 +38,7 @@ function AnimeCard({ anime, prioritaire = false }) {
             width={225}
             height={338}
             className={`w-full h-full object-cover transition-all duration-300 ${
-              thumbUrl ? 'group-hover:opacity-0' : 'group-hover:scale-105'
+              'group-hover:scale-105'
             }`}
             style={blurred ? { filter: 'blur(12px)', transform: 'scale(1.1)' } : undefined}
           />
@@ -62,26 +58,6 @@ function AnimeCard({ anime, prioritaire = false }) {
                   {ageBadge}
                 </span>
               </div>
-            </div>
-          )}
-
-          {thumbUrl && (
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <img src={thumbUrl} alt="" loading="lazy" width={480} height={360} className="w-full h-full object-cover" />
-              <a
-                href={`https://www.youtube.com/watch?v=${youtubeId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="absolute inset-0 flex items-center justify-center"
-                aria-label="Voir la bande-annonce sur YouTube"
-              >
-                <span className="bg-red-600 hover:bg-red-500 transition-colors rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-white fill-current ml-0.5">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </span>
-              </a>
             </div>
           )}
 

@@ -44,7 +44,11 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController()
     getTopAnime(1, controller.signal)
-      .then((data) => setTopAnimes(data.data?.slice(0, 6) ?? []))
+      // Grouper d'abord, découper ensuite : `groupAnime` réunit les entrées
+      // d'une même franchise, si bien que découper à six en amont pouvait n'en
+      // laisser que cinq après regroupement — et la grille, taillée pour six,
+      // gardait une case vide.
+      .then((data) => setTopAnimes(groupAnime(data.data ?? []).slice(0, 6)))
       .catch((error) => {
         if (error?.name !== 'AbortError') setTopAnimes([])
       })
@@ -527,7 +531,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 min-[540px]:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {groupAnime(topAnimes).map((anime) => (
+            {topAnimes.map((anime) => (
               <AnimeCard key={anime.mal_id} anime={anime} />
             ))}
           </div>
