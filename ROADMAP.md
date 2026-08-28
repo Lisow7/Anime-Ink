@@ -124,9 +124,18 @@ réelles, et il ne faut pas le croire tel.
       quand la source la connaît. Une seule requête pour toute la liste
       (`idMal_in`), là où un appel par série aurait coûté un tiers du quota
       d'une minute à chaque visite ;
-- [ ] calendrier des sorties — **une bonne partie du chemin est faite** : le
-      champ `nextAiringEpisode` est déjà interrogé, il reste à en faire une vue
-      par semaine plutôt qu'une liste par série ;
+- [x] ~~calendrier des sorties~~ — livré en v1.9, sur le Profil, et **restreint
+      à ce que le visiteur suit**. La mesure a tranché : AniList annonce
+      **5 000 diffusions sur sept jours**, un calendrier du catalogue entier
+      serait illisible et sans rapport avec ce que la personne regarde. La vue
+      couvre donc les favoris **et** la liste de suivi — on peut mettre en
+      favori sans suivre.
+
+      ⚠️ **Une entrée par série** : la source ne donne que le *prochain*
+      épisode de chaque titre, si bien qu'une série diffusée deux fois dans la
+      même semaine n'apparaît qu'une fois. Lever cette limite demanderait une
+      seconde opération (`airingSchedules` filtré par identifiants) pour un cas
+      rare ;
 - [x] ~~import/export JSON des favoris et de la liste~~ — livré en v1.8, sur le
       Profil, et étendu à l'historique. **Une restauration complète sans jamais
       remplacer** : importer une vieille sauvegarde ne peut pas faire reculer une

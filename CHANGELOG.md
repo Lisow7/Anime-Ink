@@ -5,6 +5,16 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.9] — 28 août 2026
+
+### Nouveautés
+- **« Cette semaine » sur ton profil** : les sorties à venir de tes séries, groupées par jour et par heure. Elle couvre tes favoris **et** ta liste de suivi — on peut mettre en favori sans suivre
+- La vue s’arrête à ce que tu suis, et c’est délibéré : la source annonce **5 000 diffusions sur sept jours**. Un calendrier du catalogue entier serait illisible
+
+> ⚠️ Une série diffusée **deux fois** dans la même semaine n’apparaît qu’une fois : la source ne donne que le prochain épisode de chaque titre.
+
+---
+
 ## [1.8] — 28 août 2026
 
 ### Nouveautés

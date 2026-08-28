@@ -4,6 +4,7 @@ import { useAgeFilter } from '../context/AgeFilterContext'
 import { classifyAdultContent } from '../constants/ageFilter'
 import { getProchainsEpisodes } from '../services/anime'
 import { posterUrl } from '../utils/images'
+import { quand } from '../utils/dates'
 
 /**
  * « Où reprendre » — les séries en cours, et quand arrive la suite.
@@ -19,23 +20,6 @@ import { posterUrl } from '../utils/images'
  *   - une source qui ne sait pas dater : l'écran s'affiche sans dates, plutôt
  *     que de ne pas s'afficher.
  */
-
-/** Formate une date ISO en repère lisible, sans dépendance de plus. */
-function quand(dateISO) {
-  const date = new Date(dateISO)
-  if (Number.isNaN(date.getTime())) return null
-
-  const jours = Math.ceil((date - Date.now()) / 86_400_000)
-  const heure = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  const jour = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
-
-  // « Demain à 17:00 » se lit mieux que « 28 août à 17:00 » quand on ouvre la
-  // page justement pour savoir si c'est bientôt.
-  if (jours <= 0) return `aujourd’hui à ${heure}`
-  if (jours === 1) return `demain à ${heure}`
-  if (jours <= 7) return `dans ${jours} jours, le ${jour}`
-  return `le ${jour}`
-}
 
 export default function OuReprendre({ watchlist }) {
   const { openModal } = useModal()

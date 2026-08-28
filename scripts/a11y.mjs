@@ -107,6 +107,19 @@ const SCENARIOS = [
   // La fiche n'était visitée qu'avec une œuvre tout public : le voile, le
   // palier d'âge et le bouton de révélation échappaient à l'analyse.
   {
+    // Heures en petit sur fond coloré, en-têtes de groupe en majuscules
+    // atténuées : deux endroits où le contraste se perd.
+    nom: 'profil, sorties de la semaine',
+    route: 'profil',
+    stockage: {
+      'anime-ink-cookie-consent': { preferences: true, userdata: true },
+      'anime-ink-watchlist': [
+        { mal_id: 2, title: 'Sousou no Frieren', watchStatus: 'watching', currentEpisode: 7, episodes: null, genres: [], images: {} },
+      ],
+    },
+    temoin: 'main section time',
+  },
+  {
     // Boutons, champ de fichier masqué et zone d'annonce : de quoi égarer un
     // lecteur d'écran si les libellés manquent.
     nom: 'profil, sauvegarde des données',
