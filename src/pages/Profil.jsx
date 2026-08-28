@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import AnimeCard from '../components/AnimeCard'
 import OuReprendre from '../components/OuReprendre'
 import SauvegardeDonnees from '../components/SauvegardeDonnees'
+import SortiesDeLaSemaine from '../components/SortiesDeLaSemaine'
 
 function StatCard({ label, value, sub }) {
   return (
@@ -160,6 +161,8 @@ export default function Profil() {
           {/* Où reprendre — avant les compteurs : on vient d'abord pour
               continuer une série, pas pour lire des statistiques. */}
           <OuReprendre watchlist={watchlist} />
+
+          <SortiesDeLaSemaine />
 
           {/* Ma liste par statut */}
           {watchlist.length > 0 && (
