@@ -438,6 +438,21 @@ const PARCOURS = [
         envoyees.some(v => v.season === 'SUMMER' && v.seasonYear === 2026),
         `la saison n'atteint pas la source : ${JSON.stringify(envoyees).slice(0, 200)}`,
       )
+
+      // La durée suit le même chemin : une tranche dans l'URL, des bornes de
+      // minutes dans la requête.
+      envoyees.length = 0
+      page.on('request', noter)
+      await page.evaluate(() => { try { sessionStorage.clear() } catch { /* refusé */ } })
+      const tranche = page.locator('select[aria-label="Filtrer par durée"]')
+      await tranche.selectOption('court')
+      await page.waitForTimeout(4000)
+      page.off('request', noter)
+
+      verifier(
+        envoyees.some(v => Number.isFinite(v.dureeMax)),
+        `la tranche de durée n'atteint pas la source : ${JSON.stringify(envoyees).slice(0, 200)}`,
+      )
     },
   },
   {

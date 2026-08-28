@@ -109,6 +109,7 @@ export default function Catalogue() {
   const letter = searchParams.get('letter') || ''
   const saison = searchParams.get('saison') || ''
   const annee = searchParams.get('annee') || ''
+  const duree = searchParams.get('duree') || ''
   const page = parseInt(searchParams.get('page') || '1')
 
   const [previousQuery, setPreviousQuery] = useState(query)
@@ -161,7 +162,7 @@ export default function Catalogue() {
           // Une reprise demandée par l'utilisateur contourne l'échec mémorisé,
           // sinon le bouton « Réessayer » paraîtrait mort pendant 30 secondes.
           const result = await getAnimeByFilter(
-            { genre, status, type, orderBy, letter, saison, annee, page },
+            { genre, status, type, orderBy, letter, saison, annee, duree, page },
             controller.signal,
             { bypassCache },
           )
@@ -192,7 +193,7 @@ export default function Catalogue() {
     }
     run()
     return () => controller.abort()
-  }, [tab, query, genre, status, type, orderBy, letter, saison, annee, page, retryKey])
+  }, [tab, query, genre, status, type, orderBy, letter, saison, annee, duree, page, retryKey])
 
   useEffect(() => {
     getGenres().then(data => { if (Array.isArray(data)) setGenres([...data].sort((a, b) => a.name.localeCompare(b.name))) })
@@ -438,6 +439,15 @@ export default function Catalogue() {
               className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
               <option value="">Toutes les années</option>
               {ANNEES.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+
+            <select value={duree} onChange={(e) => updateParam('duree', e.target.value)}
+              aria-label="Filtrer par durée"
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e] focus:border-[#22c55e] cursor-pointer">
+              <option value="">Toutes les durées</option>
+              <option value="court">Court — moins de 10 min</option>
+              <option value="standard">Standard — 10 à 40 min</option>
+              <option value="long">Long — plus de 40 min</option>
             </select>
 
             <select value={orderBy} onChange={(e) => updateParam('orderBy', e.target.value)}

@@ -5,6 +5,15 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.13] — 28 août 2026
+
+### Nouveautés
+- **Filtre le catalogue par durée** : format court (moins de 10 min), épisode classique (10 à 40 min) ou film (plus de 40 min). En tranches et non en minutes — on ne cherche pas « les animés de 22 minutes », on cherche un format
+
+> Le filtre par studio reste à faire : la source ne permet pas de filtrer le catalogue par studio, il faut passer par une requête d’un autre genre. C’est un chantier à part, consigné dans la feuille de route.
+
+---
+
 ## [1.12] — 28 août 2026
 
 ### Nouveautés

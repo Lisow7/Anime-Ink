@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.12'
+export const CURRENT_VERSION = '1.13'
 
 export const CHANGELOG = [
+  {
+    version: '1.13',
+    date: '28 août 2026',
+    changes: [
+      { type: 'feat', label: 'Filtre le catalogue par durée : format court, épisode classique ou film' },
+    ],
+  },
   {
     version: '1.12',
     date: '28 août 2026',

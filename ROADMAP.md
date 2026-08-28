@@ -150,8 +150,16 @@ réelles, et il ne faut pas le croire tel.
       **ignorée** plutôt que transmise : la transmettre ferait refuser la
       requête entière, et le catalogue afficherait une erreur là où il devrait
       simplement ne pas filtrer.
-- [ ] filtres par studio et par durée — moins évidents : le studio suppose une
-      liste ou une saisie libre, et la durée un découpage arbitraire ;
+- [x] ~~filtre par durée~~ — livré en v1.13, en **tranches** et non en minutes :
+      personne ne cherche « les animés de 22 minutes », on cherche un format —
+      une série courte, un épisode classique, un film. Vérifié contre la source :
+      les trois tranches rendent 4-6 min, 24 min et 107-130 min.
+- [ ] **filtre par studio** — instruit le 28 août, et plus coûteux qu'il n'y
+      paraît. AniList ne filtre pas `media` par studio : il faut passer par
+      `Studio(search:)`, qui rend **une autre structure et une autre
+      pagination**. Ce n'est donc pas un menu de plus dans le catalogue mais une
+      seconde opération, avec son cache, ses tests et son mode d'emploi — à
+      décider comme tel, pas à glisser dans un lot de filtres ;
 - [x] ~~statistiques personnelles, sans traçage~~ — livrées en v1.12 : « Tes
       goûts », les genres et les époques que tes choix dessinent. Le profil
       comptait déjà — combien de favoris, combien d'heures — mais ne disait
