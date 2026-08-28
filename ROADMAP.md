@@ -241,10 +241,23 @@ plus.)*
       le mobile** (0,63 contre 0,61) : elle a été retenue sur l'arbitrage, pas
       par principe.
 
-      Ce qui reste demande de **ne plus remplacer le squelette par la fiche**,
-      mais de remplir une structure déjà en place — une refonte du rendu de la
-      page, pas un réglage. À faire de front, avec une mesure avant et après sur
-      les deux tailles d'écran.
+      ⛔ **Une piste a été essayée et écartée sur mesure, le 28 août.** Le
+      diagnostic rapportait `MAIN` passant « de 835 à 835 pixels » tout en
+      comptant 0,19 de décalage, ce qui laissait croire que le coupable était le
+      **remplacement de l'arbre** — substituer la fiche au squelette — et non la
+      hauteur. Rendre la structure une seule fois, remplie ensuite, devait donc
+      régler l'affaire.
+
+      Résultat : **0,23 → 0,45 sur écran large, 0,66 → 0,74 sur mobile.** La
+      hauteur était bien en cause : sans squelette, la page démarre courte et
+      grandit davantage. La mesure de l'API attribue le décalage au conteneur
+      dont les descendants bougent, ce qui rend son « 835 → 835 » trompeur.
+
+      🥇 **Ce qui reste à essayer part donc de l'autre bout** : faire coïncider
+      la hauteur d'attente avec celle de la fiche, plutôt que supprimer
+      l'attente. Cela suppose de connaître la hauteur avant d'avoir les données
+      — donc de la réserver par catégorie de fiche, ou de rendre la page depuis
+      le serveur. Aucune des deux n'est un réglage.
 
 - [ ] **métriques de terrain (LCP, CLS, INP)** — également **possibles**
       désormais, l'hébergeur proposant sa propre mesure. Le frein a changé de
