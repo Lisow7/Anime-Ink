@@ -152,7 +152,27 @@ précédente écarte. Sans elle, il n'y a aucune date à montrer.)*
 
 ### Qualité
 
-- [ ] valider les réponses de l'API contre des schémas versionnés.
+- [x] ~~valider les réponses de l'API~~ — livré le 28 août, sous une forme que
+      la contrainte a dictée. **Les jeux de test sont figés** : c'est ce qui les
+      rend fiables, la CI ne devant dépendre d'aucun tiers, mais cela créait un
+      angle mort exact — si AniList renommait un champ, la suite de conformité
+      serait passée indéfiniment pendant que l'écran se vidait. Supportable tant
+      que deux sources coexistaient ; plus rien ne s'y opposait depuis qu'il n'en
+      reste qu'une.
+
+      `npm run veille` confronte la **vraie** API aux requêtes du dépôt —
+      importées, jamais recopiées. GraphQL **refuse** une requête qui demande un
+      champ inexistant, au lieu de l'ignorer : envoyer les vraies requêtes
+      suffit donc à faire tomber le contrôle le jour où la source change de
+      forme. S'y ajoutent des vérifications de sens, car un champ peut survivre
+      en changeant de nature — une note qui passerait sur dix, une date qui
+      passerait en millisecondes.
+
+      ⚠️ **Hors de la CI des pull requests, délibérément** : il dépend d'un
+      service extérieur, et un garde-fou qui rougit au gré de l'humeur d'un
+      tiers finit ignoré — pire que pas de garde-fou. Il tourne chaque lundi et
+      **ouvre une issue** en cas de rupture, un échec dans un onglet que
+      personne ne consulte ne valant pas mieux que rien.
 
 Le **poids** des bundles est tenu (voir plus haut). Les métriques de terrain,
 elles, ne relèvent pas de cette section : voir ci-dessous.

@@ -1,0 +1,87 @@
+name: Veille sur la source de données
+
+# Séparé de « Qualité et sécurité », et pour une raison de fond : ce contrôle
+# interroge un service extérieur. Le placer dans la CI des pull requests
+# reviendrait à faire dépendre chaque fusion de la disponibilité d'un tiers —
+# un garde-fou qui rougit au gré de l'humeur d'AniList finirait ignoré, ce qui
+# est pire que pas de garde-fou du tout.
+#
+# Il tourne donc à part : une fois par semaine, sans bloquer personne, et à la
+# demande quand un doute survient.
+on:
+  schedule:
+    # Lundi 8 h UTC. Le jour importe peu ; ce qui compte est qu'un changement de
+    # la source soit constaté par ce script plutôt que par un visiteur.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  veille:
+    name: La source rend-elle toujours ce que le site attend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Confronter la source au contrat
+        # `shell: bash` n'est pas décoratif : il apporte `pipefail`. Sans lui,
+        # `node … | tee` rend le code de sortie de `tee` — toujours zéro — et
+        # ce workflow serait vert quoi qu'il arrive. Le journal doit être gardé
+        # pour l'issue, d'où le tuyau ; le code de sortie doit survivre, d'où
+        # le shell.
+        shell: bash
+        run: node scripts/veille-contrat.mjs 2>&1 | tee /tmp/veille.txt
+
+      # Un échec silencieux dans un onglet que personne ne consulte ne vaut pas
+      # mieux que pas de veille : il ouvre une issue, qui elle se voit.
+      - name: Signaler la rupture
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            let sortie = 'sortie indisponible'
+            try { sortie = fs.readFileSync('/tmp/veille.txt', 'utf8').slice(0, 5000) } catch {}
+
+            const titre = 'La source de données ne rend plus ce que le site attend'
+
+            // Ne pas rouvrir la même issue chaque lundi tant que la précédente
+            // est ouverte : le bruit ferait ignorer le signal.
+            const ouvertes = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'veille-api',
+            })
+            if (ouvertes.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: ouvertes.data[0].number,
+                body: `Toujours en échec le ${new Date().toISOString().slice(0, 10)} :\n\n\`\`\`\n${sortie}\n\`\`\``,
+              })
+              return
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: titre,
+              labels: ['veille-api'],
+              body: [
+                'La veille hebdomadaire a constaté un écart entre ce que la source rend',
+                'et ce que le site attend.',
+                '',
+                '**Une panne passagère est possible** : relancer le workflow suffit à trancher.',
+                'Si l\'échec persiste, la source a changé de forme et le dépôt doit suivre —',
+                '`src/services/anilist/requetes.js` pour les champs demandés,',
+                '`src/services/anilist/traduction.js` pour leur passage vers le contrat.',
+                '',
+                '```',
+                sortie,
+                '```',
+              ].join('\n'),
+            })
