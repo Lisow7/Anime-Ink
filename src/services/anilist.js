@@ -136,6 +136,36 @@ export function creerAdaptateurAniList({
   }
 
   /**
+   * Le catalogue d'un studio.
+   *
+   * Rend la **même forme** que `getAnimeByFilter` — une page et sa pagination —
+   * bien que la source la livre autrement : c'est tout l'objet de cette couche,
+   * et c'est ce qui permet à l'écran du catalogue de l'afficher sans rien
+   * savoir de la différence.
+   *
+   * Un studio introuvable rend une page vide plutôt qu'une erreur : une saisie
+   * approximative est un cas courant, pas une panne.
+   */
+  async function getAnimeByStudio(nom, page = 1, signal, options = {}) {
+    const recherche = String(nom ?? '').trim()
+    if (recherche.length < 2) return { data: [], pagination: paginationDepuisAniList(null) }
+
+    const data = await demander('parStudio', {
+      nom: recherche,
+      page: Number(page) || 1,
+    }, { signal, ...options })
+
+    const studio = data?.data?.Page?.studios?.[0]
+    if (!studio) return { data: [], pagination: paginationDepuisAniList(null) }
+
+    return {
+      data: traduireListe(studio.media?.nodes),
+      pagination: paginationDepuisAniList(studio.media?.pageInfo),
+      studio: studio.name,
+    }
+  }
+
+  /**
    * Les genres viennent de la table, pas du réseau.
    *
    * `GenreCollection` ne rend que des noms, sans identifiant : il faudrait de
@@ -274,6 +304,7 @@ export function creerAdaptateurAniList({
     searchAnime,
     getTopAnime,
     getAnimeByFilter,
+    getAnimeByStudio,
     getGenres,
     getAnimeRecommendations,
     getAnimeFranchise,
@@ -291,6 +322,7 @@ export const getAnimeById = adaptateur.getAnimeById
 export const searchAnime = adaptateur.searchAnime
 export const getTopAnime = adaptateur.getTopAnime
 export const getAnimeByFilter = adaptateur.getAnimeByFilter
+export const getAnimeByStudio = adaptateur.getAnimeByStudio
 export const getGenres = adaptateur.getGenres
 export const getAnimeRecommendations = adaptateur.getAnimeRecommendations
 export const getAnimeFranchise = adaptateur.getAnimeFranchise

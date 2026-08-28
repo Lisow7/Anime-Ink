@@ -162,6 +162,14 @@ export function repondreAniList(operation, variables = {}, animes = ANIMES) {
     const source = animes.find(a => a.mal_id === demandee.idMal) ?? animes[0]
     return { data: { Media: { ...demandee, relations: { edges: relationsVersAniList(source, animes) } } } }
   }
+  if (operation === 'parStudio') {
+    // Un studio trouvé, avec sa pagination imbriquée — c'est justement cette
+    // forme différente que la traduction doit ramener à celle du catalogue.
+    return { data: { Page: { studios: [{
+      id: 1, name: 'Studio',
+      media: { pageInfo: PAGE_INFO_ANILIST, nodes: media },
+    }] } } }
+  }
   if (operation === 'prochainsEpisodes') {
     // Un jeu volontairement mixte : une série qui diffuse encore et une qui
     // est terminée. Sans la seconde, l'écran « sans date » — le cas le plus

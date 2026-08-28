@@ -496,6 +496,40 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'chercher un studio remplace les filtres, et le dit',
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(`${base}catalogue`, { waitUntil: 'load' })
+      const champ = page.locator('#filtre-studio')
+      await champ.waitFor({ timeout: 15_000 })
+
+      const genre = page.locator('select[aria-label="Filtrer par genre"]')
+      verifier(await genre.isEnabled(), 'les filtres sont éteints alors qu’aucun studio n’est demandé')
+
+      await champ.fill('Bones')
+      await page.getByRole('button', { name: /^Chercher$/ }).click()
+      await page.waitForTimeout(2500)
+
+      // L'URL porte la recherche : elle se partage comme les autres filtres.
+      verifier(
+        new URL(page.url()).searchParams.get('studio') === 'Bones',
+        `le studio n'est pas dans l'URL : ${page.url()}`,
+      )
+
+      // Les autres critères ne s'appliquent pas — et l'écran le dit au lieu de
+      // les laisser croire actifs.
+      verifier(await genre.isDisabled(), 'les filtres restent actifs alors qu’ils sont sans effet')
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      verifier(
+        /ne s.appliquent pas/i.test(texte),
+        `rien n'explique pourquoi les filtres sont éteints : « ${texte.slice(0, 200)} »`,
+      )
+
+      // Et la requête part bien vers l'opération dédiée.
+      await page.locator('main img[alt]').first().waitFor({ timeout: 15_000 })
+    },
+  },
+  {
     nom: 'comparer deux animés fait ressortir ce qui les rapproche',
     async executer(page, base) {
       await servir(page)
