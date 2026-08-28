@@ -107,6 +107,25 @@ const SCENARIOS = [
   // La fiche n'était visitée qu'avec une œuvre tout public : le voile, le
   // palier d'âge et le bouton de révélation échappaient à l'analyse.
   {
+    // Un tableau : en-têtes de colonnes et de lignes, légende, cellules mises
+    // en avant par la seule couleur — autant d'occasions de perdre un lecteur
+    // d'écran ou de manquer un contraste.
+    nom: 'comparaison de deux animés',
+    route: 'comparer',
+    stockage: {
+      'anime-ink-cookie-consent': { preferences: true, userdata: true },
+      'anime-ink-favorites': [
+        { mal_id: 1, title: 'Cowboy Bebop', score: 8.7, episodes: 26, year: 1998, status: 'Terminé', genres: [{ name: 'Action' }], images: {} },
+        { mal_id: 4, title: 'Steins;Gate', score: 9.1, episodes: 24, year: 2011, status: 'Terminé', genres: [{ name: 'Action' }], images: {} },
+      ],
+    },
+    avant: async (page) => {
+      await page.getByRole('button', { name: /Cowboy Bebop/ }).click()
+      await page.getByRole('button', { name: /Steins;Gate/ }).click()
+    },
+    temoin: 'main table',
+  },
+  {
     // Des barres colorées sur fond atténué, avec leur libellé à côté : le
     // contraste et l'étiquetage s'y perdent facilement.
     nom: 'profil, tes goûts',
@@ -191,6 +210,15 @@ async function analyser(page, base, scenario) {
 
   await page.goto(`${base}${scenario.route}`, { waitUntil: 'load' })
   await page.waitForTimeout(STABILISATION_MS)
+
+  // Certains écrans n'existent qu'après une action : une comparaison n'a rien à
+  // montrer tant que rien n'est sélectionné. Sans ce crochet, l'analyse
+  // porterait sur l'écran d'invite et déclarerait « conforme » sans avoir vu le
+  // tableau visé.
+  if (scenario.avant) {
+    await scenario.avant(page)
+    await page.waitForTimeout(STABILISATION_MS)
+  }
 
   if (scenario.mobile) {
     await page.evaluate(() => {

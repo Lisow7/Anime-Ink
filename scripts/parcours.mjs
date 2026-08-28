@@ -496,6 +496,47 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'comparer deux animés fait ressortir ce qui les rapproche',
+    async executer(page, base) {
+      await servir(page)
+      await page.addInitScript(() => {
+        try {
+          localStorage.setItem('anime-ink-cookie-consent', JSON.stringify({ preferences: true, userdata: true }))
+          localStorage.setItem('anime-ink-favorites', JSON.stringify([
+            { mal_id: 1, title: 'Cowboy Bebop', score: 8.7, episodes: 26, year: 1998, status: 'Terminé', genres: [{ name: 'Action' }, { name: 'Drame' }], images: {} },
+            { mal_id: 4, title: 'Steins;Gate', score: 9.1, episodes: 24, year: 2011, status: 'Terminé', genres: [{ name: 'Drame' }, { name: 'Sci-Fi' }], images: {} },
+          ]))
+        } catch { /* stockage refusé */ }
+      })
+
+      await page.goto(`${base}comparer`, { waitUntil: 'load' })
+      const premier = page.getByRole('button', { name: /Cowboy Bebop/ })
+      await premier.waitFor({ timeout: 15_000 })
+      await premier.click()
+      await page.getByRole('button', { name: /Steins;Gate/ }).click()
+      await page.waitForTimeout(1200)
+
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+
+      // La comparaison doit désigner, pas seulement juxtaposer.
+      verifier(/9\.1 \/ 10/.test(texte), `les notes ne sont pas comparées : « ${texte.slice(0, 160)} »`)
+      // `innerText` rend le texte TEL QU'AFFICHÉ : le titre est mis en
+      // majuscules par la feuille de style, et une comparaison sensible à la
+      // casse échouerait sur un écran pourtant correct.
+      const communs = texte.slice(texte.search(/genres communs/i))
+      verifier(/genres communs/i.test(texte), 'les genres communs ne sont pas dégagés')
+      verifier(
+        /drame/i.test(communs),
+        `le genre partagé n'est pas isolé : « ${communs.slice(0, 90)} »`,
+      )
+      // Ce que les deux n'ont PAS en commun ne doit pas y figurer.
+      verifier(
+        !/sci-fi/i.test(communs) && !/action/i.test(communs),
+        `un genre propre à un seul animé est présenté comme commun : « ${communs.slice(0, 90)} »`,
+      )
+    },
+  },
+  {
     nom: 'une sauvegarde se télécharge, et se restaure sans rien écraser',
     async executer(page, base) {
       await servir(page)

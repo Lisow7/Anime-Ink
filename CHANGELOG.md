@@ -5,6 +5,17 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.14] — 28 août 2026
+
+### Nouveautés
+- **Compare jusqu’à trois animés côte à côte** : note, épisodes, temps estimé, année, statut — et surtout leurs **genres communs**, que nulle fiche prise seule ne montre. La meilleure note et la série la plus courte sont mises en avant, sauf en cas d’égalité
+- Le choix se fait parmi ce que tu as déjà repéré — favoris, liste, historique. **Aucune requête** : la page fonctionne même quand la source est en panne
+
+### Maintenance
+- Les plafonds de poids passent à 106 ko au démarrage et 151 ko au total, avec leur mesure. Une précision au passage : le démarrage ne croît « presque pas » avec un écran ajouté, mais déclarer une route coûte environ 0,3 ko — l’affirmer nul était faux
+
+---
+
 ## [1.13] — 28 août 2026
 
 ### Nouveautés
