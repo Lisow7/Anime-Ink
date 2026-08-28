@@ -107,6 +107,20 @@ const SCENARIOS = [
   // La fiche n'était visitée qu'avec une œuvre tout public : le voile, le
   // palier d'âge et le bouton de révélation échappaient à l'analyse.
   {
+    // Des barres colorées sur fond atténué, avec leur libellé à côté : le
+    // contraste et l'étiquetage s'y perdent facilement.
+    nom: 'profil, tes goûts',
+    route: 'profil',
+    stockage: {
+      'anime-ink-cookie-consent': { preferences: true, userdata: true },
+      'anime-ink-favorites': [
+        { mal_id: 1, title: 'Cowboy Bebop', year: 1998, genres: [{ mal_id: 1, name: 'Action' }, { mal_id: 24, name: 'Sci-Fi' }], images: {} },
+        { mal_id: 4, title: 'Steins;Gate', year: 2011, genres: [{ mal_id: 24, name: 'Sci-Fi' }], images: {} },
+      ],
+    },
+    temoin: 'main section ul li span',
+  },
+  {
     // Heures en petit sur fond coloré, en-têtes de groupe en majuscules
     // atténuées : deux endroits où le contraste se perd.
     nom: 'profil, sorties de la semaine',

@@ -8,6 +8,7 @@ import AnimeCard from '../components/AnimeCard'
 import OuReprendre from '../components/OuReprendre'
 import SauvegardeDonnees from '../components/SauvegardeDonnees'
 import SortiesDeLaSemaine from '../components/SortiesDeLaSemaine'
+import TesGouts from '../components/TesGouts'
 
 function StatCard({ label, value, sub }) {
   return (
@@ -163,6 +164,8 @@ export default function Profil() {
           <OuReprendre watchlist={watchlist} />
 
           <SortiesDeLaSemaine />
+
+          <TesGouts />
 
           {/* Ma liste par statut */}
           {watchlist.length > 0 && (

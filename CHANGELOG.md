@@ -5,6 +5,18 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.12] — 28 août 2026
+
+### Nouveautés
+- **« Tes goûts » sur ton profil** : les genres et les époques que tes choix dessinent, en barres proportionnelles. Le profil comptait déjà — combien de favoris, combien d’heures — mais ne racontait rien
+- **Aucune requête, aucun envoi** : tout se calcule dans ton navigateur à partir de ce qui y est déjà enregistré
+- Seuls tes favoris et ta liste comptent. L’historique dit ce que tu as *ouvert*, souvent par curiosité : le compter prendrait un coup d’œil pour un goût
+
+### Maintenance
+- Le plafond de poids total passe de 146 à 148 ko. Les deux plafonds ne font pas le même travail, et c’est maintenant écrit : celui du **démarrage** reste strict — il mesure ce que chaque visiteur télécharge, et n’a aucune raison de croître — tandis que le **total** monte légitimement à chaque écran ajouté
+
+---
+
 ## [1.11] — 28 août 2026
 
 ### Corrections
