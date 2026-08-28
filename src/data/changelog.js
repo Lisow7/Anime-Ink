@@ -1,6 +1,14 @@
-export const CURRENT_VERSION = '1.15'
+export const CURRENT_VERSION = '1.16'
 
 export const CHANGELOG = [
+  {
+    version: '1.16',
+    date: '28 août 2026',
+    changes: [
+      { type: 'fix', label: 'Ouvrir une fiche ne télécharge plus le lecteur vidéo : 4,6 Mo deviennent 0,5 Mo' },
+      { type: 'ui', label: 'La bande-annonce se lance d’un clic, et l’écran d’attente d’une fiche ne saute plus autant' },
+    ],
+  },
   {
     version: '1.15',
     date: '28 août 2026',

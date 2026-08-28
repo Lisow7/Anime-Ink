@@ -354,6 +354,43 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'la bande-annonce ne charge son lecteur qu’au clic',
+    async executer(page, base) {
+      await servir(page)
+
+      let octetsYoutube = 0
+      const compter = async (reponse) => {
+        if (!/youtube|ytimg|googlevideo|gstatic/.test(reponse.url())) return
+        try { octetsYoutube += (await reponse.body()).length } catch { /* flux */ }
+      }
+      page.on('response', compter)
+
+      await page.goto(`${base}anime/1`, { waitUntil: 'load' })
+      const lecture = page.getByRole('button', { name: /bande-annonce/i })
+      await lecture.waitFor({ timeout: 15_000 })
+      await page.waitForTimeout(3000)
+
+      // Une `iframe` posée dans la page charge le lecteur en entier dès
+      // l'ouverture : 4,1 Mo mesurés, pour une vidéo que personne n'a demandée.
+      verifier(
+        octetsYoutube < 500_000,
+        `le lecteur se charge sans qu'on l'ait demandé : ${Math.round(octetsYoutube / 1024)} ko`,
+      )
+      verifier(
+        await page.locator('iframe').count() === 0,
+        'le lecteur est posé dans la page avant tout clic',
+      )
+
+      // Et il vient bien quand on le demande.
+      await lecture.click()
+      await page.waitForTimeout(1500)
+      verifier(
+        await page.locator('iframe').count() > 0,
+        'le lecteur n’apparaît pas après un clic sur la bande-annonce',
+      )
+    },
+  },
+  {
     nom: 'survoler une carte ne propose aucune sortie du site',
     async executer(page, base) {
       await servir(page)
