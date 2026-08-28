@@ -84,6 +84,31 @@ export const OPERATIONS = {
     }`,
   },
   /**
+   * Le catalogue d'un studio.
+   *
+   * Opération à part, et non un paramètre du catalogue : AniList **refuse** un
+   * filtre de studio sur `Page.media` (« Unknown argument "studio" »). Il faut
+   * passer par `studios`, dont la pagination est **imbriquée** dans `media` au
+   * lieu d'être portée par la page — d'où une traduction dédiée.
+   *
+   * `isMain: true` écarte les studios qui n'ont fait qu'une part du travail :
+   * « les animés de Kyoto Animation » désigne ce qu'ils ont produit, pas ce à
+   * quoi ils ont prêté la main.
+   */
+  parStudio: {
+    query: `query ($nom: String, $page: Int) {
+      Page(page: 1, perPage: 1) {
+        studios(search: $nom) {
+          id name
+          media(page: $page, perPage: 24, sort: POPULARITY_DESC, isMain: true) {
+            ${PAGE_INFO}
+            nodes { ${CHAMPS_MEDIA} }
+          }
+        }
+      }
+    }`,
+  },
+  /**
    * Les relations d'un titre — de quoi reconstituer une franchise.
    *
    * Volontairement dépourvue de `CHAMPS_MEDIA` : le parcours d'une franchise
@@ -142,6 +167,8 @@ export function ttlPourCle(cle) {
   // pour la journée épargne un appel par saison à chaque ouverture de fiche.
   if (operation === 'media' || operation === 'recommandations' || operation === 'relations') return JOUR
   if (operation === 'recherche' || operation === 'classement' || operation === 'catalogue') return HEURE
+  // Le catalogue d'un studio ne bouge qu'à chaque nouvelle production.
+  if (operation === 'parStudio') return JOUR
   // Une date de diffusion se rapproche d'heure en heure : la garder un jour
   // ferait afficher « dans 3 jours » le jour même de la sortie.
   if (operation === 'prochainsEpisodes') return HEURE

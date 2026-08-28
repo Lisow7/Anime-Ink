@@ -154,25 +154,21 @@ réelles, et il ne faut pas le croire tel.
       personne ne cherche « les animés de 22 minutes », on cherche un format —
       une série courte, un épisode classique, un film. Vérifié contre la source :
       les trois tranches rendent 4-6 min, 24 min et 107-130 min.
-- [ ] **filtre par studio** — instruit le 28 août, et plus coûteux qu'il n'y
-      paraît. AniList ne filtre pas `media` par studio : il faut passer par
-      `Studio(search:)`, qui rend **une autre structure et une autre
-      pagination**. Ce n'est donc pas un menu de plus dans le catalogue mais une
-      seconde opération, avec son cache, ses tests et son mode d'emploi — à
-      décider comme tel, pas à glisser dans un lot de filtres ;
-- [x] ~~statistiques personnelles, sans traçage~~ — livrées en v1.12 : « Tes
-      goûts », les genres et les époques que tes choix dessinent. Le profil
-      comptait déjà — combien de favoris, combien d'heures — mais ne disait
-      rien. **Aucune requête, aucun envoi** : tout se calcule dans le navigateur
-      à partir de ce qui y est déjà enregistré. Seuls les favoris et la liste
-      comptent : l'historique dit ce qu'on a ouvert, souvent par curiosité, et
-      le compter prendrait un coup d'œil pour un goût ;
-- [x] ~~comparaison de plusieurs animés~~ — livrée en v1.14, sur `/comparer`.
-      Le choix se fait parmi les favoris, la liste et l'historique : **aucune
-      requête**, tout est déjà sur l'appareil — la page fonctionne donc même si
-      la source est en panne. Comparer des titres inconnus supposerait une
-      recherche, donc du réseau, donc un autre écran ; ce n'est pas le besoin
-      courant, on hésite entre des séries qu'on a repérées.
+- [x] ~~filtre par studio~~ — livré en v1.15, **comme le chantier à part qu'il
+      est**. AniList refuse un filtre de studio sur son catalogue (« Unknown
+      argument "studio" ») : il faut passer par `studios(search:)`, dont la
+      pagination est **imbriquée** dans les œuvres au lieu d'être portée par la
+      page. D'où une opération dédiée et sa traduction, qui ramène le tout à la
+      forme que l'écran attend.
+
+      ⚠️ **Les autres filtres ne s'y appliquent pas** — c'est une autre requête,
+      pas un critère de plus. Ils sont donc **éteints** pendant une recherche de
+      studio, avec une phrase qui dit pourquoi : les laisser actifs sans effet
+      aurait été le vrai défaut.
+
+      `isMain: true` écarte les studios qui n'ont fait qu'une part du travail :
+      « les animés de Bones » désigne ce qu'ils ont produit, pas ce à quoi ils
+      ont prêté la main.
 
       Une comparaison ne juxtapose pas : elle **désigne**. La meilleure note et
       la série la plus courte sont mises en avant — sauf en cas d'égalité, où
