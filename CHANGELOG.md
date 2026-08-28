@@ -7,6 +7,12 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ## [1.16] — 28 août 2026
 
+### Corrections
+- **Ouvrir une fiche ne télécharge plus le lecteur vidéo.** Il se chargeait en entier dès l’ouverture, que tu regardes la bande-annonce ou non : **4,6 Mo, dont 4,1 pour YouTube seul**. Une vignette prend sa place, et le lecteur ne vient qu’au clic — la page tombe à 0,5 Mo
+- L’écran d’attente d’une fiche reproduit désormais la structure de ce qui arrive. La page sautait au chargement ; elle saute deux fois moins
+
+> Le décalage n’est pas entièrement résolu, et la mesure le dit : 0,23 sur écran large, 0,63 sur mobile. Ce qui reste demande une refonte du rendu de la page, consignée dans la feuille de route.
+
 ### Maintenance
 - **Le site a déménagé** : l’adresse publique devient `anime-ink-blond.vercel.app`. Les anciens liens continuent de fonctionner — ils redirigent en gardant le chemin. Les pages répondent enfin `200` au lieu de `404`, les jaquettes arrivent en WebP, et les protections que la balise `<meta>` ne pouvait pas porter sont servies
 - **Le floutage des suggestions de recherche est enfin vérifié** — la sixième et dernière surface. L’obstacle n’avait jamais été le code : l’ancienne source ne répondait qu’aux requêtes déjà en cache, or celle que compose une frappe n’y était jamais

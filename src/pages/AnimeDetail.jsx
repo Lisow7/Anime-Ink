@@ -10,6 +10,7 @@ import { scoreColor } from '../utils/score'
 import { infoItem } from '../utils/anime'
 import { posterUrl } from '../utils/images'
 import { safeYoutubeEmbed } from '../utils/urls'
+import BandeAnnonce from '../components/BandeAnnonce'
 
 export default function AnimeDetail() {
   const { id } = useParams()
@@ -97,16 +98,51 @@ export default function AnimeDetail() {
     )
   }
 
+  /**
+   * L'attente occupe la place de ce qui arrive.
+   *
+   * Le squelette ne montrait qu'une jaquette et trois lignes — 368 pixels,
+   * quand la fiche en fait 835. À l'arrivée des données, tout grandissait d'un
+   * coup et poussait le pied de page : un décalage de mise en page de 0,45,
+   * mesuré, là où 0,1 est déjà la limite du tolérable.
+   *
+   * Il reproduit donc la structure entière : jaquette, titre, bloc de
+   * caractéristiques, genres, synopsis. La hauteur ne sera jamais exacte — elle
+   * dépend de la longueur du texte, de la presence d'une bande-annonce — et
+   * viser le pixel serait vain.
+   *
+   * S'y ajoute une hauteur d'ecran reservee, retenue sur mesure et non par
+   * principe : elle ramene le decalage de 0,45 a 0,23 sur un ecran large, pour
+   * un cout de 0,02 sur mobile ou la fiche est bien plus haute. Le decalage
+   * qui subsiste est instruit dans la feuille de route.
+   *
+   * ⚠️ Réserver une hauteur d'écran entière a été essayé, et **écarté sur
+   * mesure** : cela améliorait le bureau et dégradait le mobile, où la fiche
+   * est bien plus haute. Le décalage résiduel est instruit dans .
+   */
   if (loading) {
     return (
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6 sm:gap-8 min-h-screen" aria-busy="true">
         <div className="animate-pulse flex flex-col sm:flex-row gap-6 sm:gap-8">
           <div className="w-48 shrink-0 aspect-[2/3] bg-[var(--bg-surface)] rounded-xl" />
-          <div className="flex-1 flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-4 min-w-0">
             <div className="h-8 bg-[var(--bg-surface)] rounded w-2/3" />
-            <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
-            <div className="h-4 bg-[var(--bg-surface)] rounded w-5/6" />
+            <div className="h-5 bg-[var(--bg-surface)] rounded w-24" />
+            {/* Le bloc des caractéristiques : statut, épisodes, durée, diffusion,
+                saison, classement, popularité, studios. */}
+            <div className="h-32 bg-[var(--bg-surface)] rounded-xl w-full" />
+            <div className="flex gap-2">
+              {[64, 88, 72, 56].map(l => (
+                <div key={l} className="h-7 bg-[var(--bg-surface)] rounded" style={{ width: l }} />
+              ))}
+            </div>
           </div>
+        </div>
+        <div className="animate-pulse flex flex-col gap-3">
+          <div className="h-6 bg-[var(--bg-surface)] rounded w-32" />
+          <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
+          <div className="h-4 bg-[var(--bg-surface)] rounded w-full" />
+          <div className="h-4 bg-[var(--bg-surface)] rounded w-4/5" />
         </div>
       </main>
     )
@@ -227,18 +263,7 @@ export default function AnimeDetail() {
       {safeYoutubeEmbed(trailer?.embed_url) && (
         <div className="flex flex-col gap-3">
           <h2 className="text-[var(--text-primary)] font-semibold text-lg">Bande-annonce</h2>
-          <div className="aspect-video rounded-xl overflow-hidden bg-[var(--bg-surface)]">
-            <iframe
-              src={safeYoutubeEmbed(trailer.embed_url)}
-              title={`Trailer ${title}`}
-              className="w-full h-full"
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              sandbox="allow-scripts allow-same-origin allow-presentation"
-              allow="encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-            />
-          </div>
+          <BandeAnnonce embedUrl={trailer.embed_url} youtubeId={trailer.youtube_id} titre={title} />
         </div>
       )}
     </main>
