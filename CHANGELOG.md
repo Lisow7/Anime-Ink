@@ -5,6 +5,16 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.18] — 29 août 2026
+
+### Corrections
+- **La fiche d’un animé ne saute plus à l’ouverture.** Son écran d’attente ne reproduisait pas sa géométrie : jaquette trop large de 48 pixels en mobile, lien de retour absent, et un passage en colonne à 640 pixels quand la fiche y passe à 500 — une bande de largeurs où l’attente était en colonne et la page en ligne. Le décalage tombe de **0,594 à 0,000** en mobile, de **0,153 à 0,000** sur écran large
+
+### Coulisses
+- **Le banc de mesure est versionné** (`npm run vitals`) : six pages, trois largeurs dont celle qui piégeait, et un avertissement écrit sur la lecture qui avait égaré deux corrections précédentes
+
+---
+
 ## [1.17] — 28 août 2026
 
 ### Corrections

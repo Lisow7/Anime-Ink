@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.17'
+export const CURRENT_VERSION = '1.18'
 
 export const CHANGELOG = [
+  {
+    version: '1.18',
+    date: '29 août 2026',
+    changes: [
+      { type: 'fix', label: 'La fiche d’un animé ne saute plus à l’ouverture — l’attente a désormais la forme exacte de ce qui arrive' },
+    ],
+  },
   {
     version: '1.17',
     date: '28 août 2026',
