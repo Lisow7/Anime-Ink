@@ -281,8 +281,12 @@ export default function Catalogue() {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)] tracking-tight shrink-0">
           {tab === 'favoris' ? 'Animés favoris' : tab === 'recents' ? 'Récemment consultés' : tab === 'liste' ? 'Ma liste' : 'Catalogue'}
         </h1>
-        {(history.length > 0 || watchlist.length > 0) && (
-          <div className="flex items-center gap-2">
+        {/* Le bloc entier était masqué tant qu'il n'y avait ni historique ni
+            liste — si bien qu'un nouveau venu ne pouvait pas savoir que suivre
+            une série était possible. « Ma liste » y figure désormais toujours,
+            son écran vide expliquant comment s'en servir ; « Récents » reste
+            conditionnel, l'historique se remplissant tout seul. */}
+        <div className="flex items-center gap-2">
             <div className="flex items-center gap-0.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg p-1 flex-1 sm:flex-none min-w-0">
               {history.length > 0 && (
                 <button
@@ -295,10 +299,15 @@ export default function Catalogue() {
                   </span>
                 </button>
               )}
-              {history.length > 0 && watchlist.length > 0 && (
+              {history.length > 0 && (
                 <div className="w-px h-4 bg-white/10 shrink-0" />
               )}
-              {watchlist.length > 0 && (
+              {/* Toujours visible, contrairement aux favoris et aux récents qui
+                  se remplissent d'eux-mêmes à l'usage. Suivre une série demande
+                  une action délibérée : masquer l'onglet tant que la liste est
+                  vide rendait la fonction introuvable pour qui n'en connaissait
+                  pas déjà l'existence. */}
+              {(
                 <button
                   onClick={() => switchTab(tab === 'liste' ? 'catalogue' : 'liste')}
                   onMouseEnter={prechargerWatchlist}
@@ -324,7 +333,6 @@ export default function Catalogue() {
               </button>
             )}
           </div>
-        )}
       </div>
 
       {/* Barre de recherche — toujours visible sur catalogue */}

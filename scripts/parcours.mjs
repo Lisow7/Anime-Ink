@@ -327,6 +327,72 @@ const PARCOURS = [
     },
   },
   {
+    nom: 'survoler une carte ne propose aucune sortie du site',
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(`${base}catalogue`, { waitUntil: 'load' })
+      const carte = page.locator('main article, main .group').first()
+      await carte.waitFor({ timeout: 15_000 })
+      await carte.hover()
+      await page.waitForTimeout(1200)
+
+      // Une carte survolée montrait la bande-annonce, et un clic emmenait sur
+      // YouTube. La bande-annonce a sa place sur la fiche, pas au survol d'une
+      // vignette : personne ne demande à quitter le site en promenant sa souris.
+      verifier(
+        await page.locator('main a[href*="youtube"], main a[href*="youtu.be"]').count() === 0,
+        'une carte survolée propose encore un lien vers YouTube',
+      )
+      verifier(
+        await page.locator('main img[src*="ytimg"], main img[src*="youtube"]').count() === 0,
+        'une carte survolée charge encore une miniature YouTube',
+      )
+    },
+  },
+  {
+    nom: 'la grille des mieux notés ne laisse pas de case vide',
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(base, { waitUntil: 'load' })
+      await page.locator('main img[alt]').first().waitFor({ timeout: 15_000 })
+      await page.waitForTimeout(2500)
+
+      // Le regroupement des franchises réunit plusieurs entrées en une : en
+      // découpant à six AVANT de grouper, il n'en restait parfois que cinq
+      // dans une grille taillée pour six.
+      const derniere = page.locator('main section').last()
+      const cartes = await derniere.locator('article, .group').count()
+      verifier(
+        cartes === 6,
+        `la grille des mieux notés affiche ${cartes} cartes au lieu de 6 — le regroupement en a mangé`,
+      )
+    },
+  },
+  {
+    nom: 'suivre une série se découvre sans en suivre déjà une',
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(`${base}catalogue`, { waitUntil: 'load' })
+      await page.locator('main img[alt]').first().waitFor({ timeout: 15_000 })
+
+      // L'onglet était masqué tant que la liste était vide : un nouveau venu ne
+      // pouvait donc pas apprendre que suivre une série était possible.
+      const onglet = page.getByRole('button', { name: /ma liste/i }).first()
+      verifier(
+        await onglet.count() > 0,
+        'l’onglet « Ma liste » est introuvable pour qui n’a encore rien suivi',
+      )
+
+      await onglet.click()
+      await page.waitForTimeout(2000)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      verifier(
+        /ouvre un anim/i.test(texte),
+        `l'écran vide n'explique pas comment ajouter une série : « ${texte.slice(0, 160)} »`,
+      )
+    },
+  },
+  {
     nom: 'un filtre de saison entre dans l’URL et survit au rechargement',
     async executer(page, base) {
       await servir(page)

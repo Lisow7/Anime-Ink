@@ -1,6 +1,15 @@
-export const CURRENT_VERSION = '1.10'
+export const CURRENT_VERSION = '1.11'
 
 export const CHANGELOG = [
+  {
+    version: '1.11',
+    date: '28 août 2026',
+    changes: [
+      { type: 'fix', label: 'Survoler une carte ne propose plus de partir sur YouTube — la bande-annonce reste sur la fiche' },
+      { type: 'fix', label: 'La grille des mieux notés ne laisse plus de case vide' },
+      { type: 'fix', label: 'L’onglet « Ma liste » est visible même avant d’avoir suivi une série' },
+    ],
+  },
   {
     version: '1.10',
     date: '28 août 2026',
