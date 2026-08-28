@@ -229,43 +229,38 @@ plus.)*
       tout ; ce n'est plus une impossibilité mais un arbitrage — un point de
       collecte à écrire, à surveiller et à protéger du bruit, pour un site sans
       compte ni paiement.
-- [ ] **le décalage de mise en page d'une fiche** — le reste après correction :
-      **0,19 sur écran large, 0,60 sur mobile**, quand 0,1 est la limite du
-      tolérable.
+- [x] **le décalage de mise en page** — clos le 29 août 2026. **18 mesures
+      (6 pages × 3 formats) sous 0,05**, quand 0,1 est la limite. Le banc est
+      versionné : `npm run vitals`.
 
-      ✅ **La cause principale, commune à tout le site, est réglée** :
-      l'écran d'attente de la navigation n'occupait que 40 % de la hauteur, si
-      bien que le pied de page restait **visible** puis se faisait repousser
-      hors du champ à l'arrivée du contenu. Il occupe désormais la fenêtre.
-      Résultat mesuré : catalogue **0,198 → 0,010**, profil **0,007**, accueil
-      **0,003**, mentions légales **0**.
+      Deux causes distinctes, réglées séparément, et les confondre a coûté deux
+      corrections inutiles.
 
-      La fiche reste à part parce qu'elle a **son propre** écran d'attente, donc
-      une transition de plus — et c'est cette seconde substitution qui subsiste.
+      **La première, commune à tout le site** : l'écran d'attente de la
+      navigation n'occupait que 40 % de la hauteur, si bien que le pied de page
+      restait **visible** puis se faisait repousser à l'arrivée du contenu.
+      Catalogue 0,198 → 0,010.
 
-      Deux corrections ont déjà été apportées et mesurées — un squelette qui
-      reproduit la structure entière (368 → 508 pixels) et une hauteur d'écran
-      réservée (0,45 → 0,23 sur large). ⚠️ **Cette dernière dégrade légèrement
-      le mobile** (0,63 contre 0,61) : elle a été retenue sur l'arbitrage, pas
-      par principe.
+      **La seconde, propre à la fiche** : son écran d'attente ne reproduisait
+      pas sa géométrie — jaquette de 192 pixels contre 144 en mobile, lien de
+      retour absent, espacements différents, et surtout un passage en colonne à
+      640 pixels quand la fiche y passe à 500. Entre les deux, une bande de
+      largeurs que ni le format bureau ni le format mobile ne traversent. Aligné,
+      le mobile tombe de 0,594 à 0,052.
 
-      ⛔ **Une piste a été essayée et écartée sur mesure, le 28 août.** Le
-      diagnostic rapportait `MAIN` passant « de 835 à 835 pixels » tout en
-      comptant 0,19 de décalage, ce qui laissait croire que le coupable était le
-      **remplacement de l'arbre** — substituer la fiche au squelette — et non la
-      hauteur. Rendre la structure une seule fois, remplie ensuite, devait donc
-      régler l'affaire.
+      **Ce qui restait** tenait à React : les deux branches rendaient un `<main>`
+      au même endroit de l'arbre, donc le même nœud était réutilisé et ses
+      enfants appariés par position — le bloc gris du titre « devenait » le
+      titre, et le navigateur comptait un déplacement là où il n'y avait qu'une
+      substitution. Deux `key` distinctes l'éteignent.
 
-      Résultat : **0,23 → 0,45 sur écran large, 0,66 → 0,74 sur mobile.** La
-      hauteur était bien en cause : sans squelette, la page démarre courte et
-      grandit davantage. La mesure de l'API attribue le décalage au conteneur
-      dont les descendants bougent, ce qui rend son « 835 → 835 » trompeur.
-
-      🥇 **Ce qui reste à essayer part donc de l'autre bout** : faire coïncider
-      la hauteur d'attente avec celle de la fiche, plutôt que supprimer
-      l'attente. Cela suppose de connaître la hauteur avant d'avoir les données
-      — donc de la réserver par catégorie de fiche, ou de rendre la page depuis
-      le serveur. Aucune des deux n'est un réglage.
+      🥇 **La leçon, qui vaut au-delà de ce défaut** : les rectangles rapportés
+      par l'API sont **coupés à la fenêtre**. Un `MAIN` « de 835 à 835 pixels »
+      ne dit pas que rien n'a grandi — relevé à la main, il passait de 900 à
+      1343. Cette lecture erronée a fait conclure deux fois de suite au
+      « remplacement de l'arbre », dont l'une a produit une correction qui
+      **dégradait** la mesure (0,23 → 0,45). Vérifier la hauteur réelle avant de
+      conclure ; l'avertissement est écrit dans la sortie du script.
 
 - [ ] **métriques de terrain (LCP, CLS, INP)** — également **possibles**
       désormais, l'hébergeur proposant sa propre mesure. Le frein a changé de
