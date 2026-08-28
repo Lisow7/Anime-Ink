@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.11'
+export const CURRENT_VERSION = '1.12'
 
 export const CHANGELOG = [
+  {
+    version: '1.12',
+    date: '28 août 2026',
+    changes: [
+      { type: 'feat', label: '« Tes goûts » sur ton profil : les genres et les époques que tes choix dessinent' },
+    ],
+  },
   {
     version: '1.11',
     date: '28 août 2026',
