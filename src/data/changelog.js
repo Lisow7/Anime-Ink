@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.18'
+export const CURRENT_VERSION = '1.19'
 
 export const CHANGELOG = [
+  {
+    version: '1.19',
+    date: '29 août 2026',
+    changes: [
+      { type: 'fix', label: 'Le pied de page ne remonte plus sur les pages courtes — fiche brève, écran d’erreur, comparaison vide' },
+    ],
+  },
   {
     version: '1.18',
     date: '29 août 2026',

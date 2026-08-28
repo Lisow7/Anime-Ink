@@ -63,13 +63,6 @@ export const ANIMES = [
   base(5, 'Fullmetal Alchemist'),
 ]
 
-const PAGINATION = {
-  last_visible_page: 3,
-  has_next_page: true,
-  current_page: 1,
-  items: { count: ANIMES.length, total: 72, per_page: 24 },
-}
-
 /**
  * La même fiche, telle qu'AniList la sert.
  *
