@@ -82,7 +82,20 @@
     }
     </script>
     <!-- Redirect SPA GitHub Pages -->
-    <script>
+    <!-- Le décodeur d'adresses de GitHub Pages, et lui seul.
+         GitHub Pages ne sait pas réécrire : son `404.html` renvoie vers cette
+         page en encodant le chemin demandé dans la requête (`/?/catalogue`), et
+         ce script le remet en place avant que le routeur ne s'éveille.
+
+         Vercel réécrit les routes et n'en a aucun besoin ; le plugin
+         `cspSansScriptInline` le retire donc du build servi là-bas, ce qui est
+         ce qui permet à la politique de sécurité de se passer de
+         `'unsafe-inline'`.
+
+         ⚠️ Il n'est PAS mort pour autant : `deploy.yml` documente un retour à
+         GitHub Pages « en une ligne », et ce retour a besoin de lui. C'est
+         l'hôte qui décide, pas la suppression. -->
+    <script data-hote="github-pages">
       (function(l) {
         if (l.search[1] === '/') {
           var decoded = l.search.slice(1).split('&').map(function(s) {

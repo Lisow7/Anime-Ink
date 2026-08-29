@@ -28,7 +28,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'none'"
+          "value": "default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://graphql.anilist.co https://api.mymemory.translated.net; img-src 'self' data: https://s4.anilist.co https://cdn.myanimelist.net https://img.youtube.com; frame-src https://www.youtube-nocookie.com https://www.youtube.com; manifest-src 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Permissions-Policy",

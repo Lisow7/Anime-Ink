@@ -5,6 +5,17 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.20] — 29 août 2026
+
+### Sécurité
+- **Plus aucun script inline n’est autorisé.** La politique de sécurité acceptait `'unsafe-inline'` sur les scripts, ce qui revient à autoriser n’importe quel script injecté dans la page — l’essentiel de la protection, annulé. Un seul élément l’exigeait : le décodeur d’adresses de GitHub Pages, inutile depuis le déménagement. Il n’est plus servi que là où il sert encore, et `script-src` se réduit à `'self'`
+- **La politique est servie en en-tête, et non plus par une balise.** Une balise `<meta>` ignore `frame-ancestors`, `report-uri` et `report-to` : c’est ce qui obligeait à servir `frame-ancestors` à part, et faisait cohabiter deux politiques
+
+### Coulisses
+- **Huit vérifications gardent la politique**, avec le point sensible nommément : le retour d’`'unsafe-inline'` serait un recul dont rien ne se verrait à l’écran. Éprouvées par trois mutations
+
+---
+
 ## [1.19] — 29 août 2026
 
 ### Corrections

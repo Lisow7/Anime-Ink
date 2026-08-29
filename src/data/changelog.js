@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.19'
+export const CURRENT_VERSION = '1.20'
 
 export const CHANGELOG = [
+  {
+    version: '1.20',
+    date: '29 août 2026',
+    changes: [
+      { type: 'security', label: 'La page n’exécute plus aucun script écrit dans son corps — un script injecté ne s’y exécuterait pas' },
+    ],
+  },
   {
     version: '1.19',
     date: '29 août 2026',
