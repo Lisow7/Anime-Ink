@@ -223,12 +223,17 @@ plus.)*
 
 **Ce qui reste, et pourquoi :**
 
-- [ ] **`report-uri` / `report-to`** — recevoir les violations de la politique de
-      sécurité suppose une adresse qui les collecte. C'est désormais **possible**
-      (l'hébergement sait exécuter des fonctions), là où ce ne l'était pas du
-      tout ; ce n'est plus une impossibilité mais un arbitrage — un point de
-      collecte à écrire, à surveiller et à protéger du bruit, pour un site sans
-      compte ni paiement.
+- [ ] **`report-uri` / `report-to`** — **le blocage technique est levé** depuis
+      le 29 août : la politique est servie en en-tête, or une balise `<meta>`
+      ignore ces deux directives — l'item était donc irréalisable tel qu'il était
+      écrit, et personne ne l'avait remarqué.
+
+      Ce qui reste est l'arbitrage d'origine, inchangé : un point de collecte à
+      écrire, à surveiller et à protéger du bruit, pour un site sans compte ni
+      paiement. ⚠️ Et il rapporterait peu aujourd'hui — `script-src` n'accepte
+      plus aucun script inline, si bien que la violation la plus probable a
+      disparu avec la directive qui l'autorisait.
+
 - [x] **le décalage de mise en page** — clos le 29 août 2026. **18 mesures
       (6 pages × 3 formats) sous 0,05**, quand 0,1 est la limite. Le banc est
       versionné : `npm run vitals`.
@@ -270,7 +275,12 @@ plus.)*
       **dégradait** la mesure (0,23 → 0,45). Vérifier la hauteur réelle avant de
       conclure ; l'avertissement est écrit dans la sortie du script.
 
-- [ ] **métriques de terrain (LCP, CLS, INP)** — également **possibles**
+- [ ] **métriques de terrain (LCP, CLS, INP)** — position **inchangée au
+      29 août**, et délibérément : le banc `npm run vitals` mesure en
+      laboratoire ce qu'il faut, et une métrique de terrain sans visiteurs ne
+      mesure rien. À reprendre quand il y aura du trafic, pas avant.
+
+      Rappel de la contrainte — également **possibles**
       désormais, l'hébergeur proposant sa propre mesure. Le frein a changé de
       nature : c'est le **poids** qui décide, le script de mesure s'ajoutant à
       ce que chaque visiteur télécharge, et le budget de démarrage n'a que
