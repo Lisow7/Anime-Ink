@@ -293,53 +293,104 @@ const serveur = await preview({ preview: { port: 4173, strictPort: true } })
 const base = serveur.resolvedUrls.local[0]
 const navigateur = await chromium.launch()
 
+/**
+ * Les passes tournent à plusieurs, et le nombre n'est pas choisi au hasard.
+ *
+ * Ce contrôle occupait **284 secondes** sur les 412 de l'intégration, soit plus
+ * des deux tiers — mesuré, non supposé. L'essentiel n'est pourtant pas du
+ * calcul : chaque passe attend 2,5 secondes que la page se stabilise, ce qui
+ * fait à soi seul plus de trois minutes de pure attente sur les 76 passes.
+ *
+ * Une attente se partage sans rien coûter. `axe.run`, lui, parcourt tout le
+ * document en calculant les styles rendus, et **occupe un cœur**. Le runner
+ * d'intégration en a deux : au-delà de trois passes simultanées, elles se
+ * disputeraient le processeur, et un garde-fou qui rougit selon l'ordonnancement
+ * du jour finit ignoré — ce qui est pire que lent.
+ *
+ * ⚠️ Si ce contrôle devenait instable, la réponse est de **baisser** ce nombre,
+ * jamais de relever les délais d'attente : ceux-ci masqueraient la contention
+ * sans la supprimer.
+ */
+const SIMULTANEES = 3
+
+/**
+ * Les résultats sont rendus dans l'ordre de la liste, non dans celui où ils
+ * arrivent. Une sortie dont l'ordre change à chaque exécution rendrait deux
+ * journaux impossibles à comparer — et c'est en les comparant qu'on distingue
+ * une vraie régression d'un hasard d'ordonnancement.
+ */
+const TACHES = FORMATS.flatMap(([format, viewport]) =>
+  THEMES.flatMap(theme =>
+    SCENARIOS
+      // Un scénario mobile n'a pas de sens au format bureau : le menu y est
+      // masqué, et l'y « ouvrir » ne ferait que rejouer la page ordinaire.
+      .filter(scenario => !scenario.mobile || format === 'mobile')
+      .map(scenario => ({ nom: `${format} · ${theme} · ${scenario.nom}`, viewport, theme, scenario })),
+  ),
+)
+
 let total = 0
 let passes = 0
 let echecPreparation = false
 
+const resultats = new Array(TACHES.length)
+
+async function executer(tache) {
+  // Contexte neuf par scénario : la bannière de consentement et le cache de
+  // session ne doivent pas fuir d'un scénario à l'autre.
+  // Le thème est piloté par prefers-color-scheme, comme chez un vrai
+  // utilisateur. Basculer la classe à la main était fragile : l'application
+  // réapplique son propre thème dès que le consentement change, et écrasait
+  // la bascule — les deux passes finissaient alors en clair sans le dire.
+  const contexte = await navigateur.newContext({ colorScheme: tache.theme, viewport: tache.viewport })
+  const page = await contexte.newPage()
+  try {
+    return { violations: await analyser(page, base, tache.scenario) }
+  } catch (erreur) {
+    return { erreur: erreur.message }
+  } finally {
+    await contexte.close()
+  }
+}
+
 try {
-  for (const [format, viewport] of FORMATS) {
-   for (const theme of THEMES) {
-    for (const scenario of SCENARIOS) {
-      // Un scénario mobile n'a pas de sens au format bureau : le menu y est
-      // masqué, et l'y « ouvrir » ne ferait que rejouer la page ordinaire.
-      if (scenario.mobile && format !== 'mobile') continue
-      // Contexte neuf par scénario : la bannière de consentement et le cache de
-      // session ne doivent pas fuir d'un scénario à l'autre.
-      // Le thème est piloté par prefers-color-scheme, comme chez un vrai
-      // utilisateur. Basculer la classe à la main était fragile : l'application
-      // réapplique son propre thème dès que le consentement change, et écrasait
-      // la bascule — les deux passes finissaient alors en clair sans le dire.
-      const contexte = await navigateur.newContext({ colorScheme: theme, viewport })
-      const page = await contexte.newPage()
-      const nom = `${format} · ${theme} · ${scenario.nom}`
+  let prochaine = 0
+  await Promise.all(Array.from({ length: SIMULTANEES }, async () => {
+    // Chaque ouvrier prend la tâche suivante dès qu'il se libère, plutôt que de
+    // recevoir une part fixe : les passes n'ont pas toutes la même durée, et un
+    // découpage en parts égales attendrait la plus lente de chaque part.
+    while (prochaine < TACHES.length) {
+      const rang = prochaine
+      prochaine += 1
+      resultats[rang] = await executer(TACHES[rang])
+    }
+  }))
 
-      try {
-        const violations = await analyser(page, base, scenario)
-        passes += 1
-        const noeuds = violations.reduce((somme, v) => somme + v.noeuds, 0)
-        total += noeuds
+  for (const [rang, tache] of TACHES.entries()) {
+    const { violations, erreur } = resultats[rang]
 
-        if (noeuds === 0) {
-          console.log(`  ok    ${nom}`)
-        } else {
-          console.log(`  ÉCHEC ${nom} — ${noeuds} nœud(s)`)
-          for (const v of violations) {
-            console.log(`        ${v.id} (${v.impact}) ×${v.noeuds}`)
-            console.log(`        ${v.message}`)
-            // Plusieurs cibles : une seule masquerait les autres causes du même
-            // symptôme, et enverrait corriger le mauvais élément.
-            for (const cible of v.cibles) console.log(`          → ${cible}`)
-          }
-        }
-      } catch (erreur) {
-        echecPreparation = true
-        console.log(`  ERREUR ${nom} — ${erreur.message}`)
-      } finally {
-        await contexte.close()
+    if (erreur) {
+      echecPreparation = true
+      console.log(`  ERREUR ${tache.nom} — ${erreur}`)
+      continue
+    }
+
+    passes += 1
+    const noeuds = violations.reduce((somme, v) => somme + v.noeuds, 0)
+    total += noeuds
+
+    if (noeuds === 0) {
+      console.log(`  ok    ${tache.nom}`)
+    } else {
+      console.log(`  ÉCHEC ${tache.nom} — ${noeuds} nœud(s)`)
+      for (const v of violations) {
+        console.log(`        ${v.id} (${v.impact}) ×${v.noeuds}`)
+        console.log(`        ${v.message}`)
+        // Plusieurs cibles : une seule masquerait les autres causes du même
+        // symptôme, et enverrait corriger le mauvais élément.
+        for (const cible of v.cibles) console.log(`          → ${cible}`)
       }
     }
-   }
   }
 } finally {
   await navigateur.close()
