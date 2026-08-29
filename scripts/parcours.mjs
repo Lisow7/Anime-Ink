@@ -21,6 +21,23 @@ import { SOURCE, cesserDeServir, servirSource } from './source-test.mjs'
 
 const BUREAU = { width: 1280, height: 900 }
 
+/**
+ * Le format téléphone, et pourquoi deux parcours seulement y tournent.
+ *
+ * Dupliquer les vingt et un parcours à deux largeurs doublerait la durée de
+ * l'intégration pour rejouer, en majorité, des comportements qui ne dépendent
+ * pas du format. Ce qui manquait n'était pas de la redondance : c'était le
+ * **chemin de navigation principal du téléphone**, que rien ne traversait.
+ *
+ * La barre de navigation replie ses liens dans un menu sous 1024 pixels
+ * (`lg:hidden`). Au-dessus, ce menu n'existe pas ; en dessous, c'est le seul
+ * moyen d'atteindre le catalogue ou le profil. Tous les parcours tournant à
+ * 1280, il n'était jamais emprunté — et le contrôle d'accessibilité qui
+ * prétendait l'analyser ne le faisait pas davantage : il ouvrait le menu par un
+ * `.click()` en JavaScript, lequel agit même sur un élément masqué.
+ */
+const TELEPHONE = { width: 390, height: 844 }
+
 /** Réponses simulées, avec un jeu de genres explicites pour la censure. */
 const HENTAI = [{ mal_id: 12, name: 'Hentai' }]
 
@@ -32,6 +49,79 @@ function verifier(condition, message) {
 }
 
 const PARCOURS = [
+  {
+    nom: 'sur téléphone, le menu ouvre, conduit, puis se referme',
+    format: TELEPHONE,
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(base, { waitUntil: 'load' })
+
+      const bouton = page.getByRole('button', { name: /ouvrir le menu/i })
+      // `toBeVisible` n'existe pas ici : c'est `waitFor` qui exige la
+      // visibilité, et c'est justement ce que l'ancien contrôle n'exigeait pas.
+      await bouton.waitFor({ state: 'visible', timeout: 15_000 })
+      verifier(
+        await bouton.getAttribute('aria-expanded') === 'false',
+        'le bouton du menu n’annonce pas qu’il est fermé',
+      )
+
+      await bouton.click()
+      const panneau = page.locator('#menu-mobile')
+      await panneau.waitFor({ state: 'visible', timeout: 15_000 })
+      verifier(
+        await page.getByRole('button', { name: /fermer le menu/i }).getAttribute('aria-expanded') === 'true',
+        'le bouton du menu n’annonce pas qu’il est ouvert',
+      )
+
+      // Le lien du menu, et non celui de la navigation de bureau : les deux
+      // portent la même adresse, et viser `nav a[href$="/profil"]` attraperait
+      // le mauvais — c'est ce qui rendait l'ancien témoin d'accessibilité muet.
+      await panneau.locator('a[href$="/profil"]').first().click()
+      await page.waitForTimeout(2500)
+
+      verifier(
+        new URL(page.url()).pathname.endsWith('/profil'),
+        `le menu mène à ${new URL(page.url()).pathname} au lieu du profil`,
+      )
+      // Un menu qui reste ouvert par-dessus la page d'arrivée la recouvrirait.
+      verifier(
+        await panneau.count() === 0 || !(await panneau.first().isVisible()),
+        'le menu reste ouvert après avoir mené ailleurs',
+      )
+    },
+  },
+  {
+    nom: 'sur téléphone, la bascule de thème du menu change bien le thème',
+    format: TELEPHONE,
+    async executer(page, base) {
+      await servir(page)
+      await page.goto(base, { waitUntil: 'load' })
+      await page.waitForTimeout(1500)
+
+      // ⚠️ Ce bouton est un AUTRE élément que celui du bureau : la barre en
+      // porte deux, l'un caché à chaque format. Éprouver l'un ne dit rien de
+      // l'autre, et seul celui-ci est atteignable sur un téléphone.
+      const bascule = page.getByRole('button', { name: /^mode (clair|sombre)$/i })
+      await bascule.waitFor({ state: 'visible', timeout: 15_000 })
+
+      const lire = () => page.evaluate(() => ({
+        classe: document.documentElement.className,
+        fond: getComputedStyle(document.body).backgroundColor,
+      }))
+      const avant = await lire()
+      await bascule.click()
+      await page.waitForTimeout(1200)
+      const apres = await lire()
+
+      // Le fond, et pas seulement la classe : une classe qui bascule sans que
+      // rien ne change à l'écran serait un thème en trompe-l'œil.
+      verifier(avant.classe !== apres.classe, 'la classe de thème n’a pas changé')
+      verifier(
+        avant.fond !== apres.fond,
+        `le fond reste ${apres.fond} alors que le thème a basculé`,
+      )
+    },
+  },
   {
     nom: 'la recherche mène à une suggestion, et la suggestion à la fiche',
     async executer(page, base) {
@@ -759,7 +849,10 @@ try {
   for (const parcours of PARCOURS) {
     // Contexte neuf : les favoris et la bannière de consentement ne doivent pas
     // fuir d'un parcours à l'autre.
-    const contexte = await navigateur.newContext({ viewport: BUREAU, acceptDownloads: true })
+    const contexte = await navigateur.newContext({
+      viewport: parcours.format ?? BUREAU,
+      acceptDownloads: true,
+    })
     const page = await contexte.newPage()
     try {
       await parcours.executer(page, base)

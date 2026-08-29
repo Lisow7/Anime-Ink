@@ -71,8 +71,11 @@ const SCENARIOS = [
   { nom: 'fiche animé', route: 'anime/1', temoin: 'main h1' },
   { nom: 'page inconnue', route: 'cette-route-nexiste-pas' },
   { nom: 'favoris vides', route: 'catalogue?tab=favoris' },
-  { nom: 'accueil, menu mobile ouvert', route: '', mobile: true, temoin: 'nav a[href$="/profil"]' },
-  { nom: 'catalogue, menu mobile ouvert', route: 'catalogue', mobile: true, temoin: 'nav a[href$="/profil"]' },
+  // ⚠️ `temoin` vise `#menu-mobile`, et non `nav a[...]` : les mêmes liens
+  // existent dans la navigation de bureau, si bien que l'ancien témoin était
+  // satisfait par elle et n'attestait rien du menu.
+  { nom: 'accueil, menu mobile ouvert', route: '', mobile: true, temoin: '#menu-mobile a[href$="/profil"]' },
+  { nom: 'catalogue, menu mobile ouvert', route: 'catalogue', mobile: true, temoin: '#menu-mobile a[href$="/profil"]' },
   {
     nom: 'modale de consentement',
     route: '',
@@ -240,11 +243,13 @@ async function analyser(page, base, scenario) {
   }
 
   if (scenario.mobile) {
-    await page.evaluate(() => {
-      const bouton = [...document.querySelectorAll('nav button')]
-        .find(b => /menu/i.test(b.getAttribute('aria-label') || ''))
-      bouton?.click()
-    })
+    // ⚠️ Le clic passe par Playwright, qui EXIGE que l'élément soit visible.
+    // Il passait auparavant par `page.evaluate(... .click())`, et c'était un
+    // vert trompeur : un `.click()` en JavaScript déclenche l'événement même
+    // sur un élément `display: none`. Le bouton étant `lg:hidden`, les passes
+    // de bureau ouvraient donc un menu qui restait invisible — et axe ignore
+    // l'invisible. Elles n'analysaient rien.
+    await page.getByRole('button', { name: /ouvrir le menu/i }).click()
     await page.waitForTimeout(700)
   }
 
@@ -255,11 +260,17 @@ async function analyser(page, base, scenario) {
     // prononce qu'au bout de trois tentatives espacées, bien après le délai de
     // stabilisation. Le compter aussitôt l'aurait déclaré absent à tort.
     try {
-      await page.locator(scenario.temoin).first().waitFor({ state: 'attached', timeout: 20_000 })
+      // `attached` suffit pour la plupart des états : le témoin dit que la
+      // page a fini d'arriver, non qu'elle est à l'écran. Un scénario mobile
+      // fait exception — ce qu'il vise EST la visibilité, et un menu présent
+      // mais masqué échappe à l'analyse sans que rien ne le dise.
+      const etat = scenario.mobile ? 'visible' : 'attached'
+      await page.locator(scenario.temoin).first().waitFor({ state: etat, timeout: 20_000 })
     } catch {
       throw new Error(
         `Scénario « ${scenario.nom} » : l'état visé n'a pas été atteint ` +
-        `(témoin « ${scenario.temoin} » absent). Analyser la page au repos ` +
+        `(témoin « ${scenario.temoin} » absent ou masqué). Analyser la page ` +
+        `au repos ` +
         `donnerait un vert trompeur.`
       )
     }
@@ -290,6 +301,9 @@ try {
   for (const [format, viewport] of FORMATS) {
    for (const theme of THEMES) {
     for (const scenario of SCENARIOS) {
+      // Un scénario mobile n'a pas de sens au format bureau : le menu y est
+      // masqué, et l'y « ouvrir » ne ferait que rejouer la page ordinaire.
+      if (scenario.mobile && format !== 'mobile') continue
       // Contexte neuf par scénario : la bannière de consentement et le cache de
       // session ne doivent pas fuir d'un scénario à l'autre.
       // Le thème est piloté par prefers-color-scheme, comme chez un vrai
