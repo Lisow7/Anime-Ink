@@ -109,4 +109,39 @@ describe('la page servie par Vercel se passe de script inline', () => {
     // retire du build de Vercel, où elle ferait doublon.
     expect(SOURCE).toMatch(/<meta http-equiv="Content-Security-Policy"/)
   })
+
+  it('laisse la balise plus permissive que l’en-tête, et ce n’est pas un oubli', () => {
+    // ⚠️ Les deux politiques DIVERGENT volontairement : l'en-tête interdit tout
+    // script inline, la balise doit en autoriser un — le décodeur d'adresses,
+    // dont le retour à GitHub Pages que `deploy.yml` garde ouvert dépend.
+    //
+    // Sans cette vérification, quelqu'un qui « alignerait les deux par
+    // cohérence » casserait ce retour sans que rien ne le signale : le défaut
+    // ne se verrait que le jour où on en aurait besoin. C'est le travers le
+    // plus fréquent de ce dépôt — une garantie tenue à un endroit, perdue par
+    // sa copie.
+    expect(SOURCE).toMatch(/script-src 'self' 'unsafe-inline'/)
+  })
+})
+
+describe('la page servie pour une adresse inconnue', () => {
+  /**
+   * Elle échappait à tout, et il a fallu qu'on la cherche.
+   *
+   * `404.html` n'est pas transformé comme `index.html` : le plugin qui retire
+   * les scripts inline agit sur le document d'entrée, jamais sur un fichier
+   * émis à part. Or l'en-tête de sécurité, lui, couvre `/(.*)` — donc cette
+   * page aussi. Un script écrit là serait silencieusement bloqué : la page
+   * s'afficherait, amputée, et aucune vérification ne la chargeait.
+   *
+   * Constat au 29 août : elle n'en porte aucun. Ce test fige ce constat plutôt
+   * que de le redécouvrir.
+   */
+  const GABARIT = lire('vite.config.js')
+  const CORPS = GABARIT.slice(GABARIT.indexOf("fileName: '404.html'"))
+
+  it('ne porte aucun script, puisque la politique en bloquerait un', () => {
+    const source = CORPS.slice(0, CORPS.indexOf('</html>'))
+    expect(source).not.toMatch(/<script/)
+  })
 })
