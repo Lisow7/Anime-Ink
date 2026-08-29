@@ -138,10 +138,31 @@ describe('la page servie pour une adresse inconnue', () => {
    * que de le redécouvrir.
    */
   const GABARIT = lire('vite.config.js')
-  const CORPS = GABARIT.slice(GABARIT.indexOf("fileName: '404.html'"))
+
+  /**
+   * ⚠️ Le repère est vérifié AVANT de découper, et ce n'est pas une précaution
+   * de style.
+   *
+   * `indexOf` rend `-1` quand il ne trouve rien, `slice(-1)` rend alors un seul
+   * caractère, le second `indexOf` rend `-1` à son tour et `slice(0, -1)` rend
+   * une chaîne **vide** — sur laquelle « ne contient aucun script » est vrai.
+   * Déplacer le gabarit dans son propre fichier, ou renommer la clé, ferait
+   * donc **passer ce test sans qu'il regarde quoi que ce soit**.
+   *
+   * Le premier jet du 29 août portait exactement ce défaut, alors même qu'il
+   * venait d'être corrigé ailleurs : une garantie tenue à un endroit, perdue
+   * par sa copie — encore.
+   */
+  const REPERE = "fileName: '404.html'"
+  const debut = GABARIT.indexOf(REPERE)
+  const fin = debut === -1 ? -1 : GABARIT.indexOf('</html>', debut)
+
+  it('est bien trouvée là où ce test la cherche', () => {
+    expect(debut, `repère « ${REPERE} » introuvable dans vite.config.js`).toBeGreaterThan(-1)
+    expect(fin, 'fin du gabarit introuvable après le repère').toBeGreaterThan(debut)
+  })
 
   it('ne porte aucun script, puisque la politique en bloquerait un', () => {
-    const source = CORPS.slice(0, CORPS.indexOf('</html>'))
-    expect(source).not.toMatch(/<script/)
+    expect(GABARIT.slice(debut, fin)).not.toMatch(/<script/)
   })
 })

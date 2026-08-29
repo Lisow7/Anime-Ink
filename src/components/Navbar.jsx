@@ -118,10 +118,19 @@ export default function Navbar() {
           >
             <ThemeIcon theme={theme} />
           </button>
+          {/* `aria-expanded` et `aria-controls` : un bouton qui déploie une
+              zone doit dire son état et désigner ce qu'il commande, sans quoi
+              une synthèse vocale annonce « bouton » sans indiquer que le menu
+              vient de s'ouvrir. C'est le motif déjà suivi ailleurs dans le
+              dépôt, et il donne au passage aux garde-fous le seul repère qui
+              distingue ce menu de la navigation de bureau — laquelle porte les
+              mêmes liens. */}
           <button
             onClick={() => setMenuOpen(v => !v)}
             className="text-[var(--text-muted)] hover:text-[var(--color-accent)] transition-colors"
             aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={menuOpen}
+            aria-controls="menu-mobile"
           >
             {menuOpen ? (
               <svg viewBox="0 0 24 24" className="w-6 h-6 fill-none stroke-current" strokeWidth="2">
@@ -138,7 +147,7 @@ export default function Navbar() {
 
       {/* Menu mobile déroulant */}
       {menuOpen && (
-        <div className="lg:hidden border-t border-[var(--border-subtle)] bg-[var(--navbar-bg)] px-4 py-4 flex flex-col gap-3">
+        <div id="menu-mobile" className="lg:hidden border-t border-[var(--border-subtle)] bg-[var(--navbar-bg)] px-4 py-4 flex flex-col gap-3">
 
           {/* Liens de navigation */}
           <div className="flex flex-col gap-0.5">

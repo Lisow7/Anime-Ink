@@ -5,6 +5,18 @@ Format : [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [1.21] — 29 août 2026
+
+### Accessibilité
+- **Le bouton du menu annonce son état.** Il ne disait pas s’il était ouvert ni ce qu’il commandait : une synthèse vocale annonçait « bouton » sans indiquer que le menu venait de se déployer (`aria-expanded`, `aria-controls`)
+
+### Coulisses
+- **Le menu du téléphone est enfin éprouvé.** Seul moyen d’atteindre le catalogue ou le profil sous 1024 pixels, il n’était traversé par **aucun** parcours — tous tournaient à une largeur où ce menu n’existe pas
+- **Deux passes d’accessibilité étaient creuses.** Elles ouvraient le menu par un `.click()` en JavaScript, lequel agit même sur un élément masqué ; et leur témoin était satisfait par la navigation de bureau, qui porte les mêmes liens. Chacune expliquait pourquoi l’autre ne se voyait pas
+- **Un test de la politique pouvait passer à vide** : si son repère disparaissait, il inspectait une chaîne vide et réussissait. Le défaut venait d’être corrigé ailleurs, et sa copie l’avait reperdu
+
+---
+
 ## [1.20] — 29 août 2026
 
 ### Sécurité
