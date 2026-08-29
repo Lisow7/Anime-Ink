@@ -315,6 +315,43 @@ parcours empruntent enfin ce chemin. Le bouton annonce en outre son état
 (`aria-expanded`, `aria-controls`), ce qui manquait à l'accessibilité et donnait
 au passage le repère non ambigu qui faisait défaut.
 
+### La durée de l'intégration — ramenée le 29 août 2026
+
+Elle était passée de 4 min 36 à 7 min 04 en doublant les passes d'accessibilité,
+coût annoncé et assumé. Le temps a d'abord été **mesuré par étape** plutôt que
+supposé, et il était très concentré :
+
+| étape | durée |
+|---|---|
+| `a11y.mjs` | **284 s** — plus des deux tiers |
+| `parcours.mjs` | 86 s |
+| installation du navigateur | 22 s |
+| tout le reste | ~20 s |
+
+⛔ **Découper en deux tâches d'intégration a donc été écarté sur mesure** :
+chacune aurait repayé l'installation et la construction, pour ne ramener 370 s
+qu'à environ 320. C'est la mesure par étape qui l'a montré — la durée totale
+seule aurait laissé croire l'inverse.
+
+✅ **Les passes tournent à trois.** L'essentiel de leur durée n'est pas du
+calcul : chaque passe attend 2,5 secondes que la page se stabilise, soit plus de
+trois minutes de pure attente, et une attente se partage sans rien coûter.
+Mesuré sur la même machine : **277 s à une seule, 93 à 104 s à trois** — et les
+journaux sont **identiques octet pour octet**, le partage ne change donc rien au
+résultat.
+
+🥇 **Trois et pas davantage** : `axe.run` parcourt tout le document en calculant
+les styles rendus et occupe un cœur, or le runner en a deux. Un garde-fou qui
+rougit selon l'ordonnancement du jour finit ignoré, ce qui est pire que lent. Si
+l'instabilité venait, il faut **baisser** ce nombre — jamais relever les délais
+d'attente, qui masqueraient la contention sans la supprimer.
+
+⚠️ **`main` n'est protégée par rien** — ni règle, ni protection de branche
+(constaté le 29 août). Aucun contrôle n'est donc exigé avant une fusion : la CI
+verte est une habitude, pas une garantie. Ce n'est pas un défaut de code et cela
+n'a pas été changé sans demande, mais le noter évite de croire à une protection
+qui n'existe pas.
+
 **Écarté, et non plus « à faire » :**
 
 - ⛔ **`sandbox`** — cette directive existe pour brider du contenu **tiers**
