@@ -1,6 +1,13 @@
-export const CURRENT_VERSION = '1.20'
+export const CURRENT_VERSION = '1.21'
 
 export const CHANGELOG = [
+  {
+    version: '1.21',
+    date: '29 août 2026',
+    changes: [
+      { type: 'a11y', label: 'Le bouton du menu annonce désormais s’il est ouvert — les lecteurs d’écran le disent enfin' },
+    ],
+  },
   {
     version: '1.20',
     date: '29 août 2026',

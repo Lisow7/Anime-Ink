@@ -287,6 +287,34 @@ plus.)*
       0,9 ko de marge. À reprendre le jour où il y aura du trafic à mesurer —
       une métrique de terrain sans visiteurs ne mesure rien.
 
+### Ce que le contrôle prétendait couvrir sans le couvrir — clos le 29 août 2026
+
+Le menu de la barre de navigation, seul moyen d'atteindre le catalogue ou le
+profil sous 1024 pixels, n'était traversé par **aucun** parcours : tous
+tournaient à 1280, où ce menu n'existe pas.
+
+Le contrôle d'accessibilité, lui, annonçait deux scénarios « menu mobile
+ouvert » — et ils étaient **creux**, pour deux raisons qui se cachaient l'une
+l'autre :
+
+- il ouvrait le menu par `page.evaluate(… .click())`, or un `.click()` en
+  JavaScript déclenche l'événement **même sur un élément `display: none`**. Le
+  bouton étant `lg:hidden`, le menu s'ouvrait dans le DOM et restait invisible —
+  et axe ignore l'invisible ;
+- son témoin visait `nav a[href$="/profil"]`, que la navigation de **bureau**
+  satisfait aussi. Il ne pouvait donc pas rattraper le premier défaut.
+
+🥇 **Deux garanties absentes se couvraient mutuellement** : chacune expliquait
+pourquoi l'autre ne se voyait pas. La preuve tient en une mutation — joué au
+format bureau, le scénario échoue désormais franchement (`locator.click`
+expire), là où il affichait `ok`.
+
+Corrigé : le clic passe par Playwright, qui exige la visibilité ; le témoin vise
+`#menu-mobile` ; un scénario mobile ne tourne qu'au format mobile ; et deux
+parcours empruntent enfin ce chemin. Le bouton annonce en outre son état
+(`aria-expanded`, `aria-controls`), ce qui manquait à l'accessibilité et donnait
+au passage le repère non ambigu qui faisait défaut.
+
 **Écarté, et non plus « à faire » :**
 
 - ⛔ **`sandbox`** — cette directive existe pour brider du contenu **tiers**
