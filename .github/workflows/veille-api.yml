@@ -43,7 +43,7 @@ jobs:
       # mieux que pas de veille : il ouvre une issue, qui elle se voit.
       - name: Signaler la rupture
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs')

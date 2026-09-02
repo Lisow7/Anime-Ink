@@ -363,6 +363,39 @@ qui n'existe pas.
       (`X-Vercel-Cache: HIT`, vérifié). L'item était écrit pour un hébergeur qui
       n'en avait pas.
 
+### Un jeu d'essai qui a vieilli — le 2 septembre 2026
+
+L'intégration est passée au rouge sur deux propositions de mise à jour de
+dépendances, alors qu'aucune ne touchait au code mis en cause. Elles n'y étaient
+pour rien : le jeu d'essai avait **périmé**.
+
+La prochaine diffusion simulée était figée au **30 août 2026 à 17 h**. La vue
+« Cette semaine » ne retient que les sept jours à venir : le 31, la section
+s'est vidée d'elle-même, et les quatre passes qui l'analysent ont perdu leur
+témoin. Le dernier passage vert sur `dev` datait du 29 — la panne s'est donc
+déclarée sans qu'aucune ligne ne bouge.
+
+🥇 **Un jeu d'essai figé est fiable, mais un INSTANT figé ne l'est pas** quand ce
+qui le lit mesure une distance à aujourd'hui. Ce qui devait rester constant,
+c'est l'écart, pas la date. Elle se calcule désormais à deux jours d'ici — pas
+zéro : une diffusion posée « pour aujourd'hui » à 23 h 59 est d'hier une minute
+plus tard, et la vue ne montre plus rien.
+
+⏱️ **Le défaut se voyait, mais il se voyait mal et tard** : après une
+construction, l'installation d'un navigateur et quatre minutes, sous la forme
+« témoin absent » — un message qui ne désigne pas une date périmée. Deux
+vérifications le posent maintenant en quelques millisecondes, horloge déplacée
+au 25 décembre puis à 2030, et **éprouvées par trois mutations** : diffusion
+figée, diffusion posée « pour aujourd'hui », diffusion d'hier. Une quatrième,
+à **un** jour d'ici, passe — et c'est voulu : `joursDEcart` tronque aux jours
+calendaires locaux, si bien qu'un jour d'écart en reste un à n'importe quelle
+heure. La marge à deux jours est un confort, pas une condition.
+
+⚠️ **Les autres parcours n'ont jamais tourné pendant ces deux jours** : le
+garde-fou d'accessibilité s'exécute avant eux et sortait en erreur. Une étape
+rouge en cache les suivantes — les vingt-trois parcours étaient verts, mais rien
+ne le disait.
+
 ### Ce qu'a coûté le déplacement, et ce qu'il a rapporté
 
 *(Compte rendu. Le déplacement a eu lieu le 28 août 2026 ; ce qui suit était
