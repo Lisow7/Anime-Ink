@@ -385,7 +385,11 @@ plus tard, et la vue ne montre plus rien.
 construction, l'installation d'un navigateur et quatre minutes, sous la forme
 « témoin absent » — un message qui ne désigne pas une date périmée. Deux
 vérifications le posent maintenant en quelques millisecondes, horloge déplacée
-au 25 décembre puis à 2030, et **éprouvées par trois mutations**.
+au 25 décembre puis à 2030, et **éprouvées par trois mutations** : diffusion
+figée, diffusion posée « pour aujourd'hui », diffusion d'hier. Une quatrième,
+à **un** jour d'ici, passe — et c'est voulu : `joursDEcart` tronque aux jours
+calendaires locaux, si bien qu'un jour d'écart en reste un à n'importe quelle
+heure. La marge à deux jours est un confort, pas une condition.
 
 ⚠️ **Les autres parcours n'ont jamais tourné pendant ces deux jours** : le
 garde-fou d'accessibilité s'exécute avant eux et sortait en erreur. Une étape
