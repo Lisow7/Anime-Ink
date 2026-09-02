@@ -147,6 +147,31 @@ const PAGE_INFO_ANILIST = { currentPage: 1, lastPage: 3, hasNextPage: true, tota
  * Toutes les requêtes GraphQL partagent une URL : c'est le corps qui dit ce
  * qu'on demande. L'appelant l'a déjà lu et transmet l'opération.
  */
+/**
+ * La seule valeur de ce fichier qui ne soit pas figée, et pourquoi.
+ *
+ * Tout le reste l'est par principe : un jeu d'essai figé est ce qui rend un
+ * contrôle reproductible, et ne dépendre d'aucun tiers est ce qui empêche
+ * l'humeur d'une API de faire rougir une intégration.
+ *
+ * Mais la vue « Cette semaine » ne retient que les sept jours à venir. Y figer
+ * un **instant**, c'est le figer dans le passé : celui-ci l'était au 30 août
+ * 2026, la section s'est vidée le 31, et quatre passes d'accessibilité sont
+ * passées au rouge sur un scénario dont rien n'avait bougé. Ce qui doit rester
+ * constant n'est pas la date, c'est la **distance** qui la sépare d'aujourd'hui.
+ *
+ * Deux jours, et non zéro : `joursDEcart` compte en jours calendaires locaux,
+ * si bien qu'une diffusion calculée « pour aujourd'hui » à 23 h 59 et lue une
+ * minute plus tard est déjà d'hier — et la vue ne montre plus rien. Deux jours
+ * laissent toute la durée d'une intégration à l'intérieur de la fenêtre.
+ */
+function dansDeuxJours() {
+  const date = new Date()
+  date.setDate(date.getDate() + 2)
+  date.setHours(17, 0, 0, 0)
+  return Math.floor(date.getTime() / 1000)
+}
+
 export function repondreAniList(operation, variables = {}, animes = ANIMES) {
   const media = animes.map(versAniList)
 
@@ -175,7 +200,7 @@ export function repondreAniList(operation, variables = {}, animes = ANIMES) {
         status: STATUTS_ANILIST[a.status] ?? 'FINISHED',
         episodes: a.episodes ?? null,
         nextAiringEpisode: a.status === 'Currently Airing'
-          ? { episode: 9, airingAt: Math.floor(Date.UTC(2026, 7, 30, 17, 0, 0) / 1000) }
+          ? { episode: 9, airingAt: dansDeuxJours() }
           : null,
       })) } } }
   }
